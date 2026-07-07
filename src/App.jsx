@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 import { C, Crest, Button } from "./ui";
 import Login from "./Login";
+import ResetPassword from "./ResetPassword";
 import Admin from "./Admin";
 import { AgentPortal, CustomerPortal } from "./Portals";
 
@@ -9,10 +10,14 @@ export default function App() {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
   const [ready, setReady] = useState(false);
+  const [recovery, setRecovery] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
+    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
+      if (event === "PASSWORD_RECOVERY") setRecovery(true);
+      setSession(s);
+    });
     return () => sub.subscription.unsubscribe();
   }, []);
 
@@ -26,6 +31,7 @@ export default function App() {
   }, [session]);
 
   if (!ready) return <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: C.bg, color: C.muted, fontFamily: "'Jost',sans-serif" }}>Loading…</div>;
+  if (recovery) return <ResetPassword onDone={() => setRecovery(false)} />;
   if (!session) return <Login />;
 
   const role = profile?.role || "customer";
