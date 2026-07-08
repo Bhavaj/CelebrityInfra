@@ -94,3 +94,37 @@ export function Select({ label, value, onChange, options, placeholder }) {
     </label>
   );
 }
+
+// Drill-down panel that opens in place over the content.
+export function Modal({ title, onClose, children }) {
+  return (
+    <div onClick={onClose}
+      style={{ position: "fixed", inset: 0, background: "rgba(10,26,63,.45)", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "40px 16px", zIndex: 100, overflowY: "auto" }}>
+      <div onClick={(e) => e.stopPropagation()}
+        style={{ background: "#fff", border: `1px solid ${C.line}`, borderTop: `4px solid ${C.gold}`, borderRadius: 12, width: "100%", maxWidth: 620, padding: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", marginBottom: 18 }}>
+          <h3 style={{ margin: 0, fontFamily: "'Cormorant Garamond',serif", fontWeight: 600, fontSize: 24, color: C.ink }}>{title}</h3>
+          <button onClick={onClose} aria-label="Close"
+            style={{ marginLeft: "auto", background: "none", border: `1px solid ${C.line}`, borderRadius: 6, width: 32, height: 32, cursor: "pointer", fontSize: 18, color: C.muted, lineHeight: 1 }}>×</button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export function SearchBar({ value, onChange, placeholder }) {
+  return (
+    <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder || "Search…"}
+      style={{ padding: "9px 13px", border: `1px solid ${C.line}`, borderRadius: 6, fontFamily: "'Jost',sans-serif", fontSize: 14, minWidth: 200, background: "#fff", color: C.ink }} />
+  );
+}
+
+export function KV({ k, v }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${C.line}` }}>
+      <span style={{ fontSize: 13, color: C.muted }}>{k}</span>
+      <span style={{ fontSize: 14, color: C.ink, fontWeight: 500 }}>{v}</span>
+    </div>
+  );
+}
