@@ -9,7 +9,7 @@ export default function LinkUsers({ agents, customers, onDone }) {
 
   async function load() {
     setLoading(true);
-    const { data, error } = await supabase.from("unlinked_users").select("*");
+    const { data, error } = await supabase.rpc("list_users");
     if (error) setMsg(error.message);
     setUsers(data || []);
     setLoading(false);
