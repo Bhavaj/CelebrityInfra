@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 import { C, fmt, Panel, Stat, Badge, Th, Td, Button, Field, Select } from "./ui";
+import LinkUsers from "./LinkUsers";
 
 const statusColor = { available: C.green, blocked: C.gold, sold: C.muted };
 
@@ -39,6 +40,7 @@ export default function Admin() {
   const tabs = [
     ["overview", "Overview"], ["plots", "Plots"], ["agents", "Agents & Tree"],
     ["commissions", "Commissions"], ["newagent", "＋ Add Agent"], ["sale", "＋ Record Sale"],
+    ["link", "Link Logins"],
   ];
 
   return (
@@ -121,6 +123,7 @@ export default function Admin() {
 
       {!loading && tab === "newagent" && <CreateAgent agents={data.agents} onDone={() => { load(); setTab("agents"); }} />}
       {!loading && tab === "sale" && <RecordSale plots={data.plots} customers={data.customers} agents={data.agents} onDone={() => { load(); setTab("commissions"); }} />}
+      {!loading && tab === "link" && <LinkUsers agents={data.agents} customers={data.customers} onDone={load} />}
     </div>
   );
 }

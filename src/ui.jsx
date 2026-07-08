@@ -61,6 +61,8 @@ export function Td({ children, right, bold }) {
 export function Button({ children, onClick, disabled, kind = "gold", type = "button" }) {
   const styles = kind === "gold"
     ? { background: `linear-gradient(180deg,${C.goldLt},${C.gold})`, color: C.navy, border: "none" }
+    : kind === "ghostLight"
+    ? { background: "transparent", color: "#F7F4EC", border: "1px solid rgba(247,244,236,.4)" }
     : { background: "transparent", color: C.ink, border: `1px solid ${C.line}` };
   return (
     <button type={type} onClick={onClick} disabled={disabled}

@@ -45,7 +45,7 @@ export default function App() {
           <div style={{ fontSize: 11, letterSpacing: 2, color: C.goldLt, textTransform: "uppercase" }}>{role} portal</div>
           <div style={{ marginLeft: "auto", display: "flex", gap: 12, alignItems: "center" }}>
             <span style={{ fontSize: 13, color: "rgba(247,244,236,.7)" }}>{session.user.email}</span>
-            <Button kind="ghost" onClick={() => supabase.auth.signOut()}>Sign out</Button>
+            <Button kind="ghostLight" onClick={() => supabase.auth.signOut()}>Sign out</Button>
           </div>
         </div>
       </div>
