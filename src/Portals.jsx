@@ -84,7 +84,7 @@ export function CustomerPortal({ customerId }) {
     (async () => {
       const cust = await supabase.from("customers").select("*").eq("id", customerId).single();
       const [plot, tx] = await Promise.all([
-        supabase.from("plots").select("*").eq("customer_id", customerId).maybeSingle(),
+        supabase.from("plots").select("*, projects(name, location)").eq("customer_id", customerId).maybeSingle(),
         supabase.from("transactions").select("*").eq("customer_id", customerId).order("date"),
       ]);
       setD({ customer: cust.data, plot: plot.data, transactions: tx.data || [] });
@@ -104,7 +104,7 @@ export function CustomerPortal({ customerId }) {
     <>
       <div style={{ marginBottom: 18 }}>
         <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 600, margin: "0 0 2px", color: C.ink }}>{d.customer.name}</h2>
-        <div style={{ fontSize: 13, color: C.muted }}>Park-1 · Narayankhed, Telangana</div>
+        <div style={{ fontSize: 13, color: C.muted }}>{d.plot?.projects ? `${d.plot.projects.name} · ${d.plot.projects.location || ""}` : "Celebrity Infra Pvt Ltd"}</div>
       </div>
       <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 18 }}>
         <Stat label="Plot owned" value={d.plot ? d.plot.plot_no : "—"} accent={C.navy} />

@@ -49,6 +49,13 @@ function UserRow({ u, agents, customers, onSaved, setMsg }) {
     : u.role === "admin" ? "— (admin)" : "— not linked";
 
   async function save() {
+    const alreadyLinked = u.agent_id || u.customer_id;
+    if (alreadyLinked) {
+      const ok = window.confirm(
+        `${u.email} is already linked to ${linkedLabel}. Change it to the new selection?`
+      );
+      if (!ok) return;
+    }
     setBusy(true); setMsg("");
     const args = { p_user_id: u.id, p_role: role, p_agent_id: null, p_customer_id: null };
     if (role === "agent") args.p_agent_id = recordId || null;

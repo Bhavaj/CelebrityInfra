@@ -7,6 +7,7 @@ const statusColor = { available: C.green, blocked: C.gold, sold: C.muted };
 
 export default function Admin() {
   const [tab, setTab] = useState("overview");
+  const [activeProject, setActiveProject] = useState("");
   const [data, setData] = useState({ agents: [], customers: [], plots: [], projects: [], commissions: [], transactions: [] });
   const [loading, setLoading] = useState(true);
 
@@ -16,15 +17,18 @@ export default function Admin() {
       supabase.from("agents").select("*"),
       supabase.from("customers").select("*"),
       supabase.from("plots").select("*").order("plot_no"),
-      supabase.from("projects").select("*"),
+      supabase.from("projects").select("*").order("name"),
       supabase.from("commissions").select("*"),
       supabase.from("transactions").select("*"),
     ]);
+    const projs = projects.data || [];
     setData({
       agents: agents.data || [], customers: customers.data || [],
-      plots: plots.data || [], projects: projects.data || [],
+      plots: plots.data || [], projects: projs,
       commissions: commissions.data || [], transactions: transactions.data || [],
     });
+    // default the picker to the first project if nothing chosen yet
+    setActiveProject((cur) => cur || (projs[0]?.id ?? ""));
     setLoading(false);
   }
   useEffect(() => { load(); }, []);
@@ -32,19 +36,39 @@ export default function Admin() {
   const agentName = (id) => data.agents.find((a) => a.id === id)?.name ?? "—";
   const customerName = (id) => data.customers.find((c) => c.id === id)?.name ?? "—";
 
-  const sold = data.plots.filter((p) => p.status === "sold");
+  // Everything below is scoped to the active project.
+  const projectPlots = data.plots.filter((p) => p.project_id === activeProject);
+  const plotIds = new Set(projectPlots.map((p) => p.id));
+  const projectCommissions = data.commissions.filter((c) => plotIds.has(c.plot_id));
+  const projectTx = data.transactions.filter((t) => plotIds.has(t.plot_id));
+
+  const sold = projectPlots.filter((p) => p.status === "sold");
   const revenue = sold.reduce((s, p) => s + Number(p.price), 0);
-  const collected = data.transactions.reduce((s, t) => s + Number(t.amount), 0);
-  const payout = data.commissions.reduce((s, c) => s + Number(c.amount), 0);
+  const collected = projectTx.reduce((s, t) => s + Number(t.amount), 0);
+  const payout = projectCommissions.reduce((s, c) => s + Number(c.amount), 0);
+  const projectCustomerIds = new Set(sold.map((p) => p.customer_id).filter(Boolean));
 
   const tabs = [
-    ["overview", "Overview"], ["plots", "Plots"], ["agents", "Agents & Tree"],
-    ["commissions", "Commissions"], ["newagent", "＋ Add Agent"], ["sale", "＋ Record Sale"],
+    ["overview", "Overview"], ["projects", "Projects"], ["plots", "Plots"],
+    ["agents", "Agents"], ["sale", "Record Sale"], ["commissions", "Commissions"],
     ["link", "Link Logins"],
   ];
 
+  const activeName = data.projects.find((p) => p.id === activeProject)?.name;
+
   return (
     <div>
+      {/* Project picker bar */}
+      {data.projects.length > 0 && (
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18, flexWrap: "wrap" }}>
+          <span style={{ fontSize: 12, color: C.muted, textTransform: "uppercase", letterSpacing: 1 }}>Active project</span>
+          <select value={activeProject} onChange={(e) => setActiveProject(e.target.value)}
+            style={{ padding: "9px 14px", border: `1px solid ${C.gold}`, borderRadius: 6, fontFamily: "'Jost',sans-serif", fontSize: 15, fontWeight: 600, color: C.ink, background: "#fff" }}>
+            {data.projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+        </div>
+      )}
+
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 20 }}>
         {tabs.map(([k, l]) => (
           <button key={k} onClick={() => setTab(k)}
@@ -58,51 +82,48 @@ export default function Admin() {
 
       {loading && <p style={{ color: C.muted }}>Loading…</p>}
 
-      {!loading && tab === "overview" && (
+      {!loading && data.projects.length === 0 && tab !== "projects" && (
+        <Panel title="No projects yet">
+          <p style={{ color: C.muted, marginBottom: 14 }}>Create your first project (e.g. Celebrity's Park-1) to begin adding plots and recording sales.</p>
+          <Button onClick={() => setTab("projects")}>Go to Projects</Button>
+        </Panel>
+      )}
+
+      {!loading && tab === "overview" && data.projects.length > 0 && (
         <>
+          <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 600, color: C.ink, margin: "0 0 14px" }}>{activeName}</h2>
           <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 18 }}>
             <Stat label="Revenue booked" value={fmt(revenue)} accent={C.navy} />
             <Stat label="Collected" value={fmt(collected)} accent={C.green} />
             <Stat label="Commission payout" value={fmt(payout)} accent={C.gold} />
-            <Stat label="Plots sold" value={`${sold.length}/${data.plots.length}`} />
-            <Stat label="Customers" value={data.customers.length} />
-            <Stat label="Agents" value={data.agents.length} />
+            <Stat label="Plots sold" value={`${sold.length}/${projectPlots.length}`} />
+            <Stat label="Customers" value={projectCustomerIds.size} />
+            <Stat label="Agents (company)" value={data.agents.length} />
           </div>
         </>
       )}
 
-      {!loading && tab === "plots" && (
-        <Panel title="Plot inventory">
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(150px,1fr))", gap: 10 }}>
-            {data.plots.map((p) => (
-              <div key={p.id} style={{ border: `1px solid ${C.line}`, borderLeft: `4px solid ${statusColor[p.status]}`, borderRadius: 10, padding: 12 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontWeight: 600, color: C.ink }}>{p.plot_no}</span>
-                  <Badge text={p.status} color={statusColor[p.status]} />
-                </div>
-                <div style={{ fontSize: 12, color: C.muted, marginTop: 6 }}>{p.size_sqyd} sq.yd</div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>{fmt(p.price)}</div>
-                {p.customer_id && <div style={{ fontSize: 11, color: C.navy2, marginTop: 4 }}>→ {customerName(p.customer_id)}</div>}
-              </div>
-            ))}
-            {data.plots.length === 0 && <p style={{ color: C.muted }}>No plots yet. Add them via SQL or a plots form.</p>}
-          </div>
-        </Panel>
+      {!loading && tab === "projects" && <Projects projects={data.projects} onDone={load} />}
+
+      {!loading && tab === "plots" && data.projects.length > 0 && (
+        <PlotsTab plots={projectPlots} projectId={activeProject} customerName={customerName} onDone={load} />
       )}
 
       {!loading && tab === "agents" && (
-        <Panel title="Agent commission tree" right={<span style={{ fontSize: 12, color: C.muted }}>total pool never exceeds each agent's quota</span>}>
-          <AgentTree agents={data.agents} agentName={agentName} />
-        </Panel>
+        <AgentsTab agents={data.agents} agentName={agentName} onDone={load} />
+      )}
+
+      {!loading && tab === "sale" && data.projects.length > 0 && (
+        <RecordSale plots={projectPlots} customers={data.customers} agents={data.agents} onDone={() => { load(); setTab("commissions"); }} />
       )}
 
       {!loading && tab === "commissions" && (
-        <Panel title="Commission ledger">
+        <Panel title={`Commission ledger — ${activeName ?? ""}`}>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead><tr><Th>Plot</Th><Th>Beneficiary</Th><Th>Type</Th><Th right>%</Th><Th right>Amount</Th></tr></thead>
               <tbody>
-                {data.commissions.map((c) => {
+                {projectCommissions.map((c) => {
                   const plot = data.plots.find((p) => p.id === c.plot_id);
                   return (
                     <tr key={c.id}>
@@ -114,24 +135,133 @@ export default function Admin() {
                     </tr>
                   );
                 })}
-                {data.commissions.length === 0 && <tr><Td>No commissions yet. Record a sale.</Td></tr>}
+                {projectCommissions.length === 0 && <tr><Td>No commissions in this project yet.</Td></tr>}
               </tbody>
             </table>
           </div>
         </Panel>
       )}
 
-      {!loading && tab === "newagent" && <CreateAgent agents={data.agents} onDone={() => { load(); setTab("agents"); }} />}
-      {!loading && tab === "sale" && <RecordSale plots={data.plots} customers={data.customers} agents={data.agents} onDone={() => { load(); setTab("commissions"); }} />}
       {!loading && tab === "link" && <LinkUsers agents={data.agents} customers={data.customers} onDone={load} />}
     </div>
   );
 }
 
-// ---------- Agent tree (recursive) ----------
+// ---------- PROJECTS ----------
+function Projects({ projects, onDone }) {
+  const [name, setName] = useState("");
+  const [location, setLocation] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  async function add() {
+    if (!name) return;
+    setBusy(true); setMsg("");
+    const { error } = await supabase.from("projects").insert({ name, location });
+    setBusy(false);
+    if (error) { setMsg(error.message); return; }
+    setName(""); setLocation(""); onDone();
+  }
+
+  return (
+    <>
+      <Panel title="Projects">
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead><tr><Th>Name</Th><Th>Location</Th></tr></thead>
+          <tbody>
+            {projects.map((p) => <tr key={p.id}><Td bold>{p.name}</Td><Td>{p.location}</Td></tr>)}
+            {projects.length === 0 && <tr><Td>No projects yet. Add one below.</Td></tr>}
+          </tbody>
+        </table>
+      </Panel>
+      <Panel title="Add a project">
+        <div style={{ maxWidth: 480 }}>
+          <Field label="Project name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Celebrity's Park-1" />
+          <Field label="Location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Narayankhed, Telangana" />
+          {msg && <p style={{ color: C.red, fontSize: 13 }}>{msg}</p>}
+          <Button onClick={add} disabled={busy || !name}>{busy ? "Saving…" : "Create project"}</Button>
+        </div>
+      </Panel>
+    </>
+  );
+}
+
+// ---------- PLOTS (with Add Plot as a button/panel) ----------
+function PlotsTab({ plots, projectId, customerName, onDone }) {
+  const [adding, setAdding] = useState(false);
+  return (
+    <>
+      <Panel title="Plot inventory" right={<Button onClick={() => setAdding((v) => !v)}>{adding ? "Close" : "＋ Add Plot"}</Button>}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(150px,1fr))", gap: 10 }}>
+          {plots.map((p) => (
+            <div key={p.id} style={{ border: `1px solid ${C.line}`, borderLeft: `4px solid ${statusColor[p.status]}`, borderRadius: 10, padding: 12 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontWeight: 600, color: C.ink }}>{p.plot_no}</span>
+                <Badge text={p.status} color={statusColor[p.status]} />
+              </div>
+              <div style={{ fontSize: 12, color: C.muted, marginTop: 6 }}>{p.size_sqyd} sq.yd</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>{fmt(p.price)}</div>
+              {p.customer_id && <div style={{ fontSize: 11, color: C.navy2, marginTop: 4 }}>→ {customerName(p.customer_id)}</div>}
+            </div>
+          ))}
+          {plots.length === 0 && <p style={{ color: C.muted }}>No plots in this project yet. Use ＋ Add Plot.</p>}
+        </div>
+      </Panel>
+      {adding && <AddPlot projectId={projectId} onDone={() => { setAdding(false); onDone(); }} />}
+    </>
+  );
+}
+
+function AddPlot({ projectId, onDone }) {
+  const [plotNo, setPlotNo] = useState("");
+  const [size, setSize] = useState("121");
+  const [price, setPrice] = useState("250000");
+  const [status, setStatus] = useState("available");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  async function add() {
+    if (!plotNo) return;
+    setBusy(true); setMsg("");
+    const { error } = await supabase.from("plots").insert({
+      project_id: projectId, plot_no: plotNo, size_sqyd: Number(size), price: Number(price), status,
+    });
+    setBusy(false);
+    if (error) { setMsg(error.message); return; }
+    onDone();
+  }
+
+  return (
+    <Panel title="Add a plot">
+      <div style={{ maxWidth: 480 }}>
+        <Field label="Plot number" value={plotNo} onChange={(e) => setPlotNo(e.target.value)} placeholder="e.g. A-01" />
+        <Field label="Size (sq. yd)" type="number" value={size} onChange={(e) => setSize(e.target.value)} />
+        <Field label="Price (₹)" type="number" value={price} onChange={(e) => setPrice(e.target.value)} />
+        <Select label="Status" value={status} onChange={setStatus}
+          options={[{ v: "available", l: "Available" }, { v: "blocked", l: "Blocked" }]} />
+        {msg && <p style={{ color: C.red, fontSize: 13 }}>{msg}</p>}
+        <Button onClick={add} disabled={busy || !plotNo}>{busy ? "Saving…" : "Create plot"}</Button>
+      </div>
+    </Panel>
+  );
+}
+
+// ---------- AGENTS (tree + Add Agent as a button) ----------
+function AgentsTab({ agents, agentName, onDone }) {
+  const [adding, setAdding] = useState(false);
+  return (
+    <>
+      <Panel title="Agent commission tree" right={<Button onClick={() => setAdding((v) => !v)}>{adding ? "Close" : "＋ Add Agent"}</Button>}>
+        <AgentTree agents={agents} agentName={agentName} />
+      </Panel>
+      {adding && <CreateAgent agents={agents} onDone={() => { setAdding(false); onDone(); }} />}
+    </>
+  );
+}
+
 function AgentTree({ agents, agentName }) {
   const roots = agents.filter((a) => !a.sponsor_id);
-  if (roots.length === 0) return <p style={{ color: C.muted }}>No agents yet. Add one from “＋ Add Agent”.</p>;
+  if (roots.length === 0) return <p style={{ color: C.muted }}>No agents yet. Use ＋ Add Agent.</p>;
   return <div>{roots.map((r) => <TreeNode key={r.id} agent={r} agents={agents} agentName={agentName} depth={0} />)}</div>;
 }
 function TreeNode({ agent, agents, agentName, depth }) {
@@ -153,18 +283,16 @@ function TreeNode({ agent, agents, agentName, depth }) {
   );
 }
 
-// ---------- Create Agent form (upline % split, must sum to quota) ----------
 function CreateAgent({ agents, onDone }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [quota, setQuota] = useState("6");
   const [sponsorId, setSponsorId] = useState("");
-  const [splits, setSplits] = useState({}); // {agentId: pct} for upline
+  const [splits, setSplits] = useState({});
   const [selfTake, setSelfTake] = useState("6");
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
 
-  // Build the upline chain from sponsor upward.
   const chain = [];
   let cur = agents.find((a) => a.id === sponsorId);
   while (cur) { chain.push(cur); cur = agents.find((a) => a.id === cur.sponsor_id); }
@@ -196,16 +324,10 @@ function CreateAgent({ agents, onDone }) {
         <Select label="Referred by (sponsor)" value={sponsorId} placeholder="— Direct agent (no referrer) —"
           onChange={(v) => { setSponsorId(v); setSplits({}); }}
           options={agents.map((a) => ({ v: a.id, l: a.name }))} />
-
-        {!sponsorId && (
-          <p style={{ fontSize: 13, color: C.muted }}>Direct agent keeps the full {quota}% quota.</p>
-        )}
-
+        {!sponsorId && <p style={{ fontSize: 13, color: C.muted }}>Direct agent keeps the full {quota}% quota.</p>}
         {sponsorId && (
           <div style={{ background: C.bg, border: `1px solid ${C.line}`, borderRadius: 10, padding: 14, marginBottom: 14 }}>
-            <div style={{ fontSize: 12, color: C.muted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>
-              Split the {quota}% quota
-            </div>
+            <div style={{ fontSize: 12, color: C.muted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>Split the {quota}% quota</div>
             <SplitRow label={`${name || "This agent"} (own take)`} value={selfTake} onChange={setSelfTake} />
             {chain.map((a) => (
               <SplitRow key={a.id} label={`${a.name} (upline)`} value={splits[a.id] || ""} onChange={(v) => setSplits({ ...splits, [a.id]: v })} />
@@ -215,7 +337,6 @@ function CreateAgent({ agents, onDone }) {
             </div>
           </div>
         )}
-
         {msg && <p style={{ color: C.red, fontSize: 13 }}>{msg}</p>}
         <Button onClick={save} disabled={!valid || busy}>{busy ? "Saving…" : "Create agent"}</Button>
       </div>
@@ -234,7 +355,7 @@ function SplitRow({ label, value, onChange }) {
   );
 }
 
-// ---------- Record Sale form (fires record_sale in the DB) ----------
+// ---------- RECORD SALE ----------
 function RecordSale({ plots, customers, agents, onDone }) {
   const available = plots.filter((p) => p.status !== "sold");
   const [plotId, setPlotId] = useState("");
@@ -270,10 +391,9 @@ function RecordSale({ plots, customers, agents, onDone }) {
         <Select label="Closed by agent" value={agentId} placeholder="— Select agent —" onChange={setAgentId}
           options={agents.map((a) => ({ v: a.id, l: `${a.name} · quota ${a.quota_percent}%` }))} />
         <Field label="Sale date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-
         {plot && agent && (
           <div style={{ background: C.goldSoft, borderRadius: 10, padding: 14, marginBottom: 14, fontSize: 14, color: C.ink }}>
-            Commission pool: <b>{fmt(pool)}</b> ({agent.quota_percent}% of {fmt(plot.price)}) — will be split per {agent.name}'s tree.
+            Commission pool: <b>{fmt(pool)}</b> ({agent.quota_percent}% of {fmt(plot.price)}) — split per {agent.name}'s tree.
           </div>
         )}
         {msg && <p style={{ color: C.red, fontSize: 13 }}>{msg}</p>}
