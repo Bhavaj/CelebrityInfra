@@ -39,18 +39,18 @@ export default function App() {
   return (
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Jost',sans-serif" }}>
       <div style={{ background: `linear-gradient(90deg,${C.navy},${C.navy2})`, borderBottom: `3px solid ${C.gold}` }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "12px 20px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
           <Crest size={30} />
           <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, fontWeight: 600, color: "#F7F4EC" }}>Celebrity's Park-1</div>
           <div style={{ fontSize: 11, letterSpacing: 2, color: C.goldLt, textTransform: "uppercase" }}>{role} portal</div>
-          <div style={{ marginLeft: "auto", display: "flex", gap: 12, alignItems: "center" }}>
-            <span style={{ fontSize: 13, color: "rgba(247,244,236,.7)" }}>{session.user.email}</span>
+          <div style={{ marginLeft: "auto", display: "flex", gap: 12, alignItems: "center", minWidth: 0, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 13, color: "rgba(247,244,236,.7)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "min(52vw, 320px)" }}>{session.user.email}</span>
             <Button kind="ghostLight" onClick={() => supabase.auth.signOut()}>Sign out</Button>
           </div>
         </div>
       </div>
 
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "28px 20px 60px" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "clamp(20px, 4vw, 32px) clamp(14px, 4vw, 20px) 60px" }}>
         {role === "admin" && <Admin />}
         {role === "agent" && (profile?.agent_id
           ? <AgentPortal agentId={profile.agent_id} />
@@ -65,8 +65,8 @@ export default function App() {
 
 function NotLinked({ kind }) {
   return (
-    <div style={{ background: "#fff", border: `1px solid ${C.line}`, borderRadius: 14, padding: 28, maxWidth: 560 }}>
-      <h2 style={{ fontFamily: "'Cormorant Garamond',serif", color: C.ink, margin: "0 0 8px" }}>Almost there</h2>
+    <div className="cip-card" style={{ background: "#fff", border: `1px solid ${C.line}`, borderTop: `4px solid ${C.gold}`, borderRadius: 16, padding: "clamp(20px, 5vw, 32px)", maxWidth: 560, boxShadow: "0 1px 2px rgba(10,26,63,.04)" }}>
+      <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 26, color: C.ink, margin: "0 0 8px" }}>Almost there</h2>
       <p style={{ color: C.muted, fontSize: 15, lineHeight: 1.6 }}>
         Your login isn't linked to a {kind} record yet. The admin needs to connect your account
         to your {kind} profile so your data appears here.

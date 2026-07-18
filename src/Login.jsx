@@ -87,7 +87,8 @@ export default function Login() {
 
 const inp = {
   width: "100%", background: "rgba(247,244,236,.06)", border: "1px solid rgba(247,244,236,.2)",
-  color: "#F7F4EC", padding: "14px 16px", fontFamily: "'Jost',sans-serif", fontSize: 15, borderRadius: 4,
+  color: "#F7F4EC", padding: "14px 16px", fontFamily: "'Jost',sans-serif", fontSize: 15, borderRadius: 6,
+  transition: "border-color .18s ease, box-shadow .18s ease",
 };
 const swap = { background: "none", border: "none", color: "#E8C874", cursor: "pointer", fontSize: 13, textDecoration: "underline", fontFamily: "'Jost',sans-serif" };
 const linkBtn = { background: "none", border: "none", color: "rgba(247,244,236,.7)", cursor: "pointer", fontSize: 13, marginTop: 14, padding: 0, fontFamily: "'Jost',sans-serif", textDecoration: "underline" };

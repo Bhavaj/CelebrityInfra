@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "./supabase";
-import { C, Panel, Th, Td, Button } from "./ui";
+import { C, Panel, Th, Td, Button, TableScroll, Empty } from "./ui";
 
 export default function LinkUsers({ agents, customers, onDone }) {
   const [users, setUsers] = useState([]);
@@ -19,8 +19,8 @@ export default function LinkUsers({ agents, customers, onDone }) {
   return (
     <Panel title="Link logins to records" right={<span style={{ fontSize: 12, color: C.muted }}>connect who signed up to their agent/customer record</span>}>
       {msg && <p style={{ color: C.red, fontSize: 13 }}>{msg}</p>}
-      {loading ? <p style={{ color: C.muted }}>Loading…</p> : (
-        <div style={{ overflowX: "auto" }}>
+      {loading ? <p style={{ color: C.muted }}>Loading…</p> : users.length === 0 ? <Empty>No signups yet.</Empty> : (
+        <TableScroll minWidth={640}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead><tr><Th>Email</Th><Th>Current role</Th><Th>Linked to</Th><Th>Assign</Th></tr></thead>
             <tbody>
@@ -28,10 +28,9 @@ export default function LinkUsers({ agents, customers, onDone }) {
                 <UserRow key={u.id} u={u} agents={agents} customers={customers}
                   onSaved={() => { load(); onDone && onDone(); }} setMsg={setMsg} />
               ))}
-              {users.length === 0 && <tr><Td>No signups yet.</Td></tr>}
             </tbody>
           </table>
-        </div>
+        </TableScroll>
       )}
     </Panel>
   );

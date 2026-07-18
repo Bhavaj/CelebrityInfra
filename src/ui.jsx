@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 export const C = {
   bg: "#F7F4EC", panel: "#FFFFFF", ink: "#0D2149",
@@ -9,6 +9,41 @@ export const C = {
 };
 
 export const fmt = (n) => "₹" + Number(n || 0).toLocaleString("en-IN");
+
+// Presentational-only viewport hook: true when the screen is phone-sized (≤640px).
+// Used to stack multi-column layouts and adjust padding — no behavior/data impact.
+export function useIsMobile(breakpoint = 640) {
+  const query = `(max-width: ${breakpoint}px)`;
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== "undefined" && window.matchMedia(query).matches
+  );
+  useEffect(() => {
+    const mql = window.matchMedia(query);
+    const onChange = (e) => setIsMobile(e.matches);
+    setIsMobile(mql.matches);
+    mql.addEventListener ? mql.addEventListener("change", onChange) : mql.addListener(onChange);
+    return () => (mql.removeEventListener ? mql.removeEventListener("change", onChange) : mql.removeListener(onChange));
+  }, [query]);
+  return isMobile;
+}
+
+// Horizontal-scroll wrapper so wide tables scroll inside their card instead of breaking layout.
+export function TableScroll({ children, minWidth = 560 }) {
+  return (
+    <div className="cip-scroll-x" style={{ margin: "0 -2px" }}>
+      <div style={{ minWidth }}>{children}</div>
+    </div>
+  );
+}
+
+// Consistent empty state — centered, muted, with breathing room.
+export function Empty({ children }) {
+  return (
+    <div style={{ textAlign: "center", color: C.muted, fontSize: 14, padding: "26px 16px", lineHeight: 1.6 }}>
+      {children}
+    </div>
+  );
+}
 
 export function Crest({ size = 34 }) {
   return (
@@ -25,12 +60,13 @@ export function Crest({ size = 34 }) {
 }
 
 export function Panel({ title, children, right }) {
+  const mobile = useIsMobile();
   return (
-    <div style={{ background: C.panel, border: `1px solid ${C.line}`, borderRadius: 14, padding: 18, marginBottom: 18 }}>
+    <div className="cip-card" style={{ background: C.panel, border: `1px solid ${C.line}`, borderRadius: 16, padding: mobile ? 16 : 22, marginBottom: mobile ? 16 : 20, boxShadow: "0 1px 2px rgba(10,26,63,.04)" }}>
       {title && (
-        <div style={{ display: "flex", alignItems: "center", marginBottom: 14 }}>
-          <h3 style={{ margin: 0, fontFamily: "'Cormorant Garamond',serif", fontWeight: 600, fontSize: 20, color: C.ink }}>{title}</h3>
-          {right && <div style={{ marginLeft: "auto" }}>{right}</div>}
+        <div style={{ display: "flex", alignItems: mobile ? "flex-start" : "center", flexDirection: mobile ? "column" : "row", gap: mobile ? 12 : 0, marginBottom: 18 }}>
+          <h3 style={{ margin: 0, fontFamily: "'Cormorant Garamond',serif", fontWeight: 600, fontSize: 22, letterSpacing: 0.2, color: C.ink }}>{title}</h3>
+          {right && <div style={{ marginLeft: mobile ? 0 : "auto", width: mobile ? "100%" : "auto" }}>{right}</div>}
         </div>
       )}
       {children}
@@ -39,10 +75,11 @@ export function Panel({ title, children, right }) {
 }
 
 export function Stat({ label, value, accent }) {
+  const mobile = useIsMobile();
   return (
-    <div style={{ background: C.panel, border: `1px solid ${C.line}`, borderRadius: 14, padding: "16px 18px", flex: "1 1 150px" }}>
-      <div style={{ fontSize: 12, color: C.muted, letterSpacing: 0.5, textTransform: "uppercase" }}>{label}</div>
-      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 30, fontWeight: 600, marginTop: 4, color: accent || C.ink }}>{value}</div>
+    <div className="cip-card cip-card-h" style={{ background: C.panel, border: `1px solid ${C.line}`, borderRadius: 16, padding: "16px 20px", flex: mobile ? "1 1 100%" : "1 1 160px", boxShadow: "0 1px 2px rgba(10,26,63,.04)" }}>
+      <div style={{ fontSize: 11, color: C.muted, letterSpacing: 0.8, textTransform: "uppercase" }}>{label}</div>
+      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 32, fontWeight: 600, marginTop: 4, lineHeight: 1.1, color: accent || C.ink }}>{value}</div>
     </div>
   );
 }
@@ -52,10 +89,10 @@ export function Badge({ text, color }) {
 }
 
 export function Th({ children, right }) {
-  return <th style={{ textAlign: right ? "right" : "left", fontSize: 11, letterSpacing: 0.5, textTransform: "uppercase", color: C.muted, padding: "8px 10px", borderBottom: `1px solid ${C.line}`, whiteSpace: "nowrap" }}>{children}</th>;
+  return <th style={{ textAlign: right ? "right" : "left", fontSize: 10.5, letterSpacing: 0.8, textTransform: "uppercase", fontWeight: 600, color: C.muted, padding: "10px 12px", borderBottom: `1.5px solid ${C.line}`, whiteSpace: "nowrap" }}>{children}</th>;
 }
 export function Td({ children, right, bold }) {
-  return <td style={{ textAlign: right ? "right" : "left", padding: "10px 10px", borderBottom: `1px solid ${C.line}`, fontSize: 14, fontWeight: bold ? 600 : 400, color: C.ink }}>{children}</td>;
+  return <td style={{ textAlign: right ? "right" : "left", padding: "11px 12px", borderBottom: `1px solid ${C.line}`, fontSize: 14, fontWeight: bold ? 600 : 400, color: C.ink, whiteSpace: "nowrap" }}>{children}</td>;
 }
 
 export function Button({ children, onClick, disabled, kind = "gold", type = "button" }) {
@@ -66,7 +103,7 @@ export function Button({ children, onClick, disabled, kind = "gold", type = "but
     : { background: "transparent", color: C.ink, border: `1px solid ${C.line}` };
   return (
     <button type={type} onClick={onClick} disabled={disabled}
-      style={{ ...styles, padding: "11px 22px", borderRadius: 4, fontFamily: "'Jost',sans-serif", fontSize: 13, letterSpacing: 1, fontWeight: 600, textTransform: "uppercase", cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.55 : 1 }}>
+      style={{ ...styles, padding: "11px 22px", borderRadius: 6, fontFamily: "'Jost',sans-serif", fontSize: 13, letterSpacing: 1, fontWeight: 600, textTransform: "uppercase", cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.55 : 1 }}>
       {children}
     </button>
   );
@@ -97,15 +134,16 @@ export function Select({ label, value, onChange, options, placeholder }) {
 
 // Drill-down panel that opens in place over the content.
 export function Modal({ title, onClose, children }) {
+  const mobile = useIsMobile();
   return (
     <div onClick={onClose}
-      style={{ position: "fixed", inset: 0, background: "rgba(10,26,63,.45)", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "40px 16px", zIndex: 100, overflowY: "auto" }}>
+      style={{ position: "fixed", inset: 0, background: "rgba(10,26,63,.5)", backdropFilter: "blur(2px)", display: "flex", alignItems: mobile ? "flex-start" : "flex-start", justifyContent: "center", padding: mobile ? "14px 10px" : "48px 16px", zIndex: 100, overflowY: "auto" }}>
       <div onClick={(e) => e.stopPropagation()}
-        style={{ background: "#fff", border: `1px solid ${C.line}`, borderTop: `4px solid ${C.gold}`, borderRadius: 12, width: "100%", maxWidth: 620, padding: 24 }}>
-        <div style={{ display: "flex", alignItems: "center", marginBottom: 18 }}>
-          <h3 style={{ margin: 0, fontFamily: "'Cormorant Garamond',serif", fontWeight: 600, fontSize: 24, color: C.ink }}>{title}</h3>
+        style={{ background: "#fff", border: `1px solid ${C.line}`, borderTop: `4px solid ${C.gold}`, borderRadius: mobile ? 12 : 14, width: "100%", maxWidth: 620, padding: mobile ? 18 : 26, boxShadow: "0 24px 60px rgba(10,26,63,.22)" }}>
+        <div style={{ display: "flex", alignItems: "center", marginBottom: 18, gap: 12 }}>
+          <h3 style={{ margin: 0, fontFamily: "'Cormorant Garamond',serif", fontWeight: 600, fontSize: mobile ? 22 : 25, color: C.ink }}>{title}</h3>
           <button onClick={onClose} aria-label="Close"
-            style={{ marginLeft: "auto", background: "none", border: `1px solid ${C.line}`, borderRadius: 6, width: 32, height: 32, cursor: "pointer", fontSize: 18, color: C.muted, lineHeight: 1 }}>×</button>
+            style={{ marginLeft: "auto", flexShrink: 0, background: "none", border: `1px solid ${C.line}`, borderRadius: 8, width: 34, height: 34, cursor: "pointer", fontSize: 18, color: C.muted, lineHeight: 1 }}>×</button>
         </div>
         {children}
       </div>
@@ -114,9 +152,10 @@ export function Modal({ title, onClose, children }) {
 }
 
 export function SearchBar({ value, onChange, placeholder }) {
+  const mobile = useIsMobile();
   return (
     <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder || "Search…"}
-      style={{ padding: "9px 13px", border: `1px solid ${C.line}`, borderRadius: 6, fontFamily: "'Jost',sans-serif", fontSize: 14, minWidth: 200, background: "#fff", color: C.ink }} />
+      style={{ padding: "10px 14px", border: `1px solid ${C.line}`, borderRadius: 6, fontFamily: "'Jost',sans-serif", fontSize: 14, minWidth: mobile ? 0 : 200, width: mobile ? "100%" : undefined, background: "#fff", color: C.ink }} />
   );
 }
 

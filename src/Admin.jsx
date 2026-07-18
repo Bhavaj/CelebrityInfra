@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "./supabase";
-import { C, fmt, Panel, Stat, Badge, Th, Td, Button, Field, Select, Modal, SearchBar, KV } from "./ui";
+import { C, fmt, Panel, Stat, Badge, Th, Td, Button, Field, Select, Modal, SearchBar, KV, useIsMobile, TableScroll, Empty } from "./ui";
 import LinkUsers from "./LinkUsers";
 
 const statusColor = { available: C.green, blocked: C.gold, sold: C.muted };
 
 export default function Admin() {
+  const mobile = useIsMobile();
   const [tab, setTab] = useState("overview");
   const [activeProject, setActiveProject] = useState("");
   const [data, setData] = useState({ agents: [], customers: [], plots: [], projects: [], commissions: [], transactions: [], users: [] });
@@ -62,24 +63,26 @@ export default function Admin() {
     <div>
       {/* Project picker bar */}
       {data.projects.length > 0 && (
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18, flexWrap: "wrap" }}>
-          <span style={{ fontSize: 12, color: C.muted, textTransform: "uppercase", letterSpacing: 1 }}>Active project</span>
+        <div style={{ display: "flex", alignItems: mobile ? "stretch" : "center", flexDirection: mobile ? "column" : "row", gap: mobile ? 6 : 12, marginBottom: 18 }}>
+          <span style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: 1 }}>Active project</span>
           <select value={activeProject} onChange={(e) => setActiveProject(e.target.value)}
-            style={{ padding: "9px 14px", border: `1px solid ${C.gold}`, borderRadius: 6, fontFamily: "'Jost',sans-serif", fontSize: 15, fontWeight: 600, color: C.ink, background: "#fff" }}>
+            style={{ padding: "10px 14px", border: `1px solid ${C.gold}`, borderRadius: 6, fontFamily: "'Jost',sans-serif", fontSize: 15, fontWeight: 600, color: C.ink, background: "#fff", width: mobile ? "100%" : "auto" }}>
             {data.projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
         </div>
       )}
 
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 20 }}>
-        {tabs.map(([k, l]) => (
-          <button key={k} onClick={() => setTab(k)}
-            style={{ padding: "9px 16px", borderRadius: 6, border: `1px solid ${tab === k ? C.gold : C.line}`,
-              background: tab === k ? C.gold : "#fff", color: tab === k ? C.navy : C.ink,
-              fontWeight: tab === k ? 600 : 400, cursor: "pointer", fontSize: 13, fontFamily: "'Jost',sans-serif" }}>
-            {l}
-          </button>
-        ))}
+      <div className="cip-tabs" style={{ marginBottom: 22, borderBottom: `1px solid ${C.line}`, paddingBottom: 2 }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: mobile ? "nowrap" : "wrap", width: mobile ? "max-content" : "auto" }}>
+          {tabs.map(([k, l]) => (
+            <button key={k} onClick={() => setTab(k)}
+              style={{ padding: "9px 16px", borderRadius: 6, flexShrink: 0, whiteSpace: "nowrap", border: `1px solid ${tab === k ? C.gold : C.line}`,
+                background: tab === k ? `linear-gradient(180deg,${C.goldLt},${C.gold})` : "#fff", color: tab === k ? C.navy : C.ink,
+                fontWeight: tab === k ? 600 : 400, cursor: "pointer", fontSize: 13, fontFamily: "'Jost',sans-serif" }}>
+              {l}
+            </button>
+          ))}
+        </div>
       </div>
 
       {loading && <p style={{ color: C.muted }}>Loading…</p>}
@@ -93,7 +96,7 @@ export default function Admin() {
 
       {!loading && tab === "overview" && data.projects.length > 0 && (
         <>
-          <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 600, color: C.ink, margin: "0 0 14px" }}>{activeName}</h2>
+          <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 600, fontSize: 28, color: C.ink, margin: "0 0 16px" }}>{activeName}</h2>
           <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 18 }}>
             <Stat label="Revenue booked" value={fmt(revenue)} accent={C.navy} />
             <Stat label="Collected" value={fmt(collected)} accent={C.green} />
@@ -153,13 +156,16 @@ function Projects({ projects, onDone }) {
   return (
     <>
       <Panel title="Projects">
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead><tr><Th>Name</Th><Th>Location</Th></tr></thead>
-          <tbody>
-            {projects.map((p) => <tr key={p.id}><Td bold>{p.name}</Td><Td>{p.location}</Td></tr>)}
-            {projects.length === 0 && <tr><Td>No projects yet. Add one below.</Td></tr>}
-          </tbody>
-        </table>
+        {projects.length === 0 ? <Empty>No projects yet. Add one below.</Empty> : (
+          <TableScroll minWidth={360}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead><tr><Th>Name</Th><Th>Location</Th></tr></thead>
+              <tbody>
+                {projects.map((p) => <tr key={p.id}><Td bold>{p.name}</Td><Td>{p.location}</Td></tr>)}
+              </tbody>
+            </table>
+          </TableScroll>
+        )}
       </Panel>
       <Panel title="Add a project">
         <div style={{ maxWidth: 480 }}>
@@ -175,6 +181,7 @@ function Projects({ projects, onDone }) {
 
 // ---------- PAYMENTS (searchable/filterable transaction ledger) ----------
 function PaymentsTab({ transactions, plots, customers }) {
+  const mobile = useIsMobile();
   const [q, setQ] = useState("");
   const [type, setType] = useState("");
   const plotNo = (id) => plots.find((p) => p.id === id)?.plot_no ?? "—";
@@ -192,35 +199,37 @@ function PaymentsTab({ transactions, plots, customers }) {
 
   return (
     <Panel title="Payments received" right={
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", flexDirection: mobile ? "column" : "row" }}>
         <SearchBar value={q} onChange={setQ} placeholder="Search customer, plot…" />
-        <select value={type} onChange={(e) => setType(e.target.value)} style={selStyle}>
+        <select value={type} onChange={(e) => setType(e.target.value)} style={{ ...selStyle, width: mobile ? "100%" : undefined }}>
           <option value="">All types</option>
           {types.map((t) => <option key={t} value={t}>{t}</option>)}
         </select>
       </div>
     }>
-      <div style={{ fontSize: 13, color: C.muted, marginBottom: 10 }}>{rows.length} payments · total {fmt(total)}</div>
-      <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead><tr><Th>Date</Th><Th>Customer</Th><Th>Plot</Th><Th>Type</Th><Th right>Amount</Th></tr></thead>
-          <tbody>
-            {rows.map((t) => (
-              <tr key={t.id}>
-                <Td>{t.date}</Td><Td bold>{custName(t.customer_id)}</Td>
-                <Td>{plotNo(t.plot_id)}</Td><Td>{t.type}</Td><Td right bold>{fmt(t.amount)}</Td>
-              </tr>
-            ))}
-            {rows.length === 0 && <tr><Td>No payments match.</Td></tr>}
-          </tbody>
-        </table>
-      </div>
+      <div style={{ fontSize: 13, color: C.muted, marginBottom: 12 }}>{rows.length} payments · total {fmt(total)}</div>
+      {rows.length === 0 ? <Empty>No payments match your search.</Empty> : (
+        <TableScroll minWidth={620}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead><tr><Th>Date</Th><Th>Customer</Th><Th>Plot</Th><Th>Type</Th><Th right>Amount</Th></tr></thead>
+            <tbody>
+              {rows.map((t) => (
+                <tr key={t.id}>
+                  <Td>{t.date}</Td><Td bold>{custName(t.customer_id)}</Td>
+                  <Td>{plotNo(t.plot_id)}</Td><Td>{t.type}</Td><Td right bold>{fmt(t.amount)}</Td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </TableScroll>
+      )}
     </Panel>
   );
 }
 
 // ---------- COMMISSIONS (searchable) ----------
 function CommissionsTab({ commissions, plots, agentName, projectName }) {
+  const mobile = useIsMobile();
   const [q, setQ] = useState("");
   const [kind, setKind] = useState("");
   const plotNo = (id) => plots.find((p) => p.id === id)?.plot_no ?? "—";
@@ -234,59 +243,62 @@ function CommissionsTab({ commissions, plots, agentName, projectName }) {
 
   return (
     <Panel title={`Commission ledger — ${projectName ?? ""}`} right={
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", flexDirection: mobile ? "column" : "row" }}>
         <SearchBar value={q} onChange={setQ} placeholder="Search agent, plot…" />
-        <select value={kind} onChange={(e) => setKind(e.target.value)} style={selStyle}>
+        <select value={kind} onChange={(e) => setKind(e.target.value)} style={{ ...selStyle, width: mobile ? "100%" : undefined }}>
           <option value="">All types</option>
           <option value="Direct">Direct</option>
           <option value="Referral bonus">Referral bonus</option>
         </select>
       </div>
     }>
-      <div style={{ fontSize: 13, color: C.muted, marginBottom: 10 }}>{rows.length} entries · total {fmt(total)}</div>
-      <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead><tr><Th>Plot</Th><Th>Beneficiary</Th><Th>Type</Th><Th right>%</Th><Th right>Amount</Th></tr></thead>
-          <tbody>
-            {rows.map((c) => (
-              <tr key={c.id}>
-                <Td bold>{plotNo(c.plot_id)}</Td>
-                <Td>{agentName(c.beneficiary_id)}</Td>
-                <Td><span style={{ color: c.kind === "Direct" ? C.navy : C.gold, fontWeight: 600, fontSize: 13 }}>{c.kind}</span></Td>
-                <Td right>{c.pct}%</Td>
-                <Td right bold>{fmt(c.amount)}</Td>
-              </tr>
-            ))}
-            {rows.length === 0 && <tr><Td>No commissions match.</Td></tr>}
-          </tbody>
-        </table>
-      </div>
+      <div style={{ fontSize: 13, color: C.muted, marginBottom: 12 }}>{rows.length} entries · total {fmt(total)}</div>
+      {rows.length === 0 ? <Empty>No commissions match your search.</Empty> : (
+        <TableScroll minWidth={620}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead><tr><Th>Plot</Th><Th>Beneficiary</Th><Th>Type</Th><Th right>%</Th><Th right>Amount</Th></tr></thead>
+            <tbody>
+              {rows.map((c) => (
+                <tr key={c.id}>
+                  <Td bold>{plotNo(c.plot_id)}</Td>
+                  <Td>{agentName(c.beneficiary_id)}</Td>
+                  <Td><span style={{ color: c.kind === "Direct" ? C.navy : C.gold, fontWeight: 600, fontSize: 13 }}>{c.kind}</span></Td>
+                  <Td right>{c.pct}%</Td>
+                  <Td right bold>{fmt(c.amount)}</Td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </TableScroll>
+      )}
     </Panel>
   );
 }
 
 // ---------- PLOTS (clickable cards → detail modal) ----------
 function PlotsTab({ plots, projectId, customers, transactions, agents, customerName, onDone }) {
+  const mobile = useIsMobile();
   const [adding, setAdding] = useState(false);
   const [openPlot, setOpenPlot] = useState(null);
   return (
     <>
       <Panel title="Plot inventory" right={<Button onClick={() => setAdding((v) => !v)}>{adding ? "Close" : "＋ Add Plot"}</Button>}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(150px,1fr))", gap: 10 }}>
-          {plots.map((p) => (
-            <div key={p.id} onClick={() => setOpenPlot(p)}
-              style={{ border: `1px solid ${C.line}`, borderLeft: `4px solid ${statusColor[p.status]}`, borderRadius: 10, padding: 12, cursor: "pointer" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontWeight: 600, color: C.ink }}>{p.plot_no}</span>
-                <Badge text={p.status} color={statusColor[p.status]} />
+        {plots.length === 0 ? <Empty>No plots in this project yet. Use ＋ Add Plot to create one.</Empty> : (
+          <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "repeat(auto-fill,minmax(160px,1fr))", gap: 12 }}>
+            {plots.map((p) => (
+              <div key={p.id} onClick={() => setOpenPlot(p)} className="cip-card cip-card-h"
+                style={{ background: C.panel, border: `1px solid ${C.line}`, borderLeft: `4px solid ${statusColor[p.status]}`, borderRadius: 12, padding: 14, cursor: "pointer" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontWeight: 600, color: C.ink }}>{p.plot_no}</span>
+                  <Badge text={p.status} color={statusColor[p.status]} />
+                </div>
+                <div style={{ fontSize: 12, color: C.muted, marginTop: 8 }}>{p.size_sqyd} sq.yd</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: C.ink, marginTop: 2 }}>{fmt(p.price)}</div>
+                {p.customer_id && <div style={{ fontSize: 11, color: C.navy2, marginTop: 6 }}>→ {customerName(p.customer_id)}</div>}
               </div>
-              <div style={{ fontSize: 12, color: C.muted, marginTop: 6 }}>{p.size_sqyd} sq.yd</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>{fmt(p.price)}</div>
-              {p.customer_id && <div style={{ fontSize: 11, color: C.navy2, marginTop: 4 }}>→ {customerName(p.customer_id)}</div>}
-            </div>
-          ))}
-          {plots.length === 0 && <p style={{ color: C.muted }}>No plots in this project yet. Use ＋ Add Plot.</p>}
-        </div>
+            ))}
+          </div>
+        )}
       </Panel>
       {adding && <AddPlot projectId={projectId} onDone={() => { setAdding(false); onDone(); }} />}
       {openPlot && (
@@ -393,26 +405,33 @@ function AgentsTab({ agents, customers, commissions, plots, users, agentName, on
 }
 
 function AgentTree({ agents, agentName, onOpen }) {
+  const mobile = useIsMobile();
   const roots = agents.filter((a) => !a.sponsor_id);
-  if (roots.length === 0) return <p style={{ color: C.muted }}>No agents yet. Use ＋ Add Agent.</p>;
-  return <div>{roots.map((r) => <TreeNode key={r.id} agent={r} agents={agents} agentName={agentName} onOpen={onOpen} depth={0} />)}</div>;
+  if (roots.length === 0) return <Empty>No agents yet. Use ＋ Add Agent to build your tree.</Empty>;
+  return (
+    <div className="cip-scroll-x">
+      <div style={{ minWidth: mobile ? "max-content" : "auto" }}>
+        {roots.map((r) => <TreeNode key={r.id} agent={r} agents={agents} agentName={agentName} onOpen={onOpen} depth={0} indent={mobile ? 14 : 24} />)}
+      </div>
+    </div>
+  );
 }
-function TreeNode({ agent, agents, agentName, onOpen, depth }) {
+function TreeNode({ agent, agents, agentName, onOpen, depth, indent }) {
   const children = agents.filter((a) => a.sponsor_id === agent.id);
   const split = agent.split || {};
   const ownTake = split.self ?? agent.quota_percent;
   const upline = Object.entries(split).filter(([k]) => k !== "self");
   return (
-    <div style={{ marginLeft: depth * 24, borderLeft: depth ? `2px solid ${C.goldSoft}` : "none", paddingLeft: depth ? 14 : 0, marginTop: 8 }}>
-      <div onClick={() => onOpen(agent)}
-        style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", background: depth === 0 ? C.goldSoft : "#fff", border: `1px solid ${C.line}`, borderRadius: 8, padding: "8px 10px", cursor: "pointer" }}>
+    <div style={{ marginLeft: depth * indent, borderLeft: depth ? `2px solid ${C.goldSoft}` : "none", paddingLeft: depth ? 14 : 0, marginTop: 8 }}>
+      <div onClick={() => onOpen(agent)} className="cip-card cip-card-h"
+        style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", background: depth === 0 ? C.goldSoft : "#fff", border: `1px solid ${C.line}`, borderRadius: 10, padding: "10px 12px", cursor: "pointer" }}>
         <span style={{ fontWeight: 600, color: C.ink }}>{agent.name}</span>
         <span style={{ fontSize: 12, color: C.muted }}>{agent.phone}</span>
         <span style={{ fontSize: 11, background: C.navy, color: "#fff", borderRadius: 20, padding: "2px 8px" }}>quota {agent.quota_percent}%</span>
         <span style={{ fontSize: 11, background: "#fff", border: `1px solid ${C.line}`, borderRadius: 20, padding: "2px 8px" }}>own {ownTake}%</span>
         {upline.length > 0 && <span style={{ fontSize: 11, color: C.gold }}>upline: {upline.map(([id, p]) => `${agentName(id)} ${p}%`).join(", ")}</span>}
       </div>
-      {children.map((c) => <TreeNode key={c.id} agent={c} agents={agents} agentName={agentName} onOpen={onOpen} depth={depth + 1} />)}
+      {children.map((c) => <TreeNode key={c.id} agent={c} agents={agents} agentName={agentName} onOpen={onOpen} depth={depth + 1} indent={indent} />)}
     </div>
   );
 }

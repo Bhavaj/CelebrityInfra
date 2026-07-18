@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "./supabase";
-import { C, fmt, Panel, Stat, Th, Td } from "./ui";
+import { C, fmt, Panel, Stat, Th, Td, TableScroll, Empty } from "./ui";
 
 // ---------- AGENT ----------
 export function AgentPortal({ agentId }) {
@@ -33,8 +33,8 @@ export function AgentPortal({ agentId }) {
 
   return (
     <>
-      <div style={{ marginBottom: 18 }}>
-        <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 600, margin: "0 0 2px", color: C.ink }}>{d.agent.name}</h2>
+      <div style={{ marginBottom: 20 }}>
+        <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 600, fontSize: 28, margin: "0 0 2px", color: C.ink }}>{d.agent.name}</h2>
         <div style={{ fontSize: 13, color: C.muted }}>Quota {d.agent.quota_percent}% · {d.agent.sponsor_id ? "Referred agent" : "Direct agent"}</div>
       </div>
       <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 18 }}>
@@ -46,30 +46,36 @@ export function AgentPortal({ agentId }) {
       </div>
 
       <Panel title="My customers">
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead><tr><Th>Customer</Th><Th>Phone</Th></tr></thead>
-          <tbody>
-            {d.customers.map((c) => <tr key={c.id}><Td bold>{c.name}</Td><Td>{c.phone}</Td></tr>)}
-            {d.customers.length === 0 && <tr><Td>No customers yet.</Td></tr>}
-          </tbody>
-        </table>
+        {d.customers.length === 0 ? <Empty>No customers yet.</Empty> : (
+          <TableScroll minWidth={360}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead><tr><Th>Customer</Th><Th>Phone</Th></tr></thead>
+              <tbody>
+                {d.customers.map((c) => <tr key={c.id}><Td bold>{c.name}</Td><Td>{c.phone}</Td></tr>)}
+              </tbody>
+            </table>
+          </TableScroll>
+        )}
       </Panel>
 
       <Panel title="My commission">
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead><tr><Th>Plot</Th><Th>Type</Th><Th right>%</Th><Th right>Amount</Th></tr></thead>
-          <tbody>
-            {d.commissions.map((c) => (
-              <tr key={c.id}>
-                <Td bold>{plotNo(c.plot_id)}</Td>
-                <Td><span style={{ color: c.kind === "Direct" ? C.navy : C.gold, fontWeight: 600, fontSize: 13 }}>{c.kind}</span></Td>
-                <Td right>{c.pct}%</Td>
-                <Td right bold>{fmt(c.amount)}</Td>
-              </tr>
-            ))}
-            {d.commissions.length === 0 && <tr><Td>No commission yet.</Td></tr>}
-          </tbody>
-        </table>
+        {d.commissions.length === 0 ? <Empty>No commission yet.</Empty> : (
+          <TableScroll minWidth={480}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead><tr><Th>Plot</Th><Th>Type</Th><Th right>%</Th><Th right>Amount</Th></tr></thead>
+              <tbody>
+                {d.commissions.map((c) => (
+                  <tr key={c.id}>
+                    <Td bold>{plotNo(c.plot_id)}</Td>
+                    <Td><span style={{ color: c.kind === "Direct" ? C.navy : C.gold, fontWeight: 600, fontSize: 13 }}>{c.kind}</span></Td>
+                    <Td right>{c.pct}%</Td>
+                    <Td right bold>{fmt(c.amount)}</Td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </TableScroll>
+        )}
       </Panel>
     </>
   );
@@ -102,8 +108,8 @@ export function CustomerPortal({ customerId }) {
 
   return (
     <>
-      <div style={{ marginBottom: 18 }}>
-        <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 600, margin: "0 0 2px", color: C.ink }}>{d.customer.name}</h2>
+      <div style={{ marginBottom: 20 }}>
+        <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 600, fontSize: 28, margin: "0 0 2px", color: C.ink }}>{d.customer.name}</h2>
         <div style={{ fontSize: 13, color: C.muted }}>{d.plot?.projects ? `${d.plot.projects.name} · ${d.plot.projects.location || ""}` : "Celebrity Infra Pvt Ltd"}</div>
       </div>
       <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 18 }}>
@@ -125,15 +131,18 @@ export function CustomerPortal({ customerId }) {
       )}
 
       <Panel title="Transaction history">
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead><tr><Th>Date</Th><Th>Type</Th><Th right>Amount</Th></tr></thead>
-          <tbody>
-            {d.transactions.map((t) => (
-              <tr key={t.id}><Td>{t.date}</Td><Td>{t.type}</Td><Td right bold>{fmt(t.amount)}</Td></tr>
-            ))}
-            {d.transactions.length === 0 && <tr><Td>No transactions yet.</Td></tr>}
-          </tbody>
-        </table>
+        {d.transactions.length === 0 ? <Empty>No transactions yet.</Empty> : (
+          <TableScroll minWidth={420}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead><tr><Th>Date</Th><Th>Type</Th><Th right>Amount</Th></tr></thead>
+              <tbody>
+                {d.transactions.map((t) => (
+                  <tr key={t.id}><Td>{t.date}</Td><Td>{t.type}</Td><Td right bold>{fmt(t.amount)}</Td></tr>
+                ))}
+              </tbody>
+            </table>
+          </TableScroll>
+        )}
       </Panel>
     </>
   );
