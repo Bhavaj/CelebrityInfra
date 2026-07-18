@@ -66,7 +66,7 @@ export default function Admin() {
         <div style={{ display: "flex", alignItems: mobile ? "stretch" : "center", flexDirection: mobile ? "column" : "row", gap: mobile ? 6 : 12, marginBottom: 18 }}>
           <span style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: 1 }}>Active project</span>
           <select value={activeProject} onChange={(e) => setActiveProject(e.target.value)}
-            style={{ padding: "10px 14px", border: `1px solid ${C.gold}`, borderRadius: 6, fontFamily: "'Jost',sans-serif", fontSize: 15, fontWeight: 600, color: C.ink, background: "#fff", width: mobile ? "100%" : "auto" }}>
+            style={{ padding: "10px 14px", border: `1px solid ${C.gold}`, borderRadius: 6, fontFamily: "'Jost',sans-serif", fontSize: 15, fontWeight: 600, color: C.ink, background: C.field, width: mobile ? "100%" : "auto" }}>
             {data.projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
         </div>
@@ -77,7 +77,7 @@ export default function Admin() {
           {tabs.map(([k, l]) => (
             <button key={k} onClick={() => setTab(k)}
               style={{ padding: "9px 16px", borderRadius: 6, flexShrink: 0, whiteSpace: "nowrap", border: `1px solid ${tab === k ? C.gold : C.line}`,
-                background: tab === k ? `linear-gradient(180deg,${C.goldLt},${C.gold})` : "#fff", color: tab === k ? C.navy : C.ink,
+                background: tab === k ? `linear-gradient(180deg,${C.goldLt},${C.gold})` : C.panel2, color: tab === k ? "#1A1200" : C.ink,
                 fontWeight: tab === k ? 600 : 400, cursor: "pointer", fontSize: 13, fontFamily: "'Jost',sans-serif" }}>
               {l}
             </button>
@@ -98,7 +98,7 @@ export default function Admin() {
         <>
           <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 600, fontSize: 28, color: C.ink, margin: "0 0 16px" }}>{activeName}</h2>
           <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 18 }}>
-            <Stat label="Revenue booked" value={fmt(revenue)} accent={C.navy} />
+            <Stat label="Revenue booked" value={fmt(revenue)} accent={C.steel} />
             <Stat label="Collected" value={fmt(collected)} accent={C.green} />
             <Stat label="Commission payout" value={fmt(payout)} accent={C.gold} />
             <Stat label="Plots sold" value={`${sold.length}/${projectPlots.length}`} />
@@ -262,7 +262,7 @@ function CommissionsTab({ commissions, plots, agentName, projectName }) {
                 <tr key={c.id}>
                   <Td bold>{plotNo(c.plot_id)}</Td>
                   <Td>{agentName(c.beneficiary_id)}</Td>
-                  <Td><span style={{ color: c.kind === "Direct" ? C.navy : C.gold, fontWeight: 600, fontSize: 13 }}>{c.kind}</span></Td>
+                  <Td><span style={{ color: c.kind === "Direct" ? C.emeraldLt : C.goldLt, fontWeight: 600, fontSize: 13 }}>{c.kind}</span></Td>
                   <Td right>{c.pct}%</Td>
                   <Td right bold>{fmt(c.amount)}</Td>
                 </tr>
@@ -294,7 +294,7 @@ function PlotsTab({ plots, projectId, customers, transactions, agents, customerN
                 </div>
                 <div style={{ fontSize: 12, color: C.muted, marginTop: 8 }}>{p.size_sqyd} sq.yd</div>
                 <div style={{ fontSize: 15, fontWeight: 600, color: C.ink, marginTop: 2 }}>{fmt(p.price)}</div>
-                {p.customer_id && <div style={{ fontSize: 11, color: C.navy2, marginTop: 6 }}>→ {customerName(p.customer_id)}</div>}
+                {p.customer_id && <div style={{ fontSize: 11, color: C.emeraldLt, marginTop: 6 }}>→ {customerName(p.customer_id)}</div>}
               </div>
             ))}
           </div>
@@ -424,11 +424,11 @@ function TreeNode({ agent, agents, agentName, onOpen, depth, indent }) {
   return (
     <div style={{ marginLeft: depth * indent, borderLeft: depth ? `2px solid ${C.goldSoft}` : "none", paddingLeft: depth ? 14 : 0, marginTop: 8 }}>
       <div onClick={() => onOpen(agent)} className="cip-card cip-card-h"
-        style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", background: depth === 0 ? C.goldSoft : "#fff", border: `1px solid ${C.line}`, borderRadius: 10, padding: "10px 12px", cursor: "pointer" }}>
+        style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", background: depth === 0 ? C.goldSoft : C.panel2, border: `1px solid ${C.line}`, borderRadius: 10, padding: "10px 12px", cursor: "pointer" }}>
         <span style={{ fontWeight: 600, color: C.ink }}>{agent.name}</span>
         <span style={{ fontSize: 12, color: C.muted }}>{agent.phone}</span>
-        <span style={{ fontSize: 11, background: C.navy, color: "#fff", borderRadius: 20, padding: "2px 8px" }}>quota {agent.quota_percent}%</span>
-        <span style={{ fontSize: 11, background: "#fff", border: `1px solid ${C.line}`, borderRadius: 20, padding: "2px 8px" }}>own {ownTake}%</span>
+        <span style={{ fontSize: 11, background: C.navy2, color: C.ink, borderRadius: 20, padding: "2px 8px" }}>quota {agent.quota_percent}%</span>
+        <span style={{ fontSize: 11, background: C.panel, color: C.ink, border: `1px solid ${C.line}`, borderRadius: 20, padding: "2px 8px" }}>own {ownTake}%</span>
         {upline.length > 0 && <span style={{ fontSize: 11, color: C.gold }}>upline: {upline.map(([id, p]) => `${agentName(id)} ${p}%`).join(", ")}</span>}
       </div>
       {children.map((c) => <TreeNode key={c.id} agent={c} agents={agents} agentName={agentName} onOpen={onOpen} depth={depth + 1} indent={indent} />)}
@@ -475,7 +475,7 @@ function AgentCard({ agent, agents, customers, commissions, plots, users, onClos
   );
 }
 
-const selStyle = { padding: "9px 12px", border: `1px solid ${C.line}`, borderRadius: 6, fontFamily: "'Jost',sans-serif", fontSize: 14, background: "#fff", color: C.ink };
+const selStyle = { padding: "9px 12px", border: `1px solid ${C.line}`, borderRadius: 6, fontFamily: "'Jost',sans-serif", fontSize: 14, background: C.field, color: C.ink };
 
 function CreateAgent({ agents, onDone }) {
   const [name, setName] = useState("");
@@ -543,7 +543,7 @@ function SplitRow({ label, value, onChange }) {
     <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
       <span style={{ flex: 1, fontSize: 14, color: C.ink }}>{label}</span>
       <input type="number" value={value} onChange={(e) => onChange(e.target.value)} placeholder="0"
-        style={{ width: 80, padding: "8px 10px", border: `1px solid ${C.line}`, borderRadius: 4, fontFamily: "'Jost',sans-serif", fontSize: 15, textAlign: "right" }} />
+        style={{ width: 80, padding: "8px 10px", border: `1px solid ${C.line}`, borderRadius: 4, fontFamily: "'Jost',sans-serif", fontSize: 15, textAlign: "right", background: C.field, color: C.ink }} />
       <span style={{ color: C.muted }}>%</span>
     </div>
   );

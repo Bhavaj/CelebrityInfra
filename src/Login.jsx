@@ -45,7 +45,7 @@ export default function Login() {
   const cta = mode === "in" ? "Sign in" : mode === "up" ? "Sign up" : "Send reset link";
 
   return (
-    <div style={{ minHeight: "100vh", background: `linear-gradient(180deg,${C.navy},${C.navy2})`, display: "grid", placeItems: "center", padding: 20, fontFamily: "'Jost',sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: `radial-gradient(60% 42% at 50% 0%, rgba(201,162,39,.10), transparent 60%), radial-gradient(55% 40% at 100% 100%, rgba(47,191,143,.05), transparent 55%), ${C.bg}`, display: "grid", placeItems: "center", padding: 20, fontFamily: "'Jost',sans-serif" }}>
       <div style={{ width: "100%", maxWidth: 400 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
           <Crest size={42} />

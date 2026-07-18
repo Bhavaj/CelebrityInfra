@@ -38,13 +38,13 @@ export default function App() {
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Jost',sans-serif" }}>
-      <div style={{ background: `linear-gradient(90deg,${C.navy},${C.navy2})`, borderBottom: `3px solid ${C.gold}` }}>
+      <div style={{ background: `linear-gradient(180deg, rgba(18,21,28,.92), rgba(10,12,17,.96))`, backdropFilter: "blur(10px)", borderBottom: `1px solid ${C.gold}` }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
           <Crest size={30} />
-          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, fontWeight: 600, color: "#F7F4EC" }}>Celebrity's Park-1</div>
+          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, fontWeight: 600, color: C.ink }}>Celebrity's Park-1</div>
           <div style={{ fontSize: 11, letterSpacing: 2, color: C.goldLt, textTransform: "uppercase" }}>{role} portal</div>
           <div style={{ marginLeft: "auto", display: "flex", gap: 12, alignItems: "center", minWidth: 0, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 13, color: "rgba(247,244,236,.7)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "min(52vw, 320px)" }}>{session.user.email}</span>
+            <span style={{ fontSize: 13, color: C.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "min(52vw, 320px)" }}>{session.user.email}</span>
             <Button kind="ghostLight" onClick={() => supabase.auth.signOut()}>Sign out</Button>
           </div>
         </div>
@@ -65,7 +65,7 @@ export default function App() {
 
 function NotLinked({ kind }) {
   return (
-    <div className="cip-card" style={{ background: "#fff", border: `1px solid ${C.line}`, borderTop: `4px solid ${C.gold}`, borderRadius: 16, padding: "clamp(20px, 5vw, 32px)", maxWidth: 560, boxShadow: "0 1px 2px rgba(10,26,63,.04)" }}>
+    <div className="cip-card" style={{ background: C.panel, border: `1px solid ${C.line}`, borderTop: `4px solid ${C.gold}`, borderRadius: 16, padding: "clamp(20px, 5vw, 32px)", maxWidth: 560, boxShadow: "0 10px 24px rgba(0,0,0,.28)" }}>
       <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 26, color: C.ink, margin: "0 0 8px" }}>Almost there</h2>
       <p style={{ color: C.muted, fontSize: 15, lineHeight: 1.6 }}>
         Your login isn't linked to a {kind} record yet. The admin needs to connect your account

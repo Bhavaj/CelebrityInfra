@@ -38,7 +38,7 @@ export function AgentPortal({ agentId }) {
         <div style={{ fontSize: 13, color: C.muted }}>Quota {d.agent.quota_percent}% · {d.agent.sponsor_id ? "Referred agent" : "Direct agent"}</div>
       </div>
       <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 18 }}>
-        <Stat label="Direct commission" value={fmt(direct)} accent={C.navy} />
+        <Stat label="Direct commission" value={fmt(direct)} accent={C.steel} />
         <Stat label="Referral bonus" value={fmt(bonus)} accent={C.gold} />
         <Stat label="Total earned" value={fmt(direct + bonus)} accent={C.green} />
         <Stat label="My customers" value={d.customers.length} />
@@ -67,7 +67,7 @@ export function AgentPortal({ agentId }) {
                 {d.commissions.map((c) => (
                   <tr key={c.id}>
                     <Td bold>{plotNo(c.plot_id)}</Td>
-                    <Td><span style={{ color: c.kind === "Direct" ? C.navy : C.gold, fontWeight: 600, fontSize: 13 }}>{c.kind}</span></Td>
+                    <Td><span style={{ color: c.kind === "Direct" ? C.emeraldLt : C.goldLt, fontWeight: 600, fontSize: 13 }}>{c.kind}</span></Td>
                     <Td right>{c.pct}%</Td>
                     <Td right bold>{fmt(c.amount)}</Td>
                   </tr>
@@ -113,7 +113,7 @@ export function CustomerPortal({ customerId }) {
         <div style={{ fontSize: 13, color: C.muted }}>{d.plot?.projects ? `${d.plot.projects.name} · ${d.plot.projects.location || ""}` : "Celebrity Infra Pvt Ltd"}</div>
       </div>
       <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 18 }}>
-        <Stat label="Plot owned" value={d.plot ? d.plot.plot_no : "—"} accent={C.navy} />
+        <Stat label="Plot owned" value={d.plot ? d.plot.plot_no : "—"} accent={C.steel} />
         <Stat label="Investment" value={fmt(total)} />
         <Stat label="Paid" value={fmt(paid)} accent={C.green} />
         <Stat label="Balance" value={fmt(balance)} accent={balance > 0 ? C.red : C.green} />
@@ -124,8 +124,8 @@ export function CustomerPortal({ customerId }) {
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 6, color: C.ink }}>
             <span>{pct}% paid</span><span style={{ color: C.muted }}>{fmt(paid)} of {fmt(total)}</span>
           </div>
-          <div style={{ height: 12, background: C.goldSoft, borderRadius: 20, overflow: "hidden" }}>
-            <div style={{ width: `${pct}%`, height: "100%", background: C.navy }} />
+          <div style={{ height: 12, background: C.field, borderRadius: 20, overflow: "hidden" }}>
+            <div style={{ width: `${pct}%`, height: "100%", background: `linear-gradient(90deg,${C.goldDeep},${C.gold})` }} />
           </div>
         </Panel>
       )}
