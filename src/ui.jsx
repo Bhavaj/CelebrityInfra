@@ -99,17 +99,37 @@ export function Td({ children, right, bold }) {
   return <td style={{ textAlign: right ? "right" : "left", padding: "11px 12px", borderBottom: `1px solid ${C.line}`, fontSize: 14, fontWeight: bold ? 600 : 400, color: C.ink, whiteSpace: "nowrap" }}>{children}</td>;
 }
 
-export function Button({ children, onClick, disabled, kind = "gold", type = "button" }) {
+// size="md" (default) is the loud, letter-spaced CTA treatment — reserve it for
+// the one or two primary actions on a screen (Sign in, Create project, Confirm sale).
+// size="sm" is a quiet, normal-case control for row/inline actions in tables and
+// modals (Archive, Delete, Convert…) — using the CTA style there is what reads as
+// a wireframe rather than a real dashboard.
+export function Button({ children, onClick, disabled, kind = "gold", size = "md", type = "button" }) {
   const styles = kind === "gold"
     ? { background: `linear-gradient(180deg,${C.goldLt},${C.gold})`, color: "#1A1200", border: "none" }
     : kind === "ghostLight"
     ? { background: "transparent", color: C.ink, border: "1px solid rgba(243,240,232,.28)" }
+    : kind === "danger"
+    ? { background: "transparent", color: C.red, border: `1px solid ${C.red}` }
     : { background: "transparent", color: C.ink, border: `1px solid ${C.line}` };
+  const sizing = size === "sm"
+    ? { padding: "6px 13px", borderRadius: 5, fontSize: 12.5, letterSpacing: 0.2, fontWeight: 500, textTransform: "none" }
+    : { padding: "11px 22px", borderRadius: 6, fontSize: 13, letterSpacing: 1, fontWeight: 600, textTransform: "uppercase" };
   return (
     <button type={type} onClick={onClick} disabled={disabled}
-      style={{ ...styles, padding: "11px 22px", borderRadius: 6, fontFamily: "'Jost',sans-serif", fontSize: 13, letterSpacing: 1, fontWeight: 600, textTransform: "uppercase", cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.55 : 1 }}>
+      style={{ ...styles, ...sizing, fontFamily: "'Jost',sans-serif", cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.55 : 1 }}>
       {children}
     </button>
+  );
+}
+
+// Wraps a destructive action behind a native confirm() — matches the pattern
+// already used in LinkUsers.jsx, just avoids retyping the wrapper each time.
+export function ConfirmButton({ children, confirmText, onConfirm, kind = "danger", size = "sm", ...props }) {
+  return (
+    <Button {...props} kind={kind} size={size} onClick={() => { if (window.confirm(confirmText)) onConfirm(); }}>
+      {children}
+    </Button>
   );
 }
 

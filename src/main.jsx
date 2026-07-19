@@ -42,6 +42,10 @@ style.textContent = `
     outline:none;border-color:#C9A227 !important;box-shadow:0 0 0 3px rgba(201,162,39,.20)
   }
   select option{background:#12151C;color:#F3F0E8}
+
+  /* Quiet row hover for data tables — helps scanning without adding visual noise */
+  table tbody tr{transition:background .12s ease}
+  @media (hover:hover){ table tbody tr:hover td{background:rgba(243,240,232,.025)} }
 `;
 document.head.appendChild(style);
 

@@ -246,6 +246,8 @@
   .form input:focus{outline:none;border-color:var(--gold);background:rgba(201,162,39,.05)}
   .form button{margin-top:8px;width:100%}
   .form-note{font-size:12px;color:rgba(243,240,232,.4);margin-top:16px;letter-spacing:.5px}
+  .form-error{display:none;font-size:13px;color:#E2685A;margin-top:10px}
+  .form-error.show{display:block}
   .enq-success{display:none;text-align:center;padding:30px 10px}
   .enq-success.show{display:block}
   .enq-success .ring{width:56px;height:56px;border-radius:50%;border:1px solid var(--emerald);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;color:var(--emerald-lt);font-size:24px}
@@ -422,12 +424,13 @@
     <div class="form-wrap">
       <form class="form" id="enquireForm">
         <div class="row">
-          <input type="text" placeholder="Full Name" required />
-          <input type="tel" placeholder="Phone Number" required />
+          <input type="text" id="enqName" placeholder="Full Name" required />
+          <input type="tel" id="enqPhone" placeholder="Phone Number" required />
         </div>
-        <input type="email" placeholder="Email (optional)" />
-        <input type="text" placeholder="Preferred visit date" />
+        <input type="email" id="enqEmail" placeholder="Email (optional)" />
+        <input type="text" id="enqDate" placeholder="Preferred visit date" />
         <button class="btn-gold" type="submit">Request Site Visit</button>
+        <p class="form-error" id="enqError">Something went wrong sending your request — please call us directly or try again.</p>
       </form>
       <p class="form-note">By submitting, you agree to be contacted by Celebrity Infra Pvt Ltd regarding Park-1.</p>
     </div>
@@ -495,11 +498,40 @@
     });
   }
 
-  // Enquiry form — inline confirmation instead of a browser alert
-  const enquireForm=document.getElementById('enquireForm');
-  const enqSuccess=document.getElementById('enqSuccess');
-  enquireForm.addEventListener('submit',(e)=>{
+  // Enquiry form submission itself is handled in the module script below
+  // (needs `import`, which classic scripts can't use).
+</script>
+
+<script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+  const supabase = createClient(
+    "https://suczwoujthnyzqgmvyra.supabase.co",
+    "sb_publishable_h6Xg-Enp4kP1x4nuRoEybw_xKCZHkGn"
+  );
+
+  const enquireForm = document.getElementById('enquireForm');
+  const enqSuccess = document.getElementById('enqSuccess');
+  const enqError = document.getElementById('enqError');
+  const submitBtn = enquireForm.querySelector('button[type=submit]');
+
+  enquireForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    enqError.classList.remove('show');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending…';
+    const { error } = await supabase.from('leads').insert({
+      name: document.getElementById('enqName').value,
+      phone: document.getElementById('enqPhone').value,
+      email: document.getElementById('enqEmail').value || null,
+      preferred_date: document.getElementById('enqDate').value || null,
+    });
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Request Site Visit';
+    if (error) {
+      console.error(error);
+      enqError.classList.add('show');
+      return;
+    }
     enquireForm.closest('.form-wrap').classList.add('hide');
     enqSuccess.classList.add('show');
   });
