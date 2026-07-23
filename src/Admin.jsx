@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "./supabase";
-import { C, fmt, Panel, Stat, Modal, useIsMobile } from "./ui";
+import { C, MONO, fmt, Panel, Stat, Modal, useIsMobile } from "./ui";
 import Sidebar from "./admin/Sidebar";
 import Inventory from "./admin/Inventory";
 import Customers from "./admin/Customers";
@@ -68,9 +68,9 @@ export default function Admin() {
       <div style={{ flex: 1, minWidth: 0 }}>
         {(tab === "overview" || tab === "inventory") && pickableProjects.length > 0 && (
           <div style={{ display: "flex", alignItems: mobile ? "stretch" : "center", flexDirection: mobile ? "column" : "row", gap: mobile ? 6 : 12, marginBottom: 18 }}>
-            <span style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: 1 }}>Active project</span>
+            <span style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: MONO }}>Active project</span>
             <select value={activeProject} onChange={(e) => setActiveProject(e.target.value)}
-              style={{ padding: "10px 14px", border: `1px solid ${C.gold}`, borderRadius: 6, fontFamily: "'Jost',sans-serif", fontSize: 15, fontWeight: 600, color: C.ink, background: C.field, width: mobile ? "100%" : "auto" }}>
+              style={{ padding: "10px 14px", border: `1px solid ${C.gold}`, borderRadius: 0, fontFamily: "'Hanken Grotesk',sans-serif", fontSize: 15, fontWeight: 600, color: C.ink, background: C.field, width: mobile ? "100%" : "auto" }}>
               {pickableProjects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>
@@ -85,7 +85,7 @@ export default function Admin() {
             </Panel>
           ) : (
             <>
-              <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 600, fontSize: 28, color: C.ink, margin: "0 0 16px" }}>{activeName}</h2>
+              <h2 style={{ fontFamily: "'Hanken Grotesk',serif", fontWeight: 600, fontSize: 28, color: C.ink, margin: "0 0 16px" }}>{activeName}</h2>
               <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 18 }}>
                 <Stat label="Revenue booked" value={fmt(revenue)} accent={C.steel} />
                 <Stat label="Collected" value={fmt(collected)} accent={C.green} />
@@ -107,7 +107,7 @@ export default function Admin() {
 
         {!loading && tab === "customers" && (
           <Customers customers={data.customers} plots={data.plots} transactions={data.transactions}
-            agentName={agentName} onDone={load} />
+            users={data.users} agentName={agentName} onDone={load} />
         )}
 
         {!loading && tab === "partners" && (

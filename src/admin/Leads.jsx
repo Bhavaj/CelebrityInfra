@@ -47,7 +47,7 @@ export default function Leads({ leads, onDone }) {
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", flexDirection: mobile ? "column" : "row" }}>
         <SearchBar value={q} onChange={setQ} placeholder="Search name, phone, email…" />
         <select value={status} onChange={(e) => setStatus(e.target.value)}
-          style={{ padding: "9px 12px", border: `1px solid ${C.line}`, borderRadius: 6, fontFamily: "'Jost',sans-serif", fontSize: 14, background: C.field, color: C.ink, width: mobile ? "100%" : undefined }}>
+          style={{ padding: "9px 12px", border: `1px solid ${C.line}`, borderRadius: 0, fontFamily: "'Hanken Grotesk',sans-serif", fontSize: 14, background: C.field, color: C.ink, width: mobile ? "100%" : undefined }}>
           <option value="">All stages</option>
           {STATUS.map((s) => <option key={s} value={s}>{statusLabel[s]}</option>)}
         </select>
@@ -71,7 +71,7 @@ export default function Leads({ leads, onDone }) {
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <Badge text={statusLabel[l.status]} color={statusColor[l.status]} />
                       <select value={l.status} onChange={(e) => setStatusFor(l, e.target.value)}
-                        style={{ padding: "5px 8px", border: `1px solid ${C.line}`, borderRadius: 4, fontFamily: "'Jost',sans-serif", fontSize: 12, background: C.field, color: C.ink }}>
+                        style={{ padding: "5px 8px", border: `1px solid ${C.line}`, borderRadius: 0, fontFamily: "'Hanken Grotesk',sans-serif", fontSize: 12, background: C.field, color: C.ink }}>
                         {STATUS.map((s) => <option key={s} value={s}>{statusLabel[s]}</option>)}
                       </select>
                     </div>

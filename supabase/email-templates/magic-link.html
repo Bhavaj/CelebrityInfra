@@ -1,0 +1,86 @@
+<!--
+  Paste this into: Supabase Dashboard -> Authentication -> Email Templates -> Magic Link
+  (paste into the "Message body" HTML editor, replacing the default content).
+
+  Subject line to use:
+    Your Celebrity Infra sign-in code
+
+  Requires custom SMTP to be enabled first (Authentication -> Settings -> SMTP Settings) --
+  the built-in template editor won't fully save/preview otherwise.
+
+  Uses only inline styles + table layout, no external CSS/fonts/images -- this is
+  required for the template to render consistently across email clients (Gmail,
+  Outlook, Apple Mail all strip <style> blocks and block remote font loading to
+  varying degrees), so it intentionally does not pull in the site's Google Fonts.
+-->
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">
+  Your one-time sign-in code for Celebrity Infra Pvt Ltd
+</div>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#08090D;padding:32px 16px;">
+  <tr>
+    <td align="center">
+      <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;width:100%;background-color:#12151C;border:1px solid rgba(243,240,232,0.10);border-top:4px solid #C9A227;border-radius:14px;">
+
+        <!-- Header -->
+        <tr>
+          <td style="padding:32px 32px 0 32px;">
+            <table role="presentation" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="width:40px;height:40px;border-radius:50%;background-color:#C9A227;text-align:center;vertical-align:middle;">
+                  <span style="font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:bold;color:#08090D;line-height:40px;">C</span>
+                </td>
+                <td style="padding-left:12px;">
+                  <div style="font-family:Georgia,'Times New Roman',serif;font-size:18px;font-weight:bold;letter-spacing:2px;color:#E8C874;">CELEBRITY</div>
+                  <div style="font-family:Helvetica,Arial,sans-serif;font-size:9px;letter-spacing:3px;color:rgba(247,244,236,0.6);">INFRA PVT LTD</div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td style="padding:28px 32px 8px 32px;">
+            <h1 style="margin:0 0 6px 0;font-family:Georgia,'Times New Roman',serif;font-weight:600;font-size:26px;color:#F7F4EC;">
+              Your sign-in code
+            </h1>
+            <p style="margin:0;font-family:Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:rgba(247,244,236,0.65);">
+              Enter this code on the sign-in screen to continue.
+            </p>
+          </td>
+        </tr>
+
+        <!-- Code -->
+        <tr>
+          <td style="padding:20px 32px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#08090D;border:1px solid rgba(201,162,39,0.35);border-radius:10px;">
+              <tr>
+                <td align="center" style="padding:22px 16px;">
+                  <span style="font-family:Georgia,'Times New Roman',serif;font-size:34px;font-weight:700;letter-spacing:10px;color:#E8C874;">
+                    {{ .Token }}
+                  </span>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Footer note -->
+        <tr>
+          <td style="padding:4px 32px 32px 32px;">
+            <p style="margin:0 0 14px 0;font-family:Helvetica,Arial,sans-serif;font-size:13px;line-height:1.6;color:rgba(247,244,236,0.55);">
+              This code expires shortly and can only be used once. If you didn't request this, you can safely ignore this email.
+            </p>
+            <div style="border-top:1px solid rgba(243,240,232,0.10);padding-top:14px;">
+              <p style="margin:0;font-family:Helvetica,Arial,sans-serif;font-size:11px;letter-spacing:0.5px;color:rgba(247,244,236,0.35);">
+                Celebrity Infra Pvt Ltd
+              </p>
+            </div>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>

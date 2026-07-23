@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { supabase } from "../supabase";
-import { C, fmt, Panel, Stat, Badge, Th, Td, Button, ConfirmButton, Field, Select, Modal, KV, useIsMobile, TableScroll, Empty } from "../ui";
+import { C, MONO, fmt, Panel, Stat, Badge, Th, Td, Button, ConfirmButton, Field, Select, Modal, KV, useIsMobile, TableScroll, Empty } from "../ui";
 
 const statusColor = { available: C.green, blocked: C.gold, sold: C.muted };
 
@@ -25,7 +25,7 @@ export default function Inventory({ plots, projectId, projects, customers, agent
           <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "repeat(auto-fill,minmax(160px,1fr))", gap: 12 }}>
             {projectPlots.map((p) => (
               <div key={p.id} onClick={() => setOpenPlot(p)} className="cip-card cip-card-h"
-                style={{ background: C.panel, border: `1px solid ${C.line}`, borderLeft: `4px solid ${statusColor[p.status]}`, borderRadius: 12, padding: 14, cursor: "pointer" }}>
+                style={{ background: C.panel, border: `1px solid ${C.line}`, borderLeft: `4px solid ${statusColor[p.status]}`, borderRadius: 0, padding: 14, cursor: "pointer" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
                   <span style={{ fontWeight: 600, color: C.ink }}>{p.plot_no}</span>
                   <Badge text={p.status} color={statusColor[p.status]} />
@@ -86,7 +86,7 @@ function PlotCard({ plot, customers, agents, transactions, onClose, onChanged, o
 
       {tx.length > 0 && (
         <div style={{ marginTop: 14 }}>
-          <div style={{ fontSize: 12, color: C.muted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Payments</div>
+          <div style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8, fontFamily: MONO }}>Payments</div>
           {tx.map((t) => (
             <div key={t.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 14, padding: "6px 0", borderBottom: `1px solid ${C.line}` }}>
               <span style={{ color: C.muted }}>{t.date} · {t.type}</span>
@@ -153,19 +153,19 @@ function SellPlotForm({ plot, customers, agents, onCancel, onSold }) {
 
   return (
     <div style={{ marginTop: 18, borderTop: `1px solid ${C.line}`, paddingTop: 16 }}>
-      <div style={{ fontSize: 12, color: C.muted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>Sell this plot</div>
+      <div style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10, fontFamily: MONO }}>Sell this plot</div>
 
       {!newCust ? (
         <>
           <Select label="Customer" value={customerId} placeholder="— Select customer —" onChange={setCustomerId}
             options={custList.map((c) => ({ v: c.id, l: c.name }))} />
           <button onClick={() => setNewCust(true)} type="button"
-            style={{ background: "none", border: "none", color: C.gold, textDecoration: "underline", cursor: "pointer", fontSize: 13, padding: 0, marginBottom: 14, fontFamily: "'Jost',sans-serif" }}>
+            style={{ background: "none", border: "none", color: C.gold, textDecoration: "underline", cursor: "pointer", fontSize: 13, padding: 0, marginBottom: 14, fontFamily: "'Hanken Grotesk',sans-serif" }}>
             + New customer
           </button>
         </>
       ) : (
-        <div style={{ background: C.field, border: `1px solid ${C.line}`, borderRadius: 10, padding: 14, marginBottom: 14 }}>
+        <div style={{ background: C.field, border: `1px solid ${C.line}`, borderRadius: 0, padding: 14, marginBottom: 14 }}>
           <Field label="Name" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Customer name" />
           <Field label="Phone" value={newPhone} onChange={(e) => setNewPhone(e.target.value)} placeholder="98480 00000" />
           <div style={{ display: "flex", gap: 8 }}>
@@ -179,7 +179,7 @@ function SellPlotForm({ plot, customers, agents, onCancel, onSold }) {
         options={activeAgents.map((a) => ({ v: a.id, l: `${a.name} · quota ${a.quota_percent}%` }))} />
       <Field label="Sale date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
       {agent && (
-        <div style={{ background: C.goldSoft, borderRadius: 10, padding: 14, marginBottom: 14, fontSize: 14, color: C.ink }}>
+        <div style={{ background: C.goldSoft, borderRadius: 0, padding: 14, marginBottom: 14, fontSize: 14, color: C.ink }}>
           Commission pool: <b>{fmt(pool)}</b> ({agent.quota_percent}% of {fmt(plot.price)}) — split per {agent.name}'s tree.
         </div>
       )}
@@ -283,7 +283,7 @@ function ManageProjects({ projects, plots, onClose, onDone }) {
       </TableScroll>
 
       <div style={{ marginTop: 20, borderTop: `1px solid ${C.line}`, paddingTop: 16 }}>
-        <div style={{ fontSize: 12, color: C.muted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>Add a project</div>
+        <div style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10, fontFamily: MONO }}>Add a project</div>
         <Field label="Project name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Celebrity's Park-1" />
         <Field label="Location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Narayankhed, Telangana" />
         <Button onClick={add} disabled={busy || !name}>{busy ? "Saving…" : "Create project"}</Button>

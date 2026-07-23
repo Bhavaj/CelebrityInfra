@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { supabase } from "../supabase";
-import { C, fmt, Panel, Th, Td, Button, ConfirmButton, Field, Select, Modal, SearchBar, KV, Badge, TableScroll, Empty, useIsMobile } from "../ui";
+import { C, MONO, fmt, Panel, Th, Td, Button, ConfirmButton, Field, Select, Modal, SearchBar, KV, Badge, TableScroll, Empty, useIsMobile } from "../ui";
+import AccessCode from "./AccessCode";
 
 export default function Partners({ agents, customers, commissions, plots, users, agentName, view, setView, onDone }) {
   const [adding, setAdding] = useState(false);
@@ -34,9 +35,9 @@ export default function Partners({ agents, customers, commissions, plots, users,
 function ViewToggle({ active, onClick, children }) {
   return (
     <button onClick={onClick}
-      style={{ padding: "8px 16px", borderRadius: 6, border: `1px solid ${active ? C.gold : C.line}`,
+      style={{ padding: "8px 16px", borderRadius: 0, border: `1px solid ${active ? C.gold : C.line}`,
         background: active ? C.goldSoft : "transparent", color: active ? C.goldLt : C.muted,
-        fontWeight: active ? 600 : 400, cursor: "pointer", fontSize: 13, fontFamily: "'Jost',sans-serif" }}>
+        fontWeight: active ? 600 : 400, cursor: "pointer", fontSize: 13, fontFamily: "'Hanken Grotesk',sans-serif" }}>
       {children}
     </button>
   );
@@ -63,12 +64,13 @@ function TreeNode({ agent, agents, agentName, onOpen, depth, indent }) {
     <div style={{ marginLeft: depth * indent, borderLeft: depth ? `2px solid ${C.goldSoft}` : "none", paddingLeft: depth ? 14 : 0, marginTop: 8 }}>
       <div onClick={() => onOpen(agent)} className="cip-card cip-card-h"
         style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", background: depth === 0 ? C.goldSoft : C.panel2,
-          border: `1px solid ${C.line}`, borderRadius: 10, padding: "10px 12px", cursor: "pointer", opacity: agent.archived ? 0.55 : 1 }}>
+          border: `1px solid ${C.line}`, borderRadius: 0, padding: "10px 12px", cursor: "pointer", opacity: agent.archived ? 0.55 : 1 }}>
         <span style={{ fontWeight: 600, color: C.ink }}>{agent.name}</span>
         {agent.archived && <Badge text="Archived" color={C.muted} />}
+        <span style={{ fontSize: 10, background: "transparent", color: C.muted, border: `1px solid ${C.line}`, borderRadius: 0, padding: "2px 8px", fontFamily: MONO, textTransform: "uppercase", letterSpacing: "0.05em" }}>{agent.member_code}</span>
         <span style={{ fontSize: 12, color: C.muted }}>{agent.phone}</span>
-        <span style={{ fontSize: 11, background: C.navy2, color: C.ink, borderRadius: 20, padding: "2px 8px" }}>quota {agent.quota_percent}%</span>
-        <span style={{ fontSize: 11, background: C.panel, color: C.ink, border: `1px solid ${C.line}`, borderRadius: 20, padding: "2px 8px" }}>own {ownTake}%</span>
+        <span style={{ fontSize: 10, background: "transparent", color: C.goldLt, border: `1px solid ${C.goldLt}`, borderRadius: 0, padding: "2px 8px", fontFamily: MONO, textTransform: "uppercase", letterSpacing: "0.05em" }}>quota {agent.quota_percent}%</span>
+        <span style={{ fontSize: 10, background: "transparent", color: C.ink, border: `1px solid ${C.line}`, borderRadius: 0, padding: "2px 8px", fontFamily: MONO, textTransform: "uppercase", letterSpacing: "0.05em" }}>own {ownTake}%</span>
         {upline.length > 0 && <span style={{ fontSize: 11, color: C.gold }}>upline: {upline.map(([id, p]) => `${agentName(id)} ${p}%`).join(", ")}</span>}
       </div>
       {children.map((c) => <TreeNode key={c.id} agent={c} agents={agents} agentName={agentName} onOpen={onOpen} depth={depth + 1} indent={indent} />)}
@@ -103,8 +105,9 @@ function AgentCard({ agent, agents, customers, commissions, users, onClose, onOp
     <Modal title={agent.name} onClose={onClose}>
       {msg && <p style={{ color: C.red, fontSize: 13, marginBottom: 10 }}>{msg}</p>}
       {agent.archived && <div style={{ marginBottom: 12 }}><Badge text="Archived" color={C.muted} /></div>}
+      <KV k="Member ID" v={agent.member_code} />
       <KV k="Phone" v={agent.phone || "—"} />
-      <KV k="Login email" v={email || "not linked yet"} />
+      <KV k="Login" v={email || "not linked yet"} />
       <KV k="Quota" v={`${agent.quota_percent}%`} />
       <KV k="Referred by" v={sponsor ? sponsor.name : "Direct partner"} />
       <KV k="Direct commission" v={fmt(direct)} />
@@ -112,17 +115,17 @@ function AgentCard({ agent, agents, customers, commissions, users, onClose, onOp
       <KV k="Total earned" v={fmt(direct + bonus)} />
 
       <div style={{ marginTop: 16 }}>
-        <div style={{ fontSize: 12, color: C.muted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Customers ({myCustomers.length})</div>
+        <div style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8, fontFamily: MONO }}>Customers ({myCustomers.length})</div>
         {myCustomers.length === 0 ? <p style={{ fontSize: 14, color: C.muted }}>None yet.</p> :
           myCustomers.map((c) => <div key={c.id} style={{ fontSize: 14, color: C.ink, padding: "4px 0" }}>{c.name} · {c.phone}</div>)}
       </div>
 
       <div style={{ marginTop: 16 }}>
-        <div style={{ fontSize: 12, color: C.muted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Partners referred ({downline.length})</div>
+        <div style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8, fontFamily: MONO }}>Partners referred ({downline.length})</div>
         {downline.length === 0 ? <p style={{ fontSize: 14, color: C.muted }}>None yet.</p> :
           downline.map((d) => (
             <button key={d.id} onClick={() => onOpenOther(d)}
-              style={{ display: "block", background: "none", border: "none", color: C.gold, textDecoration: "underline", cursor: "pointer", fontSize: 14, padding: "4px 0", fontFamily: "'Jost',sans-serif" }}>
+              style={{ display: "block", background: "none", border: "none", color: C.gold, textDecoration: "underline", cursor: "pointer", fontSize: 14, padding: "4px 0", fontFamily: "'Hanken Grotesk',sans-serif" }}>
               {d.name} →
             </button>
           ))}
@@ -135,11 +138,13 @@ function AgentCard({ agent, agents, customers, commissions, users, onClose, onOp
           <Button kind="ghost" size="sm" onClick={toggleArchive}>{agent.archived ? "Unarchive" : "Archive"}</Button>
         )}
       </div>
+
+      <AccessCode role="agent" targetId={agent.id} linked={!!email} />
     </Modal>
   );
 }
 
-const selStyle = { padding: "9px 12px", border: `1px solid ${C.line}`, borderRadius: 6, fontFamily: "'Jost',sans-serif", fontSize: 14, background: C.field, color: C.ink };
+const selStyle = { padding: "9px 12px", border: `1px solid ${C.line}`, borderRadius: 0, fontFamily: "'Hanken Grotesk',sans-serif", fontSize: 14, background: C.field, color: C.ink };
 
 function CreateAgent({ agents, onDone }) {
   const activeAgents = agents.filter((a) => !a.archived);
@@ -185,8 +190,8 @@ function CreateAgent({ agents, onDone }) {
           options={activeAgents.map((a) => ({ v: a.id, l: a.name }))} />
         {!sponsorId && <p style={{ fontSize: 13, color: C.muted }}>Direct partner keeps the full {quota}% quota.</p>}
         {sponsorId && (
-          <div style={{ background: C.bg, border: `1px solid ${C.line}`, borderRadius: 10, padding: 14, marginBottom: 14 }}>
-            <div style={{ fontSize: 12, color: C.muted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>Split the {quota}% quota</div>
+          <div style={{ background: C.bg, border: `1px solid ${C.line}`, borderRadius: 0, padding: 14, marginBottom: 14 }}>
+            <div style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10, fontFamily: MONO }}>Split the {quota}% quota</div>
             <SplitRow label={`${name || "This partner"} (own take)`} value={selfTake} onChange={setSelfTake} />
             {chain.map((a) => (
               <SplitRow key={a.id} label={`${a.name} (upline)`} value={splits[a.id] || ""} onChange={(v) => setSplits({ ...splits, [a.id]: v })} />
@@ -208,7 +213,7 @@ function SplitRow({ label, value, onChange }) {
     <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
       <span style={{ flex: 1, fontSize: 14, color: C.ink }}>{label}</span>
       <input type="number" value={value} onChange={(e) => onChange(e.target.value)} placeholder="0"
-        style={{ width: 80, padding: "8px 10px", border: `1px solid ${C.line}`, borderRadius: 4, fontFamily: "'Jost',sans-serif", fontSize: 15, textAlign: "right", background: C.field, color: C.ink }} />
+        style={{ width: 80, padding: "8px 10px", border: `1px solid ${C.line}`, borderRadius: 0, fontFamily: "'Hanken Grotesk',sans-serif", fontSize: 15, textAlign: "right", background: C.field, color: C.ink }} />
       <span style={{ color: C.muted }}>%</span>
     </div>
   );

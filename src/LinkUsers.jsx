@@ -94,4 +94,4 @@ function UserRow({ u, agents, customers, onSaved, setMsg }) {
   );
 }
 
-const sel = { padding: "8px 10px", border: `1px solid ${C.line}`, borderRadius: 4, fontFamily: "'Jost',sans-serif", fontSize: 14, background: C.field, color: C.ink };
+const sel = { padding: "8px 10px", border: `1px solid ${C.line}`, borderRadius: 0, fontFamily: "'Hanken Grotesk',sans-serif", fontSize: 14, background: C.field, color: C.ink };
