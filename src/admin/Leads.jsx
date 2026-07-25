@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { supabase } from "../supabase";
-import { C, Panel, Badge, Th, Td, Button, ConfirmButton, SearchBar, TableScroll, Empty, useIsMobile } from "../ui";
+import { C, MONO, Panel, Badge, Th, Td, Button, ConfirmButton, SearchBar, TableScroll, Empty, useIsMobile, RowCard, RowLine } from "../ui";
 
 const STATUS = ["new", "site_visit", "negotiating", "booked", "lost"];
 const statusLabel = { new: "New", site_visit: "Site Visit", negotiating: "Negotiating", booked: "Booked", lost: "Lost" };
@@ -55,7 +55,37 @@ export default function Leads({ leads, onDone }) {
     }>
       {msg && <p style={{ color: C.red, fontSize: 13, marginBottom: 10 }}>{msg}</p>}
       <div style={{ fontSize: 13, color: C.muted, marginBottom: 12 }}>{rows.length} lead{rows.length === 1 ? "" : "s"}</div>
-      {rows.length === 0 ? <Empty>No enquiries yet — they'll land here automatically when someone submits the homepage form.</Empty> : (
+      {rows.length === 0 ? <Empty>No enquiries yet — they'll land here automatically when someone submits the homepage form.</Empty> : mobile ? (
+        <div>
+          {rows.map((l) => (
+            <RowCard key={l.id}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6, gap: 8 }}>
+                <span style={{ fontWeight: 700, fontSize: 15, color: C.ink }}>{l.name}</span>
+                <Badge text={statusLabel[l.status]} color={statusColor[l.status]} />
+              </div>
+              <RowLine label="Received" value={new Date(l.created_at).toLocaleDateString("en-IN")} />
+              <RowLine label="Phone" value={l.phone} />
+              <RowLine label="Email" value={l.email || "—"} />
+              <RowLine label="Pref. date" value={l.preferred_date || "—"} />
+              <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${C.line}` }}>
+                <div style={{ fontSize: 10.5, color: C.muted, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6, fontFamily: MONO }}>Stage</div>
+                <select value={l.status} onChange={(e) => setStatusFor(l, e.target.value)}
+                  style={{ width: "100%", padding: "10px 10px", border: `1px solid ${C.line}`, borderRadius: 0, fontFamily: "'Hanken Grotesk',sans-serif", fontSize: 14, background: C.field, color: C.ink, marginBottom: 10 }}>
+                  {STATUS.map((s) => <option key={s} value={s}>{statusLabel[s]}</option>)}
+                </select>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {l.converted_customer_id
+                    ? <span style={{ fontSize: 12, color: C.emeraldLt }}>✓ Converted</span>
+                    : <Button kind="ghost" size="sm" onClick={() => convert(l)}>Convert to customer</Button>}
+                  <ConfirmButton confirmText={`Delete the enquiry from ${l.name}? This can't be undone.`} onConfirm={() => remove(l)}>
+                    Delete
+                  </ConfirmButton>
+                </div>
+              </div>
+            </RowCard>
+          ))}
+        </div>
+      ) : (
         <TableScroll minWidth={760}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead><tr><Th>Received</Th><Th>Name</Th><Th>Phone</Th><Th>Email</Th><Th>Preferred date</Th><Th>Stage</Th><Th>Actions</Th></tr></thead>

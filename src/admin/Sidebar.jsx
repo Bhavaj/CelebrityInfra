@@ -5,7 +5,7 @@ const NAV = [
   ["overview", "Overview", "dashboard"],
   ["inventory", "Inventory", "domain"],
   ["customers", "Customers", "group"],
-  ["partners", "Partners", "handshake"],
+  ["agents", "Agents", "handshake"],
   ["leads", "Leads", "campaign"],
 ];
 
@@ -26,9 +26,9 @@ export default function Sidebar({ active, onSelect, onOpenSettings }) {
     <nav style={{ display: "flex", flexDirection: "column", gap: 1 }}>
       {NAV.map(([k, label, icon]) => (
         <button key={k} onClick={() => select(k)}
-          className={active === k ? "cip-glow" : undefined}
+          className={active === k ? "cip-glow cip-tap" : "cip-tap"}
           style={{
-            textAlign: "left", padding: "11px 14px", borderRadius: 0, fontFamily: MONO,
+            textAlign: "left", padding: "13px 14px", borderRadius: 0, fontFamily: MONO,
             fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer", border: "none",
             display: "flex", alignItems: "center", gap: 10,
             background: active === k ? C.goldLt : "transparent",
@@ -58,31 +58,40 @@ export default function Sidebar({ active, onSelect, onOpenSettings }) {
     );
   }
 
+  // The fixed-position backdrop/drawer below must NOT be nested inside any
+  // element carrying the cip-in-* entrance animations — those animate
+  // `transform`, and a non-"none" transform on an ancestor (even a finished
+  // one, held by animation-fill-mode) creates a new containing block, which
+  // silently rescopes `position:fixed` descendants to that ancestor instead
+  // of the viewport. Keep the drawer as a sibling, not a child, of the
+  // animated topbar.
   return (
-    <div style={{ marginBottom: 16 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, background: C.panel, border: `1px solid ${C.line}`, borderRadius: 0, padding: "12px 14px" }}>
-        <button onClick={() => setOpen(true)} aria-label="Open menu"
-          style={{ background: "none", border: `1px solid ${C.line}`, borderRadius: 0, width: 38, height: 38, color: C.ink, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Icon name="menu" size={20} />
-        </button>
-        <span style={{ fontFamily: FONT, fontSize: 17, fontWeight: 700, textTransform: "uppercase", color: C.ink }}>{activeLabel}</span>
-        <button onClick={onOpenSettings} aria-label="Settings"
-          style={{ marginLeft: "auto", background: "none", border: `1px solid ${C.line}`, borderRadius: 0, width: 38, height: 38, color: C.muted, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Icon name="settings" size={18} />
-        </button>
+    <>
+      <div style={{ marginBottom: 16, width: "100%" }} className="cip-in-fast">
+        <div style={{ display: "flex", alignItems: "center", gap: 12, background: C.panel, border: `1px solid ${C.line}`, borderRadius: 0, padding: "12px 14px" }}>
+          <button onClick={() => setOpen(true)} aria-label="Open menu" className="cip-tap"
+            style={{ background: "none", border: `1px solid ${C.line}`, borderRadius: 0, width: 40, height: 40, color: C.ink, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Icon name="menu" size={20} />
+          </button>
+          <span style={{ fontFamily: FONT, fontSize: 17, fontWeight: 700, textTransform: "uppercase", color: C.ink }}>{activeLabel}</span>
+          <button onClick={onOpenSettings} aria-label="Settings" className="cip-tap"
+            style={{ marginLeft: "auto", background: "none", border: `1px solid ${C.line}`, borderRadius: 0, width: 40, height: 40, color: C.muted, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Icon name="settings" size={18} />
+          </button>
+        </div>
       </div>
 
       {open && (
-        <div onClick={() => setOpen(false)}
+        <div onClick={() => setOpen(false)} className="cip-in-fade"
           style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.8)", backdropFilter: "blur(3px)", zIndex: 90 }}>
-          <div onClick={(e) => e.stopPropagation()}
+          <div onClick={(e) => e.stopPropagation()} className="cip-drawer-in"
             style={{ position: "fixed", top: 0, left: 0, bottom: 0, width: "min(78vw,300px)", background: C.panel,
-              borderRight: `1px solid ${C.line}`, padding: 18, overflowY: "auto" }}>
+              borderRight: `1px solid ${C.line}`, padding: "18px 18px calc(18px + env(safe-area-inset-bottom))", overflowY: "auto" }}>
             <div style={{ fontFamily: MONO, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700, color: C.goldLt, marginBottom: 18 }}>Menu</div>
             {navList}
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

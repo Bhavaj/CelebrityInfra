@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { supabase } from "../supabase";
 import { C, MONO, fmt, Panel, Stat, Badge, Th, Td, Button, ConfirmButton, Field, Select, Modal, KV, useIsMobile, TableScroll, Empty } from "../ui";
+import RecordPayment from "./RecordPayment";
 
 const statusColor = { available: C.green, blocked: C.gold, sold: C.muted };
 
@@ -24,7 +25,7 @@ export default function Inventory({ plots, projectId, projects, customers, agent
         projectPlots.length === 0 ? <Empty>No plots in this project yet. Use ＋ Add Plot to create one.</Empty> : (
           <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "repeat(auto-fill,minmax(160px,1fr))", gap: 12 }}>
             {projectPlots.map((p) => (
-              <div key={p.id} onClick={() => setOpenPlot(p)} className="cip-card cip-card-h"
+              <div key={p.id} onClick={() => setOpenPlot(p)} className="cip-card cip-card-h cip-tap cip-in-fast"
                 style={{ background: C.panel, border: `1px solid ${C.line}`, borderLeft: `4px solid ${statusColor[p.status]}`, borderRadius: 0, padding: 14, cursor: "pointer" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
                   <span style={{ fontWeight: 600, color: C.ink }}>{p.plot_no}</span>
@@ -45,6 +46,7 @@ export default function Inventory({ plots, projectId, projects, customers, agent
         <PlotCard plot={openPlot} customers={customers} agents={agents} transactions={transactions}
           onClose={() => setOpenPlot(null)}
           onChanged={() => { setOpenPlot(null); onDone(); }}
+          onPaymentAdded={onDone}
           onSold={() => { setOpenPlot(null); onSold(); }} />
       )}
 
@@ -55,7 +57,7 @@ export default function Inventory({ plots, projectId, projects, customers, agent
   );
 }
 
-function PlotCard({ plot, customers, agents, transactions, onClose, onChanged, onSold }) {
+function PlotCard({ plot, customers, agents, transactions, onClose, onChanged, onPaymentAdded, onSold }) {
   const [selling, setSelling] = useState(false);
   const cust = customers.find((c) => c.id === plot.customer_id);
   const closer = agents.find((a) => a.id === plot.closed_by_agent_id);
@@ -107,6 +109,10 @@ function PlotCard({ plot, customers, agents, transactions, onClose, onChanged, o
 
       {plot.status !== "sold" && selling && (
         <SellPlotForm plot={plot} customers={customers} agents={agents} onCancel={() => setSelling(false)} onSold={onSold} />
+      )}
+
+      {plot.status === "sold" && plot.customer_id && (
+        <RecordPayment plotId={plot.id} customerId={plot.customer_id} price={plot.price} paid={paid} onDone={onPaymentAdded} />
       )}
     </Modal>
   );

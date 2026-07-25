@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { supabase } from "../supabase";
-import { C, MONO, fmt, Panel, Th, Td, Button, ConfirmButton, SearchBar, Modal, KV, TableScroll, Empty, useIsMobile } from "../ui";
+import { C, MONO, fmt, Panel, Th, Td, Button, ConfirmButton, SearchBar, Modal, KV, TableScroll, Empty, useIsMobile, RowCard, RowLine } from "../ui";
 import AccessCode from "./AccessCode";
+import RecordPayment from "./RecordPayment";
 
 export default function Customers({ customers, plots, transactions, users, agentName, onDone }) {
   const mobile = useIsMobile();
@@ -20,7 +21,25 @@ export default function Customers({ customers, plots, transactions, users, agent
     <>
       <Panel title="Customers" right={<SearchBar value={q} onChange={setQ} placeholder="Search name, phone…" />}>
         <div style={{ fontSize: 13, color: C.muted, marginBottom: 12 }}>{rows.length} customer{rows.length === 1 ? "" : "s"}</div>
-        {rows.length === 0 ? <Empty>No customers yet — they appear here once a plot is sold, or a lead is converted.</Empty> : (
+        {rows.length === 0 ? <Empty>No customers yet — they appear here once a plot is sold, or a lead is converted.</Empty> : mobile ? (
+          <div>
+            {rows.map((c) => {
+              const plot = plotFor(c.id);
+              return (
+                <RowCard key={c.id} onClick={() => setOpenCust(c)}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                    <span style={{ fontWeight: 700, fontSize: 15, color: C.ink }}>{c.name}</span>
+                    <span style={{ fontFamily: MONO, fontSize: 10.5, color: C.muted }}>{c.member_code}</span>
+                  </div>
+                  <RowLine label="Phone" value={c.phone} />
+                  <RowLine label="Agent" value={c.agent_id ? agentName(c.agent_id) : "—"} />
+                  <RowLine label="Plot" value={plot ? plot.plot_no : "—"} />
+                  <RowLine label="Paid" value={fmt(paidFor(c.id))} bold />
+                </RowCard>
+              );
+            })}
+          </div>
+        ) : (
           <TableScroll minWidth={620}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead><tr><Th>ID</Th><Th>Name</Th><Th>Phone</Th><Th>Agent</Th><Th>Plot</Th><Th right>Paid</Th></tr></thead>
@@ -47,13 +66,14 @@ export default function Customers({ customers, plots, transactions, users, agent
       {openCust && (
         <CustomerCard customer={openCust} plot={plotFor(openCust.id)} transactions={transactions.filter((t) => t.customer_id === openCust.id)}
           linked={users.some((u) => u.customer_id === openCust.id)}
-          agentName={agentName} onClose={() => setOpenCust(null)} onChanged={() => { setOpenCust(null); onDone(); }} />
+          agentName={agentName} onClose={() => setOpenCust(null)} onChanged={() => { setOpenCust(null); onDone(); }}
+          onPaymentAdded={onDone} />
       )}
     </>
   );
 }
 
-function CustomerCard({ customer, plot, transactions, linked, agentName, onClose, onChanged }) {
+function CustomerCard({ customer, plot, transactions, linked, agentName, onClose, onChanged, onPaymentAdded }) {
   const paid = transactions.reduce((s, t) => s + Number(t.amount), 0);
   const deletable = !plot && transactions.length === 0;
 
@@ -81,6 +101,10 @@ function CustomerCard({ customer, plot, transactions, linked, agentName, onClose
             </div>
           ))}
         </div>
+      )}
+
+      {plot && (
+        <RecordPayment plotId={plot.id} customerId={customer.id} price={plot.price} paid={paid} onDone={onPaymentAdded} />
       )}
 
       {deletable && (

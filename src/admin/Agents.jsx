@@ -1,21 +1,21 @@
 import React, { useState } from "react";
 import { supabase } from "../supabase";
-import { C, MONO, fmt, Panel, Th, Td, Button, ConfirmButton, Field, Select, Modal, SearchBar, KV, Badge, TableScroll, Empty, useIsMobile } from "../ui";
+import { C, MONO, fmt, Panel, Th, Td, Button, ConfirmButton, Field, Select, Modal, SearchBar, KV, Badge, TableScroll, Empty, useIsMobile, RowCard, RowLine } from "../ui";
 import AccessCode from "./AccessCode";
 
-export default function Partners({ agents, customers, commissions, plots, users, agentName, view, setView, onDone }) {
+export default function Agents({ agents, customers, commissions, plots, users, agentName, view, setView, onDone }) {
   const [adding, setAdding] = useState(false);
   const [openAgent, setOpenAgent] = useState(null);
 
   return (
     <>
       <div style={{ display: "flex", gap: 6, marginBottom: 18 }}>
-        <ViewToggle active={view === "tree"} onClick={() => setView("tree")}>Partner tree</ViewToggle>
+        <ViewToggle active={view === "tree"} onClick={() => setView("tree")}>Agent tree</ViewToggle>
         <ViewToggle active={view === "commissions"} onClick={() => setView("commissions")}>Commission ledger</ViewToggle>
       </div>
 
       {view === "tree" ? (
-        <Panel title="Partner network" right={<Button onClick={() => setAdding((v) => !v)}>{adding ? "Close" : "＋ Add Partner"}</Button>}>
+        <Panel title="Agent network" right={<Button onClick={() => setAdding((v) => !v)}>{adding ? "Close" : "＋ Add Agent"}</Button>}>
           <AgentTree agents={agents} agentName={agentName} onOpen={setOpenAgent} />
         </Panel>
       ) : (
@@ -43,37 +43,83 @@ function ViewToggle({ active, onClick, children }) {
   );
 }
 
+// Org-chart-style tree — each node with reports gets a +/− toggle so deep
+// downlines can be collapsed instead of forcing a horizontal scroll. Indent
+// per level is fixed and small so it holds up down to phone widths.
 function AgentTree({ agents, agentName, onOpen }) {
-  const mobile = useIsMobile();
   const roots = agents.filter((a) => !a.sponsor_id);
-  if (roots.length === 0) return <Empty>No partners yet. Use ＋ Add Partner to build your tree.</Empty>;
+  const parentIds = new Set(agents.filter((a) => a.sponsor_id).map((a) => a.sponsor_id));
+  const [collapsed, setCollapsed] = useState({});
+
+  if (roots.length === 0) return <Empty>No agents yet. Use ＋ Add Agent to build your tree.</Empty>;
+
+  const toggle = (id) => setCollapsed((c) => ({ ...c, [id]: !c[id] }));
+  const collapseAll = () => setCollapsed(Object.fromEntries([...parentIds].map((id) => [id, true])));
+  const expandAll = () => setCollapsed({});
+
   return (
-    <div className="cip-scroll-x">
-      <div style={{ minWidth: mobile ? "max-content" : "auto" }}>
-        {roots.map((r) => <TreeNode key={r.id} agent={r} agents={agents} agentName={agentName} onOpen={onOpen} depth={0} indent={mobile ? 14 : 24} />)}
-      </div>
+    <div>
+      {parentIds.size > 0 && (
+        <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+          <button onClick={expandAll} className="cip-tap"
+            style={{ background: "none", border: `1px solid ${C.line}`, borderRadius: 0, color: C.muted, fontFamily: MONO, fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.08em", padding: "6px 10px", cursor: "pointer" }}>
+            Expand all
+          </button>
+          <button onClick={collapseAll} className="cip-tap"
+            style={{ background: "none", border: `1px solid ${C.line}`, borderRadius: 0, color: C.muted, fontFamily: MONO, fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.08em", padding: "6px 10px", cursor: "pointer" }}>
+            Collapse all
+          </button>
+        </div>
+      )}
+      {roots.map((r) => <TreeNode key={r.id} agent={r} agents={agents} agentName={agentName} onOpen={onOpen} depth={0} collapsed={collapsed} toggle={toggle} />)}
     </div>
   );
 }
-function TreeNode({ agent, agents, agentName, onOpen, depth, indent }) {
+
+function TreeNode({ agent, agents, agentName, onOpen, depth, collapsed, toggle }) {
   const children = agents.filter((a) => a.sponsor_id === agent.id);
+  const hasChildren = children.length > 0;
+  const isOpen = !collapsed[agent.id];
   const split = agent.split || {};
   const ownTake = split.self ?? agent.quota_percent;
   const upline = Object.entries(split).filter(([k]) => k !== "self");
+
   return (
-    <div style={{ marginLeft: depth * indent, borderLeft: depth ? `2px solid ${C.goldSoft}` : "none", paddingLeft: depth ? 14 : 0, marginTop: 8 }}>
-      <div onClick={() => onOpen(agent)} className="cip-card cip-card-h"
-        style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", background: depth === 0 ? C.goldSoft : C.panel2,
-          border: `1px solid ${C.line}`, borderRadius: 0, padding: "10px 12px", cursor: "pointer", opacity: agent.archived ? 0.55 : 1 }}>
-        <span style={{ fontWeight: 600, color: C.ink }}>{agent.name}</span>
-        {agent.archived && <Badge text="Archived" color={C.muted} />}
-        <span style={{ fontSize: 10, background: "transparent", color: C.muted, border: `1px solid ${C.line}`, borderRadius: 0, padding: "2px 8px", fontFamily: MONO, textTransform: "uppercase", letterSpacing: "0.05em" }}>{agent.member_code}</span>
-        <span style={{ fontSize: 12, color: C.muted }}>{agent.phone}</span>
-        <span style={{ fontSize: 10, background: "transparent", color: C.goldLt, border: `1px solid ${C.goldLt}`, borderRadius: 0, padding: "2px 8px", fontFamily: MONO, textTransform: "uppercase", letterSpacing: "0.05em" }}>quota {agent.quota_percent}%</span>
-        <span style={{ fontSize: 10, background: "transparent", color: C.ink, border: `1px solid ${C.line}`, borderRadius: 0, padding: "2px 8px", fontFamily: MONO, textTransform: "uppercase", letterSpacing: "0.05em" }}>own {ownTake}%</span>
-        {upline.length > 0 && <span style={{ fontSize: 11, color: C.gold }}>upline: {upline.map(([id, p]) => `${agentName(id)} ${p}%`).join(", ")}</span>}
+    <div style={{ marginLeft: depth ? 10 : 0, paddingLeft: depth ? 14 : 0, borderLeft: depth ? `1px solid ${C.line}` : "none" }}>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 8 }}>
+        <button type="button" onClick={() => hasChildren && toggle(agent.id)} disabled={!hasChildren}
+          aria-label={hasChildren ? (isOpen ? "Collapse branch" : "Expand branch") : undefined}
+          className={hasChildren ? "cip-tap" : undefined}
+          style={{ flexShrink: 0, marginTop: 8, width: 22, height: 22, borderRadius: 0, fontFamily: MONO, fontSize: 13, fontWeight: 700, lineHeight: 1,
+            border: hasChildren ? `1px solid ${C.goldSoft}` : "none", background: hasChildren ? C.field : "transparent",
+            color: hasChildren ? C.goldLt : C.faint, cursor: hasChildren ? "pointer" : "default",
+            display: "flex", alignItems: "center", justifyContent: "center" }}>
+          {hasChildren ? (isOpen ? "−" : "+") : "·"}
+        </button>
+
+        <div onClick={() => onOpen(agent)} className="cip-card cip-card-h cip-tap cip-in-fast"
+          style={{ flex: 1, minWidth: 0, background: depth === 0 ? C.goldSoft : C.panel2,
+            border: `1px solid ${C.line}`, borderRadius: 0, padding: "10px 12px", cursor: "pointer", opacity: agent.archived ? 0.55 : 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <span style={{ fontWeight: 700, color: C.ink, fontSize: 14.5 }}>{agent.name}</span>
+            {agent.archived && <Badge text="Archived" color={C.muted} />}
+            {hasChildren && <span style={{ fontSize: 10.5, color: C.muted, fontFamily: MONO }}>{children.length} report{children.length === 1 ? "" : "s"}</span>}
+          </div>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 5, fontSize: 11.5, color: C.muted, fontFamily: MONO }}>
+            <span>{agent.member_code}</span>
+            <span>{agent.phone}</span>
+            <span style={{ color: C.goldLt }}>quota {agent.quota_percent}%</span>
+            <span>own {ownTake}%</span>
+          </div>
+          {upline.length > 0 && (
+            <div style={{ fontSize: 11, color: C.gold, marginTop: 4 }}>upline: {upline.map(([id, p]) => `${agentName(id)} ${p}%`).join(", ")}</div>
+          )}
+        </div>
       </div>
-      {children.map((c) => <TreeNode key={c.id} agent={c} agents={agents} agentName={agentName} onOpen={onOpen} depth={depth + 1} indent={indent} />)}
+
+      {hasChildren && isOpen && children.map((c) => (
+        <TreeNode key={c.id} agent={c} agents={agents} agentName={agentName} onOpen={onOpen} depth={depth + 1} collapsed={collapsed} toggle={toggle} />
+      ))}
     </div>
   );
 }
@@ -97,7 +143,7 @@ function AgentCard({ agent, agents, customers, commissions, users, onClose, onOp
 
   async function remove() {
     const { data, error } = await supabase.from("agents").delete().eq("id", agent.id).select();
-    if (error || !data || data.length === 0) { setMsg(error?.message || "Delete didn't go through — this partner has history."); return; }
+    if (error || !data || data.length === 0) { setMsg(error?.message || "Delete didn't go through — this agent has history."); return; }
     onChanged();
   }
 
@@ -109,7 +155,7 @@ function AgentCard({ agent, agents, customers, commissions, users, onClose, onOp
       <KV k="Phone" v={agent.phone || "—"} />
       <KV k="Login" v={email || "not linked yet"} />
       <KV k="Quota" v={`${agent.quota_percent}%`} />
-      <KV k="Referred by" v={sponsor ? sponsor.name : "Direct partner"} />
+      <KV k="Referred by" v={sponsor ? sponsor.name : "Direct agent"} />
       <KV k="Direct commission" v={fmt(direct)} />
       <KV k="Referral bonus" v={fmt(bonus)} />
       <KV k="Total earned" v={fmt(direct + bonus)} />
@@ -121,7 +167,7 @@ function AgentCard({ agent, agents, customers, commissions, users, onClose, onOp
       </div>
 
       <div style={{ marginTop: 16 }}>
-        <div style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8, fontFamily: MONO }}>Partners referred ({downline.length})</div>
+        <div style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8, fontFamily: MONO }}>Agents referred ({downline.length})</div>
         {downline.length === 0 ? <p style={{ fontSize: 14, color: C.muted }}>None yet.</p> :
           downline.map((d) => (
             <button key={d.id} onClick={() => onOpenOther(d)}
@@ -179,20 +225,20 @@ function CreateAgent({ agents, onDone }) {
   }
 
   return (
-    <Panel title="Add a new partner">
+    <Panel title="Add a new agent">
       <div style={{ maxWidth: 520 }}>
-        <Field label="Partner name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Ravi Kumar" />
+        <Field label="Agent name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Ravi Kumar" />
         <Field label="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98480 00000" />
         <Field label="Total commission quota (%)" type="number" value={quota}
           onChange={(e) => { setQuota(e.target.value); if (!sponsorId) setSelfTake(e.target.value); }} />
-        <Select label="Referred by (sponsor)" value={sponsorId} placeholder="— Direct partner (no referrer) —"
+        <Select label="Referred by (sponsor)" value={sponsorId} placeholder="— Direct agent (no referrer) —"
           onChange={(v) => { setSponsorId(v); setSplits({}); }}
           options={activeAgents.map((a) => ({ v: a.id, l: a.name }))} />
-        {!sponsorId && <p style={{ fontSize: 13, color: C.muted }}>Direct partner keeps the full {quota}% quota.</p>}
+        {!sponsorId && <p style={{ fontSize: 13, color: C.muted }}>Direct agent keeps the full {quota}% quota.</p>}
         {sponsorId && (
           <div style={{ background: C.bg, border: `1px solid ${C.line}`, borderRadius: 0, padding: 14, marginBottom: 14 }}>
             <div style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10, fontFamily: MONO }}>Split the {quota}% quota</div>
-            <SplitRow label={`${name || "This partner"} (own take)`} value={selfTake} onChange={setSelfTake} />
+            <SplitRow label={`${name || "This agent"} (own take)`} value={selfTake} onChange={setSelfTake} />
             {chain.map((a) => (
               <SplitRow key={a.id} label={`${a.name} (upline)`} value={splits[a.id] || ""} onChange={(v) => setSplits({ ...splits, [a.id]: v })} />
             ))}
@@ -202,7 +248,7 @@ function CreateAgent({ agents, onDone }) {
           </div>
         )}
         {msg && <p style={{ color: C.red, fontSize: 13 }}>{msg}</p>}
-        <Button onClick={save} disabled={!valid || busy}>{busy ? "Saving…" : "Create partner"}</Button>
+        <Button onClick={save} disabled={!valid || busy}>{busy ? "Saving…" : "Create agent"}</Button>
       </div>
     </Panel>
   );
@@ -235,7 +281,7 @@ function CommissionsLedger({ commissions, plots, agentName }) {
   return (
     <Panel title="Commission ledger" right={
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", flexDirection: mobile ? "column" : "row" }}>
-        <SearchBar value={q} onChange={setQ} placeholder="Search partner, plot…" />
+        <SearchBar value={q} onChange={setQ} placeholder="Search agent, plot…" />
         <select value={kind} onChange={(e) => setKind(e.target.value)} style={{ ...selStyle, width: mobile ? "100%" : undefined }}>
           <option value="">All types</option>
           <option value="Direct">Direct</option>
@@ -244,7 +290,21 @@ function CommissionsLedger({ commissions, plots, agentName }) {
       </div>
     }>
       <div style={{ fontSize: 13, color: C.muted, marginBottom: 12 }}>{rows.length} entries · total {fmt(total)}</div>
-      {rows.length === 0 ? <Empty>No commissions match your search.</Empty> : (
+      {rows.length === 0 ? <Empty>No commissions match your search.</Empty> : mobile ? (
+        <div>
+          {rows.map((c) => (
+            <RowCard key={c.id}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                <span style={{ fontWeight: 700, fontSize: 15, color: C.ink }}>{plotNo(c.plot_id)}</span>
+                <span style={{ color: c.kind === "Direct" ? C.emeraldLt : C.goldLt, fontWeight: 600, fontSize: 12 }}>{c.kind}</span>
+              </div>
+              <RowLine label="Beneficiary" value={agentName(c.beneficiary_id)} />
+              <RowLine label="Share" value={`${c.pct}%`} />
+              <RowLine label="Amount" value={fmt(c.amount)} bold />
+            </RowCard>
+          ))}
+        </div>
+      ) : (
         <TableScroll minWidth={620}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead><tr><Th>Plot</Th><Th>Beneficiary</Th><Th>Type</Th><Th right>%</Th><Th right>Amount</Th></tr></thead>

@@ -3,7 +3,7 @@ import { C } from "../ui";
 import AuthShell from "./AuthShell";
 
 const ROLES = [
-  { key: "admin", label: "Admin", desc: "Manage inventory, sales & partners" },
+  { key: "admin", label: "Admin", desc: "Manage inventory, sales & agents" },
   { key: "agent", label: "Agent", desc: "Track your customers & commission" },
   { key: "client", label: "Client", desc: "View your plot & payments" },
 ];
@@ -11,9 +11,9 @@ const ROLES = [
 export default function RoleChooser({ onSelect }) {
   return (
     <AuthShell title="Welcome" subtitle="Choose how you're signing in">
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }} className="cip-stagger">
         {ROLES.map((r) => (
-          <button key={r.key} onClick={() => onSelect(r.key)} className="cip-card-h" style={tile}>
+          <button key={r.key} onClick={() => onSelect(r.key)} className="cip-card-h cip-tap cip-in-fast" style={tile}>
             <div style={{ fontWeight: 600, fontSize: 16, color: C.ink }}>{r.label}</div>
             <div style={{ fontSize: 12.5, color: C.muted, marginTop: 2 }}>{r.desc}</div>
           </button>

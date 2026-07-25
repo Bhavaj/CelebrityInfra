@@ -82,7 +82,7 @@ const glass = { background: "rgba(18,19,23,.7)", backdropFilter: "blur(16px)", W
 export function Panel({ title, children, right }) {
   const mobile = useIsMobile();
   return (
-    <div className="cip-card" style={{ ...glass, border: `1px solid ${C.line}`, borderRadius: 0, padding: mobile ? 16 : 24, marginBottom: mobile ? 16 : 20 }}>
+    <div className="cip-card cip-in" style={{ ...glass, border: `1px solid ${C.line}`, borderRadius: 0, padding: mobile ? 16 : 24, marginBottom: mobile ? 16 : 20 }}>
       {title && (
         <div style={{ display: "flex", alignItems: mobile ? "flex-start" : "center", flexDirection: mobile ? "column" : "row", gap: mobile ? 12 : 0, marginBottom: 18, paddingBottom: 16, borderBottom: `1px solid ${C.line}` }}>
           <h3 style={{ margin: 0, fontFamily: FONT, fontWeight: 700, fontSize: 20, textTransform: "uppercase", letterSpacing: "-0.01em", color: C.ink }}>{title}</h3>
@@ -97,7 +97,7 @@ export function Panel({ title, children, right }) {
 export function Stat({ label, value, accent }) {
   const mobile = useIsMobile();
   return (
-    <div className="cip-card cip-card-h" style={{ ...glass, border: `1px solid ${C.line}`, borderRadius: 0, padding: "18px 20px", flex: mobile ? "1 1 100%" : "1 1 160px" }}>
+    <div className="cip-card cip-card-h cip-in-fast" style={{ ...glass, border: `1px solid ${C.line}`, borderRadius: 0, padding: "18px 20px", flex: mobile ? "1 1 100%" : "1 1 160px" }}>
       <div style={{ fontSize: 11, color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: MONO }}>{label}</div>
       <div style={{ fontFamily: FONT, fontSize: 32, fontWeight: 700, marginTop: 6, lineHeight: 1.1, letterSpacing: "-0.02em", color: accent || C.ink }}>{value}</div>
     </div>
@@ -182,10 +182,12 @@ export function Select({ label, value, onChange, options, placeholder }) {
 export function Modal({ title, onClose, children }) {
   const mobile = useIsMobile();
   return (
-    <div onClick={onClose}
-      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.8)", backdropFilter: "blur(3px)", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: mobile ? "14px 10px" : "48px 16px", zIndex: 100, overflowY: "auto" }}>
-      <div onClick={(e) => e.stopPropagation()}
-        style={{ ...glass, border: `1px solid ${C.line}`, borderTop: `3px solid ${C.goldLt}`, borderRadius: 0, width: "100%", maxWidth: 620, padding: mobile ? 18 : 26 }}>
+    <div onClick={onClose} className="cip-in-fade"
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.8)", backdropFilter: "blur(3px)", display: "flex", alignItems: mobile ? "flex-end" : "flex-start", justifyContent: "center", padding: mobile ? 0 : "48px 16px", zIndex: 100, overflowY: mobile ? "hidden" : "auto" }}>
+      <div onClick={(e) => e.stopPropagation()} className={mobile ? "cip-in-sheet" : "cip-in-scale"}
+        style={{ ...glass, border: `1px solid ${C.line}`, borderTop: `3px solid ${C.goldLt}`, borderRadius: 0, width: "100%", maxWidth: mobile ? "none" : 620,
+          maxHeight: mobile ? "88dvh" : "none", overflowY: mobile ? "auto" : "visible",
+          padding: mobile ? "18px 18px calc(18px + env(safe-area-inset-bottom))" : 26 }}>
         <div style={{ display: "flex", alignItems: "center", marginBottom: 18, gap: 12 }}>
           <h3 style={{ margin: 0, fontFamily: FONT, fontWeight: 700, fontSize: mobile ? 20 : 24, color: C.ink }}>{title}</h3>
           <button onClick={onClose} aria-label="Close"
@@ -206,6 +208,28 @@ export function SearchBar({ value, onChange, placeholder }) {
       <Icon name="search" size={16} style={{ color: C.muted }} />
       <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder || "Search…"}
         style={{ flex: 1, padding: "10px 0", border: "none", background: "transparent", fontFamily: FONT, fontSize: 14, color: C.ink, outline: "none" }} />
+    </div>
+  );
+}
+
+// Mobile stand-in for a table row — a tappable bordered card used when a
+// data table's columns would otherwise force horizontal scrolling on phones.
+export function RowCard({ children, onClick }) {
+  return (
+    <div onClick={onClick} className="cip-card cip-card-h cip-tap cip-in-fast"
+      style={{ background: C.panel, border: `1px solid ${C.line}`, borderRadius: 0, padding: "13px 14px", marginBottom: 8, cursor: onClick ? "pointer" : "default" }}>
+      {children}
+    </div>
+  );
+}
+
+// Label/value pair for the compact card body inside RowCard — mirrors <Td>
+// typography at a smaller scale so mobile cards read like a slimmed table row.
+export function RowLine({ label, value, bold }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "3px 0", fontSize: 13.5 }}>
+      <span style={{ color: C.muted, fontFamily: MONO, fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.06em", alignSelf: "center" }}>{label}</span>
+      <span style={{ color: C.ink, fontWeight: bold ? 700 : 500, textAlign: "right" }}>{value}</span>
     </div>
   );
 }

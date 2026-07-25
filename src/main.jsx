@@ -58,6 +58,47 @@ style.textContent = `
   /* Quiet row hover for data tables — helps scanning without adding visual noise */
   table tbody tr{transition:background .12s ease}
   @media (hover:hover){ table tbody tr:hover td{background:rgba(227,226,231,.03)} }
+
+  /* ---------- Motion system ---------- */
+  html{-webkit-tap-highlight-color:transparent}
+  body{overscroll-behavior-y:contain}
+
+  @keyframes cipFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes cipFadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes cipScaleIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+  @keyframes cipSheetUp{from{opacity:0;transform:translateY(100%)}to{opacity:1;transform:translateY(0)}}
+  @keyframes cipSlideInLeft{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:translateX(0)}}
+
+  .cip-in{animation:cipFadeUp .5s cubic-bezier(.16,1,.3,1) both}
+  .cip-in-fast{animation:cipFadeUp .38s cubic-bezier(.16,1,.3,1) both}
+  .cip-in-fade{animation:cipFadeIn .3s ease both}
+  .cip-in-scale{animation:cipScaleIn .28s cubic-bezier(.16,1,.3,1) both}
+  .cip-in-left{animation:cipSlideInLeft .32s cubic-bezier(.16,1,.3,1) both}
+  .cip-in-sheet{animation:cipSheetUp .32s cubic-bezier(.16,1,.3,1) both}
+
+  @keyframes cipDrawerIn{from{transform:translateX(-100%)}to{transform:translateX(0)}}
+  .cip-drawer-in{animation:cipDrawerIn .28s cubic-bezier(.16,1,.3,1) both}
+
+  /* Staggered children — apply .cip-stagger to a container of .cip-in items */
+  .cip-stagger > *{animation-fill-mode:both}
+  .cip-stagger > *:nth-child(1){animation-delay:.02s}
+  .cip-stagger > *:nth-child(2){animation-delay:.06s}
+  .cip-stagger > *:nth-child(3){animation-delay:.1s}
+  .cip-stagger > *:nth-child(4){animation-delay:.14s}
+  .cip-stagger > *:nth-child(5){animation-delay:.18s}
+  .cip-stagger > *:nth-child(6){animation-delay:.22s}
+  .cip-stagger > *:nth-child(n+7){animation-delay:.26s}
+
+  /* Touch/press feedback for buttons and tappable rows */
+  button:not(:disabled){-webkit-tap-highlight-color:transparent}
+  button:not(:disabled):active{transform:scale(.97)}
+  .cip-tap{transition:transform .12s ease, background .15s ease, border-color .15s ease}
+  .cip-tap:active{transform:scale(.98)}
+
+  @media (prefers-reduced-motion: reduce){
+    .cip-in,.cip-in-fast,.cip-in-fade,.cip-in-scale,.cip-in-left,.cip-in-sheet,.cip-drawer-in{animation:none !important;opacity:1 !important;transform:none !important}
+    button:not(:disabled):active,.cip-tap:active{transform:none}
+  }
 `;
 document.head.appendChild(style);
 

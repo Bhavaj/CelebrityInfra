@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "./supabase";
-import { C, FONT, MONO, Crest, Button, Badge } from "./ui";
+import { C, FONT, MONO, Crest, Button, Badge, useIsMobile } from "./ui";
 import RoleChooser from "./auth/RoleChooser";
 import AdminLogin from "./auth/AdminLogin";
 import AgentLogin from "./auth/AgentLogin";
@@ -12,6 +12,7 @@ import Admin from "./Admin";
 import { AgentPortal, CustomerPortal } from "./Portals";
 
 export default function App() {
+  const mobile = useIsMobile(480);
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
   const [ready, setReady] = useState(false);
@@ -87,15 +88,17 @@ export default function App() {
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: FONT }}>
-      <div style={{ position: "sticky", top: 0, zIndex: 50, background: C.panel, borderBottom: `1px solid ${C.line}` }}>
+      <div style={{ position: "sticky", top: 0, zIndex: 50, background: C.panel, borderBottom: `1px solid ${C.line}`, paddingTop: "env(safe-area-inset-top)" }} className="cip-in-fade">
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
           <Crest size={30} />
-          <div style={{ fontFamily: MONO, fontSize: 15, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: C.ink }}>Celebrity's Park-1</div>
+          {!mobile && <div style={{ fontFamily: MONO, fontSize: 15, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: C.ink }}>Celebrity's Park-1</div>}
           <Badge text={`${role} portal`} color={C.goldLt} />
           <div style={{ marginLeft: "auto", display: "flex", gap: 12, alignItems: "center", minWidth: 0, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 13, color: C.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "min(52vw, 320px)" }}>
-              {session.user.email || session.user.phone}
-            </span>
+            {!mobile && (
+              <span style={{ fontSize: 13, color: C.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "min(52vw, 320px)" }}>
+                {session.user.email || session.user.phone}
+              </span>
+            )}
             <Button kind="ghostLight" size="sm" onClick={signOut}>Sign out</Button>
           </div>
         </div>

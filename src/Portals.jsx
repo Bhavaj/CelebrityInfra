@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "./supabase";
-import { C, fmt, Panel, Stat, Th, Td, TableScroll, Empty } from "./ui";
+import { C, fmt, Panel, Stat, Th, Td, TableScroll, Empty, useIsMobile, RowCard, RowLine } from "./ui";
 
 // ---------- AGENT ----------
 export function AgentPortal({ agentId }) {
+  const mobile = useIsMobile();
   const [d, setD] = useState({ agent: null, customers: [], commissions: [], downline: [], plots: [], transactions: [], projects: [] });
   const [loading, setLoading] = useState(true);
 
@@ -53,7 +54,23 @@ export function AgentPortal({ agentId }) {
       </div>
 
       <Panel title="My customers">
-        {d.customers.length === 0 ? <Empty>No customers yet.</Empty> : (
+        {d.customers.length === 0 ? <Empty>No customers yet.</Empty> : mobile ? (
+          <div>
+            {d.customers.map((c) => {
+              const plot = plotFor(c.id);
+              const paid = paidFor(c.id);
+              const pending = plot ? Number(plot.price) - paid : null;
+              return (
+                <RowCard key={c.id}>
+                  <div style={{ fontWeight: 700, fontSize: 15, color: C.ink, marginBottom: 6 }}>{c.name}</div>
+                  <RowLine label="Phone" value={c.phone} />
+                  <RowLine label="Paid" value={plot ? fmt(paid) : "—"} />
+                  <RowLine label="Pending" value={plot ? fmt(pending) : "—"} bold={pending > 0} />
+                </RowCard>
+              );
+            })}
+          </div>
+        ) : (
           <TableScroll minWidth={520}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead><tr><Th>Customer</Th><Th>Phone</Th><Th right>Paid</Th><Th right>Pending</Th></tr></thead>
@@ -78,7 +95,20 @@ export function AgentPortal({ agentId }) {
       </Panel>
 
       <Panel title="My commission">
-        {d.commissions.length === 0 ? <Empty>No commission yet.</Empty> : (
+        {d.commissions.length === 0 ? <Empty>No commission yet.</Empty> : mobile ? (
+          <div>
+            {d.commissions.map((c) => (
+              <RowCard key={c.id}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                  <span style={{ fontWeight: 700, fontSize: 15, color: C.ink }}>{plotNo(c.plot_id)}</span>
+                  <span style={{ color: c.kind === "Direct" ? C.emeraldLt : C.goldLt, fontWeight: 600, fontSize: 12 }}>{c.kind}</span>
+                </div>
+                <RowLine label="Share" value={`${c.pct}%`} />
+                <RowLine label="Amount" value={fmt(c.amount)} bold />
+              </RowCard>
+            ))}
+          </div>
+        ) : (
           <TableScroll minWidth={480}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead><tr><Th>Plot</Th><Th>Type</Th><Th right>%</Th><Th right>Amount</Th></tr></thead>
@@ -98,7 +128,17 @@ export function AgentPortal({ agentId }) {
       </Panel>
 
       <Panel title="Open plots" right={<span style={{ fontSize: 12, color: C.muted }}>{openPlots.length} available</span>}>
-        {openPlots.length === 0 ? <Empty>No open plots right now.</Empty> : (
+        {openPlots.length === 0 ? <Empty>No open plots right now.</Empty> : mobile ? (
+          <div>
+            {openPlots.map((p) => (
+              <RowCard key={p.id}>
+                <div style={{ fontWeight: 700, fontSize: 15, color: C.ink, marginBottom: 6 }}>{p.plot_no}</div>
+                <RowLine label="Project" value={projectName(p.project_id)} />
+                <RowLine label="Price" value={fmt(p.price)} bold />
+              </RowCard>
+            ))}
+          </div>
+        ) : (
           <TableScroll minWidth={420}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead><tr><Th>Plot</Th><Th>Project</Th><Th right>Price</Th></tr></thead>
@@ -121,6 +161,7 @@ export function AgentPortal({ agentId }) {
 
 // ---------- CUSTOMER ----------
 export function CustomerPortal({ customerId }) {
+  const mobile = useIsMobile();
   const [d, setD] = useState({ customer: null, plot: null, transactions: [], agent: null });
   const [loading, setLoading] = useState(true);
 
@@ -179,7 +220,17 @@ export function CustomerPortal({ customerId }) {
       )}
 
       <Panel title="Payment history">
-        {d.transactions.length === 0 ? <Empty>No payments recorded yet.</Empty> : (
+        {d.transactions.length === 0 ? <Empty>No payments recorded yet.</Empty> : mobile ? (
+          <div>
+            {d.transactions.map((t) => (
+              <RowCard key={t.id}>
+                <RowLine label="Date" value={t.date} />
+                <RowLine label="Type" value={t.type} />
+                <RowLine label="Amount" value={fmt(t.amount)} bold />
+              </RowCard>
+            ))}
+          </div>
+        ) : (
           <TableScroll minWidth={420}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead><tr><Th>Date</Th><Th>Type</Th><Th right>Amount</Th></tr></thead>

@@ -4,14 +4,14 @@ import { C, MONO, fmt, Panel, Stat, Modal, useIsMobile } from "./ui";
 import Sidebar from "./admin/Sidebar";
 import Inventory from "./admin/Inventory";
 import Customers from "./admin/Customers";
-import Partners from "./admin/Partners";
+import Agents from "./admin/Agents";
 import Leads from "./admin/Leads";
 import LinkUsers from "./LinkUsers";
 
 export default function Admin() {
   const mobile = useIsMobile(900);
   const [tab, setTab] = useState("overview");
-  const [partnersView, setPartnersView] = useState("tree");
+  const [agentsView, setAgentsView] = useState("tree");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [activeProject, setActiveProject] = useState("");
   const [data, setData] = useState({ agents: [], customers: [], plots: [], projects: [], commissions: [], transactions: [], users: [], leads: [] });
@@ -59,10 +59,10 @@ export default function Admin() {
   const activeName = data.projects.find((p) => p.id === activeProject)?.name;
   const newLeadsCount = data.leads.filter((l) => l.status === "new").length;
 
-  const onSold = () => { load(); setTab("partners"); setPartnersView("commissions"); };
+  const onSold = () => { load(); setTab("agents"); setAgentsView("commissions"); };
 
   return (
-    <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
+    <div style={{ display: "flex", flexDirection: mobile ? "column" : "row", alignItems: mobile ? "stretch" : "flex-start", gap: mobile ? 0 : 20 }}>
       <Sidebar active={tab} onSelect={setTab} onOpenSettings={() => setSettingsOpen(true)} />
 
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -92,7 +92,7 @@ export default function Admin() {
                 <Stat label="Commission payout" value={fmt(payout)} accent={C.gold} />
                 <Stat label="Plots sold" value={`${sold.length}/${projectPlots.length}`} />
                 <Stat label="Customers" value={projectCustomerIds.size} />
-                <Stat label="Partners" value={data.agents.length} />
+                <Stat label="Agents" value={data.agents.length} />
                 <Stat label="New leads" value={newLeadsCount} accent={newLeadsCount > 0 ? C.gold : undefined} />
               </div>
             </>
@@ -110,10 +110,10 @@ export default function Admin() {
             users={data.users} agentName={agentName} onDone={load} />
         )}
 
-        {!loading && tab === "partners" && (
-          <Partners agents={data.agents} customers={data.customers} commissions={data.commissions}
+        {!loading && tab === "agents" && (
+          <Agents agents={data.agents} customers={data.customers} commissions={data.commissions}
             plots={data.plots} users={data.users} agentName={agentName}
-            view={partnersView} setView={setPartnersView} onDone={load} />
+            view={agentsView} setView={setAgentsView} onDone={load} />
         )}
 
         {!loading && tab === "leads" && (
