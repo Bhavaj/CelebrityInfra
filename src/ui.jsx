@@ -179,13 +179,13 @@ export function Select({ label, value, onChange, options, placeholder }) {
 }
 
 // Drill-down panel that opens in place over the content.
-export function Modal({ title, onClose, children }) {
+export function Modal({ title, onClose, children, maxWidth = 620 }) {
   const mobile = useIsMobile();
   return (
     <div onClick={onClose} className="cip-in-fade"
       style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.8)", backdropFilter: "blur(3px)", display: "flex", alignItems: mobile ? "flex-end" : "flex-start", justifyContent: "center", padding: mobile ? 0 : "48px 16px", zIndex: 100, overflowY: mobile ? "hidden" : "auto" }}>
       <div onClick={(e) => e.stopPropagation()} className={mobile ? "cip-in-sheet" : "cip-in-scale"}
-        style={{ ...glass, border: `1px solid ${C.line}`, borderTop: `3px solid ${C.goldLt}`, borderRadius: 0, width: "100%", maxWidth: mobile ? "none" : 620,
+        style={{ ...glass, border: `1px solid ${C.line}`, borderTop: `3px solid ${C.goldLt}`, borderRadius: 0, width: "100%", maxWidth: mobile ? "none" : maxWidth,
           maxHeight: mobile ? "88dvh" : "none", overflowY: mobile ? "auto" : "visible",
           padding: mobile ? "18px 18px calc(18px + env(safe-area-inset-bottom))" : 26 }}>
         <div style={{ display: "flex", alignItems: "center", marginBottom: 18, gap: 12 }}>

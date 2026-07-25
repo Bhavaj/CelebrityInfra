@@ -122,7 +122,7 @@ export default function Admin() {
       </div>
 
       {settingsOpen && (
-        <Modal title="Settings" onClose={() => setSettingsOpen(false)}>
+        <Modal title="Settings" onClose={() => setSettingsOpen(false)} maxWidth={860}>
           <LinkUsers agents={data.agents} customers={data.customers} onDone={load} />
         </Modal>
       )}
