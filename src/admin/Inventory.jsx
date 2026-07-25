@@ -15,7 +15,7 @@ export default function Inventory({ plots, projectId, projects, customers, agent
 
   return (
     <>
-      <Panel title="Plot inventory" right={
+      <Panel title="Plots" right={
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <Button kind="ghost" size="sm" onClick={() => setManageOpen(true)}>Manage Projects</Button>
           {projectId && <Button onClick={() => setAdding((v) => !v)}>{adding ? "Close" : "＋ Add Plot"}</Button>}

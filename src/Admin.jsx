@@ -81,7 +81,7 @@ export default function Admin() {
         {!loading && tab === "overview" && (
           pickableProjects.length === 0 ? (
             <Panel title="No projects yet">
-              <p style={{ color: C.muted, marginBottom: 14 }}>Create your first project (e.g. Celebrity's Park-1) from Inventory → Manage Projects to begin adding plots and recording sales.</p>
+              <p style={{ color: C.muted, marginBottom: 14 }}>Create your first project (e.g. Celebrity's Park-1) from Plots → Manage Projects to begin adding plots and recording sales.</p>
             </Panel>
           ) : (
             <>

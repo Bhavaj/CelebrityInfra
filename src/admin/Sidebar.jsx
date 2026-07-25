@@ -3,7 +3,7 @@ import { C, FONT, MONO, Icon, useIsMobile } from "../ui";
 
 const NAV = [
   ["overview", "Overview", "dashboard"],
-  ["inventory", "Inventory", "domain"],
+  ["inventory", "Plots", "domain"],
   ["customers", "Customers", "group"],
   ["agents", "Agents", "handshake"],
   ["leads", "Leads", "campaign"],
