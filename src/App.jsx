@@ -84,6 +84,7 @@ export default function App() {
     return <RoleChooser onSelect={setLoginScreen} />;
   }
 
+  const hasAccount = !!profile;
   const role = profile?.role || "customer";
 
   return (
@@ -92,7 +93,7 @@ export default function App() {
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
           <Crest size={30} />
           {!mobile && <div style={{ fontFamily: MONO, fontSize: 15, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: C.ink }}>Celebrity's Park-1</div>}
-          <Badge text={`${role} portal`} color={C.goldLt} />
+          <Badge text={hasAccount ? `${role} portal` : "no account"} color={hasAccount ? C.goldLt : C.red} />
           <div style={{ marginLeft: "auto", display: "flex", gap: 12, alignItems: "center", minWidth: 0, flexWrap: "wrap" }}>
             {!mobile && (
               <span style={{ fontSize: 13, color: C.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "min(52vw, 320px)" }}>
@@ -105,14 +106,30 @@ export default function App() {
       </div>
 
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "clamp(20px, 4vw, 32px) clamp(14px, 4vw, 20px) 60px" }}>
-        {role === "admin" && <Admin />}
-        {role === "agent" && (profile?.agent_id
+        {!hasAccount && <NoAccount error={claimError} />}
+        {hasAccount && role === "admin" && <Admin />}
+        {hasAccount && role === "agent" && (profile.agent_id
           ? <AgentPortal agentId={profile.agent_id} />
           : <NotLinked kind="agent" error={claimError} />)}
-        {role === "customer" && (profile?.customer_id
+        {hasAccount && role === "customer" && (profile.customer_id
           ? <CustomerPortal customerId={profile.customer_id} />
           : <NotLinked kind="customer" error={claimError} />)}
       </div>
+    </div>
+  );
+}
+
+// Shown when Supabase auth succeeded but no `profiles` row exists at all —
+// i.e. nobody has ever given this login a role. Distinct from NotLinked,
+// which is for logins an admin already assigned a role to but hasn't
+// pointed at a specific agent/customer record yet.
+function NoAccount({ error }) {
+  return (
+    <div className="cip-card" style={{ background: C.panel, border: `1px solid ${C.line}`, borderTop: `3px solid ${C.red}`, borderRadius: 0, padding: "clamp(20px, 5vw, 32px)", maxWidth: 560 }}>
+      <h2 style={{ fontFamily: FONT, fontWeight: 700, fontSize: 24, color: C.ink, margin: "0 0 8px" }}>You don't have an account yet</h2>
+      <p style={{ color: C.muted, fontSize: 15, lineHeight: 1.6 }}>
+        {error || <>This login isn't linked to any account. If you were given an invite code, use it on the sign-up screen — otherwise, ask an admin to grant you access.</>}
+      </p>
     </div>
   );
 }

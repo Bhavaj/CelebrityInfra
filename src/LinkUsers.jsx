@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "./supabase";
-import { C, Panel, Th, Td, Button, TableScroll, Empty } from "./ui";
+import { C, Panel, Th, Td, Button, TableScroll, Empty, RowCard, RowLine, useIsMobile } from "./ui";
 
 export default function LinkUsers({ agents, customers, onDone }) {
+  const mobile = useIsMobile();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState("");
@@ -19,7 +20,18 @@ export default function LinkUsers({ agents, customers, onDone }) {
   return (
     <Panel title="Link logins to records" right={<span style={{ fontSize: 12, color: C.muted }}>connect who signed up to their agent/customer record</span>}>
       {msg && <p style={{ color: C.red, fontSize: 13 }}>{msg}</p>}
-      {loading ? <p style={{ color: C.muted }}>Loading…</p> : users.length === 0 ? <Empty>No signups yet.</Empty> : (
+      {loading ? <p style={{ color: C.muted }}>Loading…</p> : users.length === 0 ? <Empty>No signups yet.</Empty> : mobile ? (
+        <div>
+          {users.map((u) => (
+            <RowCard key={u.id}>
+              <div style={{ fontWeight: 700, fontSize: 14, color: C.ink, marginBottom: 6, wordBreak: "break-all" }}>{u.email}</div>
+              <RowLine label="Current role" value={u.role} />
+              <UserRow u={u} agents={agents} customers={customers} mobile
+                onSaved={() => { load(); onDone && onDone(); }} setMsg={setMsg} />
+            </RowCard>
+          ))}
+        </div>
+      ) : (
         <TableScroll minWidth={640}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead><tr><Th>Email</Th><Th>Current role</Th><Th>Linked to</Th><Th>Assign</Th></tr></thead>
@@ -36,7 +48,7 @@ export default function LinkUsers({ agents, customers, onDone }) {
   );
 }
 
-function UserRow({ u, agents, customers, onSaved, setMsg }) {
+function UserRow({ u, agents, customers, onSaved, setMsg, mobile }) {
   const [role, setRole] = useState(u.role || "customer");
   const [recordId, setRecordId] = useState(u.agent_id || u.customer_id || "");
   const [busy, setBusy] = useState(false);
@@ -67,29 +79,40 @@ function UserRow({ u, agents, customers, onSaved, setMsg }) {
 
   const options = role === "agent" ? agents : role === "customer" ? customers : [];
 
+  const controls = (
+    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+      <select value={role} onChange={(e) => { setRole(e.target.value); setRecordId(""); }} style={sel}>
+        <option value="admin">Admin</option>
+        <option value="agent">Agent</option>
+        <option value="customer">Customer</option>
+      </select>
+      {(role === "agent" || role === "customer") && (
+        <select value={recordId} onChange={(e) => setRecordId(e.target.value)} style={sel}>
+          <option value="">— pick {role} —</option>
+          {options.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+        </select>
+      )}
+      <Button onClick={save} disabled={busy || ((role !== "admin") && !recordId)}>
+        {busy ? "…" : "Link"}
+      </Button>
+    </div>
+  );
+
+  if (mobile) {
+    return (
+      <>
+        <RowLine label="Linked to" value={linkedLabel} />
+        <div style={{ marginTop: 8 }}>{controls}</div>
+      </>
+    );
+  }
+
   return (
     <tr>
       <Td bold>{u.email}</Td>
       <Td>{u.role}</Td>
       <Td>{linkedLabel}</Td>
-      <Td>
-        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-          <select value={role} onChange={(e) => { setRole(e.target.value); setRecordId(""); }} style={sel}>
-            <option value="admin">Admin</option>
-            <option value="agent">Agent</option>
-            <option value="customer">Customer</option>
-          </select>
-          {(role === "agent" || role === "customer") && (
-            <select value={recordId} onChange={(e) => setRecordId(e.target.value)} style={sel}>
-              <option value="">— pick {role} —</option>
-              {options.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
-            </select>
-          )}
-          <Button onClick={save} disabled={busy || ((role !== "admin") && !recordId)}>
-            {busy ? "…" : "Link"}
-          </Button>
-        </div>
-      </Td>
+      <Td>{controls}</Td>
     </tr>
   );
 }
