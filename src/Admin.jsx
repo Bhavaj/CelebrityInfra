@@ -107,7 +107,7 @@ export default function Admin() {
 
         {!loading && tab === "customers" && (
           <Customers customers={data.customers} plots={data.plots} transactions={data.transactions}
-            users={data.users} agentName={agentName} onDone={load} />
+            users={data.users} agents={data.agents} agentName={agentName} onDone={load} />
         )}
 
         {!loading && tab === "agents" && (

@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { supabase } from "../supabase";
-import { C, MONO, fmt, Panel, Th, Td, Button, ConfirmButton, SearchBar, Modal, KV, TableScroll, Empty, useIsMobile, RowCard, RowLine } from "../ui";
+import { C, MONO, fmt, Panel, Th, Td, Button, ConfirmButton, SearchBar, Modal, KV, TableScroll, Empty, useIsMobile, RowCard, RowLine, Field, Select } from "../ui";
 import AccessCode from "./AccessCode";
 import RecordPayment from "./RecordPayment";
 
-export default function Customers({ customers, plots, transactions, users, agentName, onDone }) {
+export default function Customers({ customers, plots, transactions, users, agents, agentName, onDone }) {
   const mobile = useIsMobile();
   const [q, setQ] = useState("");
   const [openCust, setOpenCust] = useState(null);
+  const [adding, setAdding] = useState(false);
 
   const plotFor = (custId) => plots.find((p) => p.customer_id === custId);
   const paidFor = (custId) => transactions.filter((t) => t.customer_id === custId).reduce((s, t) => s + Number(t.amount), 0);
@@ -19,7 +20,12 @@ export default function Customers({ customers, plots, transactions, users, agent
 
   return (
     <>
-      <Panel title="Customers" right={<SearchBar value={q} onChange={setQ} placeholder="Search name, phone…" />}>
+      <Panel title="Customers" right={
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <SearchBar value={q} onChange={setQ} placeholder="Search name, phone…" />
+          <Button onClick={() => setAdding((v) => !v)}>{adding ? "Close" : "＋ Add Customer"}</Button>
+        </div>
+      }>
         <div style={{ fontSize: 13, color: C.muted, marginBottom: 12 }}>{rows.length} customer{rows.length === 1 ? "" : "s"}</div>
         {rows.length === 0 ? <Empty>No customers yet — they appear here once a plot is sold, or a lead is converted.</Empty> : mobile ? (
           <div>
@@ -63,6 +69,8 @@ export default function Customers({ customers, plots, transactions, users, agent
         )}
       </Panel>
 
+      {adding && <CreateCustomer agents={agents} onDone={() => { setAdding(false); onDone(); }} />}
+
       {openCust && (
         <CustomerCard customer={openCust} plot={plotFor(openCust.id)} transactions={transactions.filter((t) => t.customer_id === openCust.id)}
           linked={users.some((u) => u.customer_id === openCust.id)}
@@ -70,6 +78,41 @@ export default function Customers({ customers, plots, transactions, users, agent
           onPaymentAdded={onDone} />
       )}
     </>
+  );
+}
+
+// Provisions a customer record with no plot/sale attached yet, purely so the
+// admin can hand them a login code right away — mirrors CreateAgent in
+// Agents.jsx. A plot can be linked to them later from Inventory.
+function CreateCustomer({ agents, onDone }) {
+  const activeAgents = agents.filter((a) => !a.archived);
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [agentId, setAgentId] = useState("");
+  const [msg, setMsg] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function save() {
+    setBusy(true); setMsg("");
+    const { error } = await supabase.from("customers").insert({
+      name, phone, agent_id: agentId || null,
+    });
+    setBusy(false);
+    if (error) { setMsg(error.message); return; }
+    onDone();
+  }
+
+  return (
+    <Panel title="Add a new customer">
+      <div style={{ maxWidth: 460 }}>
+        <Field label="Customer name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Priya Sharma" />
+        <Field label="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98480 00000" />
+        <Select label="Referred by (optional)" value={agentId} placeholder="— No agent —"
+          onChange={setAgentId} options={activeAgents.map((a) => ({ v: a.id, l: a.name }))} />
+        {msg && <p style={{ color: C.red, fontSize: 13 }}>{msg}</p>}
+        <Button onClick={save} disabled={!name || busy}>{busy ? "Saving…" : "Create customer"}</Button>
+      </div>
+    </Panel>
   );
 }
 
