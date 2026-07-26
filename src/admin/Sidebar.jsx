@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { C, FONT, MONO, Icon, useIsMobile } from "../ui";
+import { C, FONT, MONO, R, Icon, useIsMobile } from "../ui";
 
 const NAV = [
   ["overview", "Overview", "dashboard"],
@@ -28,7 +28,7 @@ export default function Sidebar({ active, onSelect, onOpenSettings }) {
         <button key={k} onClick={() => select(k)}
           className={active === k ? "cip-glow cip-tap" : "cip-tap"}
           style={{
-            textAlign: "left", padding: "13px 14px", borderRadius: 0, fontFamily: MONO,
+            textAlign: "left", padding: "13px 14px", borderRadius: R.sm, fontFamily: MONO,
             fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer", border: "none",
             display: "flex", alignItems: "center", gap: 10,
             background: active === k ? C.goldLt : "transparent",
@@ -41,7 +41,7 @@ export default function Sidebar({ active, onSelect, onOpenSettings }) {
       ))}
       <div style={{ borderTop: `1px solid ${C.line}`, margin: "10px 4px 6px" }} />
       <button onClick={() => { onOpenSettings(); setOpen(false); }}
-        style={{ textAlign: "left", padding: "11px 14px", borderRadius: 0, border: "none",
+        style={{ textAlign: "left", padding: "11px 14px", borderRadius: R.sm, border: "none",
           background: "transparent", color: C.faint, fontSize: 12, fontFamily: MONO, textTransform: "uppercase", letterSpacing: "0.1em", cursor: "pointer",
           display: "flex", alignItems: "center", gap: 10 }}>
         <Icon name="settings" size={18} /> Settings
@@ -52,7 +52,7 @@ export default function Sidebar({ active, onSelect, onOpenSettings }) {
   if (!mobile) {
     return (
       <div className="cip-card" style={{ width: 220, flexShrink: 0, alignSelf: "flex-start", position: "sticky", top: 20,
-        background: C.panel, border: `1px solid ${C.line}`, borderRadius: 0, padding: 10 }}>
+        background: C.panel, border: `1px solid ${C.line}`, borderRadius: R.lg, padding: 10 }}>
         {navList}
       </div>
     );
@@ -68,14 +68,14 @@ export default function Sidebar({ active, onSelect, onOpenSettings }) {
   return (
     <>
       <div style={{ marginBottom: 16, width: "100%" }} className="cip-in-fast">
-        <div style={{ display: "flex", alignItems: "center", gap: 12, background: C.panel, border: `1px solid ${C.line}`, borderRadius: 0, padding: "12px 14px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, background: C.panel, border: `1px solid ${C.line}`, borderRadius: R.md, padding: "12px 14px" }}>
           <button onClick={() => setOpen(true)} aria-label="Open menu" className="cip-tap"
-            style={{ background: "none", border: `1px solid ${C.line}`, borderRadius: 0, width: 40, height: 40, color: C.ink, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            style={{ background: "none", border: `1px solid ${C.line}`, borderRadius: R.sm, width: 40, height: 40, color: C.ink, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Icon name="menu" size={20} />
           </button>
           <span style={{ fontFamily: FONT, fontSize: 17, fontWeight: 700, textTransform: "uppercase", color: C.ink }}>{activeLabel}</span>
           <button onClick={onOpenSettings} aria-label="Settings" className="cip-tap"
-            style={{ marginLeft: "auto", background: "none", border: `1px solid ${C.line}`, borderRadius: 0, width: 40, height: 40, color: C.muted, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            style={{ marginLeft: "auto", background: "none", border: `1px solid ${C.line}`, borderRadius: R.sm, width: 40, height: 40, color: C.muted, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Icon name="settings" size={18} />
           </button>
         </div>
@@ -86,7 +86,7 @@ export default function Sidebar({ active, onSelect, onOpenSettings }) {
           style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.8)", backdropFilter: "blur(3px)", zIndex: 90 }}>
           <div onClick={(e) => e.stopPropagation()} className="cip-drawer-in"
             style={{ position: "fixed", top: 0, left: 0, bottom: 0, width: "min(78vw,300px)", background: C.panel,
-              borderRight: `1px solid ${C.line}`, padding: "18px 18px calc(18px + env(safe-area-inset-bottom))", overflowY: "auto" }}>
+              borderRight: `1px solid ${C.line}`, boxShadow: "8px 0 30px -10px rgba(0,0,0,.6)", padding: "18px 18px calc(18px + env(safe-area-inset-bottom))", overflowY: "auto" }}>
             <div style={{ fontFamily: MONO, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700, color: C.goldLt, marginBottom: 18 }}>Menu</div>
             {navList}
           </div>

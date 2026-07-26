@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import logoUrl from "./assets/logo.jpg";
 
 // "Enterprise Noir" — pure-black canvas, sharp/square edges, glass-panel
 // surfaces, gold as the sole accent. Display type is Hanken Grotesk; all
@@ -16,6 +17,10 @@ export const C = {
 
 export const FONT = "'Hanken Grotesk',sans-serif";
 export const MONO = "'JetBrains Mono',monospace";
+
+// Shared corner radii — a soft, modern scale replacing the old sharp-edged look.
+export const R = { sm: 8, md: 12, lg: 16, xl: 20, pill: 999 };
+export const goldGradient = `linear-gradient(135deg, ${C.goldLt} 0%, ${C.gold} 55%, ${C.goldDeep} 100%)`;
 
 export const fmt = (n) => "₹" + Number(n || 0).toLocaleString("en-IN");
 
@@ -63,17 +68,24 @@ export function Empty({ children }) {
   );
 }
 
+// The real Celebrity Infra crest — a gold laurel medallion on ivory. Rendered
+// as a circular medallion (zoomed past the wordmark row) so it reads clearly
+// at nav/icon sizes and sits like a seal against the dark UI.
 export function Crest({ size = 34 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" aria-hidden="true">
-      <path d="M15 15 L20 9 L24 13 L28 9 L33 15 Z" fill="#F2CA50" />
-      <circle cx="20" cy="9.5" r="1.5" fill="#FFE088" />
-      <circle cx="24" cy="13" r="1.5" fill="#FFE088" />
-      <circle cx="28" cy="9.5" r="1.5" fill="#FFE088" />
-      <path d="M11 25 Q9 34 18 40" fill="none" stroke="#D4AF37" strokeWidth="1.4" strokeLinecap="round" />
-      <path d="M37 25 Q39 34 30 40" fill="none" stroke="#D4AF37" strokeWidth="1.4" strokeLinecap="round" />
-      <text x="24" y="34" textAnchor="middle" fontFamily={FONT} fontSize="22" fontWeight="700" fill="#F2CA50">C</text>
-    </svg>
+    <div
+      style={{
+        width: size, height: size, flex: "none", borderRadius: "50%", overflow: "hidden",
+        background: "#F3EFE2", border: `1.5px solid ${C.gold}`,
+        boxShadow: `0 0 ${Math.round(size * 0.4)}px rgba(212,175,55,.35)`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}
+    >
+      <img
+        src={logoUrl} alt="Celebrity Infra Pvt Ltd" draggable={false}
+        style={{ width: "84%", height: "84%", objectFit: "contain" }}
+      />
+    </div>
   );
 }
 
@@ -82,7 +94,7 @@ const glass = { background: "rgba(18,19,23,.7)", backdropFilter: "blur(16px)", W
 export function Panel({ title, children, right }) {
   const mobile = useIsMobile();
   return (
-    <div className="cip-card cip-in" style={{ ...glass, border: `1px solid ${C.line}`, borderRadius: 0, padding: mobile ? 16 : 24, marginBottom: mobile ? 16 : 20 }}>
+    <div className="cip-card cip-in" style={{ ...glass, border: `1px solid ${C.line}`, borderRadius: R.lg, padding: mobile ? 16 : 24, marginBottom: mobile ? 16 : 20, boxShadow: "0 12px 32px -16px rgba(0,0,0,.5)" }}>
       {title && (
         <div style={{ display: "flex", alignItems: mobile ? "flex-start" : "center", flexDirection: mobile ? "column" : "row", gap: mobile ? 12 : 0, marginBottom: 18, paddingBottom: 16, borderBottom: `1px solid ${C.line}` }}>
           <h3 style={{ margin: 0, fontFamily: FONT, fontWeight: 700, fontSize: 20, textTransform: "uppercase", letterSpacing: "-0.01em", color: C.ink }}>{title}</h3>
@@ -96,18 +108,23 @@ export function Panel({ title, children, right }) {
 
 export function Stat({ label, value, accent }) {
   const mobile = useIsMobile();
+  const barColor = accent || C.gold;
   return (
-    <div className="cip-card cip-card-h cip-in-fast" style={{ ...glass, border: `1px solid ${C.line}`, borderRadius: 0, padding: "18px 20px", flex: mobile ? "1 1 100%" : "1 1 160px" }}>
+    <div className="cip-card cip-card-h cip-in-fast" style={{ ...glass, position: "relative", overflow: "hidden", border: `1px solid ${C.line}`, borderRadius: R.md, padding: "18px 20px", flex: mobile ? "1 1 100%" : "1 1 160px" }}>
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, transparent, ${barColor}, transparent)` }} />
       <div style={{ fontSize: 11, color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: MONO }}>{label}</div>
       <div style={{ fontFamily: FONT, fontSize: 32, fontWeight: 700, marginTop: 6, lineHeight: 1.1, letterSpacing: "-0.02em", color: accent || C.ink }}>{value}</div>
     </div>
   );
 }
 
-// Rectangular bordered chip — no fill, no pill radius — matching the Noir status tags.
+// Soft pill chip — tinted fill plus a matching border, reads livelier than a flat outline.
 export function Badge({ text, color }) {
   return (
-    <span style={{ fontSize: 10, fontWeight: 600, color, background: "transparent", border: `1px solid ${color}`, padding: "3px 8px", borderRadius: 0, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: MONO }}>
+    <span style={{
+      fontSize: 10, fontWeight: 700, color, background: `${color}1f`, border: `1px solid ${color}66`,
+      padding: "4px 10px", borderRadius: R.pill, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: MONO,
+    }}>
       {text}
     </span>
   );
@@ -127,19 +144,19 @@ export function Td({ children, right, bold }) {
 // chips ("Call Client", "Log Note") in the Noir screens, just lower-emphasis.
 export function Button({ children, onClick, disabled, kind = "gold", size = "md", type = "button" }) {
   const styles = kind === "gold"
-    ? { background: C.goldLt, color: "#1A1200", border: "none", fontWeight: 700 }
+    ? { background: goldGradient, color: "#1A1200", border: "none", fontWeight: 700, boxShadow: "0 6px 20px -4px rgba(212,175,55,.45)" }
     : kind === "ghostLight"
     ? { background: "transparent", color: C.ink, border: `1px solid ${C.line}`, fontWeight: 600 }
     : kind === "danger"
     ? { background: "transparent", color: C.red, border: `1px solid ${C.red}`, fontWeight: 600 }
     : { background: "transparent", color: C.muted, border: `1px solid ${C.line}`, fontWeight: 600 };
   const sizing = size === "sm"
-    ? { padding: "6px 12px", fontSize: 11 }
-    : { padding: "12px 24px", fontSize: 12.5 };
+    ? { padding: "6px 12px", fontSize: 11, borderRadius: R.sm }
+    : { padding: "12px 24px", fontSize: 12.5, borderRadius: R.md };
   return (
     <button type={type} onClick={onClick} disabled={disabled}
       className={kind === "gold" && !disabled ? "cip-glow" : undefined}
-      style={{ ...styles, ...sizing, borderRadius: 0, fontFamily: MONO, textTransform: "uppercase", letterSpacing: "0.1em", cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.5 : 1, transition: "all .15s ease" }}>
+      style={{ ...styles, ...sizing, fontFamily: MONO, textTransform: "uppercase", letterSpacing: "0.1em", cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.5 : 1, transition: "all .15s ease" }}>
       {children}
     </button>
   );
@@ -160,7 +177,7 @@ export function Field({ label, ...props }) {
     <label style={{ display: "block", marginBottom: 14 }}>
       <span style={{ display: "block", fontSize: 11, color: C.muted, marginBottom: 6, letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: MONO }}>{label}</span>
       <input {...props}
-        style={{ width: "100%", padding: "11px 13px", border: `1px solid ${C.line}`, borderRadius: 0, fontFamily: FONT, fontSize: 15, color: C.ink, background: C.field }} />
+        style={{ width: "100%", padding: "11px 13px", border: `1px solid ${C.line}`, borderRadius: R.sm, fontFamily: FONT, fontSize: 15, color: C.ink, background: C.field }} />
     </label>
   );
 }
@@ -170,7 +187,7 @@ export function Select({ label, value, onChange, options, placeholder }) {
     <label style={{ display: "block", marginBottom: 14 }}>
       {label && <span style={{ display: "block", fontSize: 11, color: C.muted, marginBottom: 6, letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: MONO }}>{label}</span>}
       <select value={value} onChange={(e) => onChange(e.target.value)}
-        style={{ width: "100%", padding: "11px 13px", border: `1px solid ${C.line}`, borderRadius: 0, fontFamily: FONT, fontSize: 15, color: C.ink, background: C.field }}>
+        style={{ width: "100%", padding: "11px 13px", border: `1px solid ${C.line}`, borderRadius: R.sm, fontFamily: FONT, fontSize: 15, color: C.ink, background: C.field }}>
         {placeholder && <option value="">{placeholder}</option>}
         {options.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
       </select>
@@ -185,13 +202,15 @@ export function Modal({ title, onClose, children, maxWidth = 620 }) {
     <div onClick={onClose} className="cip-in-fade"
       style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.8)", backdropFilter: "blur(3px)", display: "flex", alignItems: mobile ? "flex-end" : "flex-start", justifyContent: "center", padding: mobile ? 0 : "48px 16px", zIndex: 100, overflowY: mobile ? "hidden" : "auto" }}>
       <div onClick={(e) => e.stopPropagation()} className={mobile ? "cip-in-sheet" : "cip-in-scale"}
-        style={{ ...glass, border: `1px solid ${C.line}`, borderTop: `3px solid ${C.goldLt}`, borderRadius: 0, width: "100%", maxWidth: mobile ? "none" : maxWidth,
+        style={{ ...glass, border: `1px solid ${C.line}`, borderTop: `3px solid ${C.goldLt}`,
+          borderRadius: mobile ? `${R.lg}px ${R.lg}px 0 0` : R.lg, width: "100%", maxWidth: mobile ? "none" : maxWidth,
           maxHeight: mobile ? "88dvh" : "none", overflowY: mobile ? "auto" : "visible",
+          boxShadow: "0 24px 60px -20px rgba(0,0,0,.6)",
           padding: mobile ? "18px 18px calc(18px + env(safe-area-inset-bottom))" : 26 }}>
         <div style={{ display: "flex", alignItems: "center", marginBottom: 18, gap: 12 }}>
           <h3 style={{ margin: 0, fontFamily: FONT, fontWeight: 700, fontSize: mobile ? 20 : 24, color: C.ink }}>{title}</h3>
           <button onClick={onClose} aria-label="Close"
-            style={{ marginLeft: "auto", flexShrink: 0, background: "none", border: `1px solid ${C.line}`, borderRadius: 0, width: 34, height: 34, cursor: "pointer", color: C.muted }}>
+            style={{ marginLeft: "auto", flexShrink: 0, background: "none", border: `1px solid ${C.line}`, borderRadius: R.pill, width: 34, height: 34, cursor: "pointer", color: C.muted }}>
             <Icon name="close" size={18} />
           </button>
         </div>
@@ -204,7 +223,7 @@ export function Modal({ title, onClose, children, maxWidth = 620 }) {
 export function SearchBar({ value, onChange, placeholder }) {
   const mobile = useIsMobile();
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 12px", border: `1px solid ${C.line}`, background: C.field, minWidth: mobile ? 0 : 220, width: mobile ? "100%" : undefined }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 12px", border: `1px solid ${C.line}`, background: C.field, borderRadius: R.sm, minWidth: mobile ? 0 : 220, width: mobile ? "100%" : undefined }}>
       <Icon name="search" size={16} style={{ color: C.muted }} />
       <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder || "Search…"}
         style={{ flex: 1, padding: "10px 0", border: "none", background: "transparent", fontFamily: FONT, fontSize: 14, color: C.ink, outline: "none" }} />
@@ -217,7 +236,7 @@ export function SearchBar({ value, onChange, placeholder }) {
 export function RowCard({ children, onClick }) {
   return (
     <div onClick={onClick} className="cip-card cip-card-h cip-tap cip-in-fast"
-      style={{ background: C.panel, border: `1px solid ${C.line}`, borderRadius: 0, padding: "13px 14px", marginBottom: 8, cursor: onClick ? "pointer" : "default" }}>
+      style={{ background: C.panel, border: `1px solid ${C.line}`, borderRadius: R.md, padding: "13px 14px", marginBottom: 8, cursor: onClick ? "pointer" : "default" }}>
       {children}
     </div>
   );

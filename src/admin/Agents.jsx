@@ -35,7 +35,7 @@ export default function Agents({ agents, customers, commissions, plots, users, a
 function ViewToggle({ active, onClick, children }) {
   return (
     <button onClick={onClick}
-      style={{ padding: "8px 16px", borderRadius: 0, border: `1px solid ${active ? C.gold : C.line}`,
+      style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${active ? C.gold : C.line}`,
         background: active ? C.goldSoft : "transparent", color: active ? C.goldLt : C.muted,
         fontWeight: active ? 600 : 400, cursor: "pointer", fontSize: 13, fontFamily: "'Hanken Grotesk',sans-serif" }}>
       {children}
@@ -62,11 +62,11 @@ function AgentTree({ agents, agentName, onOpen }) {
       {parentIds.size > 0 && (
         <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
           <button onClick={expandAll} className="cip-tap"
-            style={{ background: "none", border: `1px solid ${C.line}`, borderRadius: 0, color: C.muted, fontFamily: MONO, fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.08em", padding: "6px 10px", cursor: "pointer" }}>
+            style={{ background: "none", border: `1px solid ${C.line}`, borderRadius: 8, color: C.muted, fontFamily: MONO, fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.08em", padding: "6px 10px", cursor: "pointer" }}>
             Expand all
           </button>
           <button onClick={collapseAll} className="cip-tap"
-            style={{ background: "none", border: `1px solid ${C.line}`, borderRadius: 0, color: C.muted, fontFamily: MONO, fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.08em", padding: "6px 10px", cursor: "pointer" }}>
+            style={{ background: "none", border: `1px solid ${C.line}`, borderRadius: 8, color: C.muted, fontFamily: MONO, fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.08em", padding: "6px 10px", cursor: "pointer" }}>
             Collapse all
           </button>
         </div>
@@ -90,7 +90,7 @@ function TreeNode({ agent, agents, agentName, onOpen, depth, collapsed, toggle }
         <button type="button" onClick={() => hasChildren && toggle(agent.id)} disabled={!hasChildren}
           aria-label={hasChildren ? (isOpen ? "Collapse branch" : "Expand branch") : undefined}
           className={hasChildren ? "cip-tap" : undefined}
-          style={{ flexShrink: 0, marginTop: 8, width: 22, height: 22, borderRadius: 0, fontFamily: MONO, fontSize: 13, fontWeight: 700, lineHeight: 1,
+          style={{ flexShrink: 0, marginTop: 8, width: 22, height: 22, borderRadius: "50%", fontFamily: MONO, fontSize: 13, fontWeight: 700, lineHeight: 1,
             border: hasChildren ? `1px solid ${C.goldSoft}` : "none", background: hasChildren ? C.field : "transparent",
             color: hasChildren ? C.goldLt : C.faint, cursor: hasChildren ? "pointer" : "default",
             display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -99,7 +99,7 @@ function TreeNode({ agent, agents, agentName, onOpen, depth, collapsed, toggle }
 
         <div onClick={() => onOpen(agent)} className="cip-card cip-card-h cip-tap cip-in-fast"
           style={{ flex: 1, minWidth: 0, background: depth === 0 ? C.goldSoft : C.panel2,
-            border: `1px solid ${C.line}`, borderRadius: 0, padding: "10px 12px", cursor: "pointer", opacity: agent.archived ? 0.55 : 1 }}>
+            border: `1px solid ${C.line}`, borderRadius: 8, padding: "10px 12px", cursor: "pointer", opacity: agent.archived ? 0.55 : 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             <span style={{ fontWeight: 700, color: C.ink, fontSize: 14.5 }}>{agent.name}</span>
             {agent.archived && <Badge text="Archived" color={C.muted} />}
@@ -190,7 +190,7 @@ function AgentCard({ agent, agents, customers, commissions, users, onClose, onOp
   );
 }
 
-const selStyle = { padding: "9px 12px", border: `1px solid ${C.line}`, borderRadius: 0, fontFamily: "'Hanken Grotesk',sans-serif", fontSize: 14, background: C.field, color: C.ink };
+const selStyle = { padding: "9px 12px", border: `1px solid ${C.line}`, borderRadius: 8, fontFamily: "'Hanken Grotesk',sans-serif", fontSize: 14, background: C.field, color: C.ink };
 
 function CreateAgent({ agents, onDone }) {
   const activeAgents = agents.filter((a) => !a.archived);
@@ -236,7 +236,7 @@ function CreateAgent({ agents, onDone }) {
           options={activeAgents.map((a) => ({ v: a.id, l: a.name }))} />
         {!sponsorId && <p style={{ fontSize: 13, color: C.muted }}>Direct agent keeps the full {quota}% quota.</p>}
         {sponsorId && (
-          <div style={{ background: C.bg, border: `1px solid ${C.line}`, borderRadius: 0, padding: 14, marginBottom: 14 }}>
+          <div style={{ background: C.bg, border: `1px solid ${C.line}`, borderRadius: 8, padding: 14, marginBottom: 14 }}>
             <div style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10, fontFamily: MONO }}>Split the {quota}% quota</div>
             <SplitRow label={`${name || "This agent"} (own take)`} value={selfTake} onChange={setSelfTake} />
             {chain.map((a) => (
@@ -259,7 +259,7 @@ function SplitRow({ label, value, onChange }) {
     <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
       <span style={{ flex: 1, fontSize: 14, color: C.ink }}>{label}</span>
       <input type="number" value={value} onChange={(e) => onChange(e.target.value)} placeholder="0"
-        style={{ width: 80, padding: "8px 10px", border: `1px solid ${C.line}`, borderRadius: 0, fontFamily: "'Hanken Grotesk',sans-serif", fontSize: 15, textAlign: "right", background: C.field, color: C.ink }} />
+        style={{ width: 80, padding: "8px 10px", border: `1px solid ${C.line}`, borderRadius: 8, fontFamily: "'Hanken Grotesk',sans-serif", fontSize: 15, textAlign: "right", background: C.field, color: C.ink }} />
       <span style={{ color: C.muted }}>%</span>
     </div>
   );

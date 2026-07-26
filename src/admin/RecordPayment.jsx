@@ -29,7 +29,7 @@ export default function RecordPayment({ plotId, customerId, price, paid, onDone 
   }
 
   return (
-    <div style={{ marginTop: 16, background: C.bg, border: `1px solid ${C.line}`, borderRadius: 0, padding: 14 }}>
+    <div style={{ marginTop: 16, background: C.bg, border: `1px solid ${C.line}`, borderRadius: 8, padding: 14 }}>
       <div style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10, fontFamily: MONO }}>
         Record a payment{remaining > 0 && <span style={{ color: C.goldLt }}> · {fmt(remaining)} remaining</span>}
       </div>

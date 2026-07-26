@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "./supabase";
-import { C, FONT, MONO, Crest, Button, Badge, useIsMobile } from "./ui";
+import { C, FONT, MONO, R, Crest, Button, Badge, useIsMobile } from "./ui";
 import RoleChooser from "./auth/RoleChooser";
 import AdminLogin from "./auth/AdminLogin";
 import AgentLogin from "./auth/AgentLogin";
@@ -89,9 +89,9 @@ export default function App() {
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: FONT }}>
-      <div style={{ position: "sticky", top: 0, zIndex: 50, background: C.panel, borderBottom: `1px solid ${C.line}`, paddingTop: "env(safe-area-inset-top)" }} className="cip-in-fade">
+      <div style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(18,19,23,.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderBottom: `1px solid ${C.line}`, boxShadow: "0 1px 0 rgba(242,202,80,.15)", paddingTop: "env(safe-area-inset-top)" }} className="cip-in-fade">
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-          <Crest size={30} />
+          <Crest size={32} />
           {!mobile && <div style={{ fontFamily: MONO, fontSize: 15, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: C.ink }}>Celebrity's Park-1</div>}
           <Badge text={hasAccount ? `${role} portal` : "no account"} color={hasAccount ? C.goldLt : C.red} />
           <div style={{ marginLeft: "auto", display: "flex", gap: 12, alignItems: "center", minWidth: 0, flexWrap: "wrap" }}>
@@ -125,7 +125,7 @@ export default function App() {
 // pointed at a specific agent/customer record yet.
 function NoAccount({ error }) {
   return (
-    <div className="cip-card" style={{ background: C.panel, border: `1px solid ${C.line}`, borderTop: `3px solid ${C.red}`, borderRadius: 0, padding: "clamp(20px, 5vw, 32px)", maxWidth: 560 }}>
+    <div className="cip-card" style={{ background: C.panel, border: `1px solid ${C.line}`, borderTop: `3px solid ${C.red}`, borderRadius: R.lg, padding: "clamp(20px, 5vw, 32px)", maxWidth: 560 }}>
       <h2 style={{ fontFamily: FONT, fontWeight: 700, fontSize: 24, color: C.ink, margin: "0 0 8px" }}>You don't have an account yet</h2>
       <p style={{ color: C.muted, fontSize: 15, lineHeight: 1.6 }}>
         {error || <>This login isn't linked to any account. If you were given an invite code, use it on the sign-up screen — otherwise, ask an admin to grant you access.</>}
@@ -136,7 +136,7 @@ function NoAccount({ error }) {
 
 function NotLinked({ kind, error }) {
   return (
-    <div className="cip-card" style={{ background: C.panel, border: `1px solid ${C.line}`, borderTop: `3px solid ${C.goldLt}`, borderRadius: 0, padding: "clamp(20px, 5vw, 32px)", maxWidth: 560 }}>
+    <div className="cip-card" style={{ background: C.panel, border: `1px solid ${C.line}`, borderTop: `3px solid ${C.goldLt}`, borderRadius: R.lg, padding: "clamp(20px, 5vw, 32px)", maxWidth: 560 }}>
       <h2 style={{ fontFamily: FONT, fontWeight: 700, fontSize: 24, color: C.ink, margin: "0 0 8px" }}>Almost there</h2>
       <p style={{ color: C.muted, fontSize: 15, lineHeight: 1.6 }}>
         {error

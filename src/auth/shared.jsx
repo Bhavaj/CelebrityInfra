@@ -21,11 +21,11 @@ export function BackButton({ onClick }) {
 
 export function TabToggle({ value, onChange, options }) {
   return (
-    <div style={{ display: "flex", gap: 0, background: C.field, border: `1px solid ${C.line}`, borderRadius: 0, padding: 0, marginBottom: 22 }}>
+    <div style={{ display: "flex", gap: 4, background: C.field, border: `1px solid ${C.line}`, borderRadius: 10, padding: 4, marginBottom: 22 }}>
       {options.map((o) => (
         <button key={o.value} type="button" onClick={() => onChange(o.value)}
           style={{
-            flex: 1, padding: "10px 10px", borderRadius: 0, border: "none", cursor: "pointer",
+            flex: 1, padding: "10px 10px", borderRadius: 7, border: "none", cursor: "pointer",
             fontFamily: MONO, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em",
             background: value === o.value ? C.goldLt : "transparent",
             color: value === o.value ? "#1A1200" : C.muted,
@@ -39,7 +39,7 @@ export function TabToggle({ value, onChange, options }) {
 
 export const codeInputStyle = {
   width: "100%", background: C.field, border: `1px solid ${C.line}`,
-  color: C.ink, padding: "14px 16px", fontFamily: MONO, fontSize: 18, borderRadius: 0,
+  color: C.ink, padding: "14px 16px", fontFamily: MONO, fontSize: 18, borderRadius: 8,
   letterSpacing: 4, textAlign: "center", textTransform: "uppercase",
 };
 

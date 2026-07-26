@@ -1,5 +1,5 @@
 import React from "react";
-import { C } from "../ui";
+import { C, R } from "../ui";
 import AuthShell from "./AuthShell";
 
 const ROLES = [
@@ -24,6 +24,6 @@ export default function RoleChooser({ onSelect }) {
 }
 
 const tile = {
-  textAlign: "left", padding: "16px 18px", borderRadius: 0, cursor: "pointer",
+  textAlign: "left", padding: "16px 18px", borderRadius: R.md, cursor: "pointer",
   background: C.field, border: `1px solid ${C.line}`, fontFamily: "'Hanken Grotesk',sans-serif",
 };

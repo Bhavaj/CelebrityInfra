@@ -70,7 +70,7 @@ export default function Admin() {
           <div style={{ display: "flex", alignItems: mobile ? "stretch" : "center", flexDirection: mobile ? "column" : "row", gap: mobile ? 6 : 12, marginBottom: 18 }}>
             <span style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: MONO }}>Active project</span>
             <select value={activeProject} onChange={(e) => setActiveProject(e.target.value)}
-              style={{ padding: "10px 14px", border: `1px solid ${C.gold}`, borderRadius: 0, fontFamily: "'Hanken Grotesk',sans-serif", fontSize: 15, fontWeight: 600, color: C.ink, background: C.field, width: mobile ? "100%" : "auto" }}>
+              style={{ padding: "10px 14px", border: `1px solid ${C.gold}`, borderRadius: 8, fontFamily: "'Hanken Grotesk',sans-serif", fontSize: 15, fontWeight: 600, color: C.ink, background: C.field, width: mobile ? "100%" : "auto" }}>
               {pickableProjects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>

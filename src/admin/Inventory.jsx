@@ -26,7 +26,7 @@ export default function Inventory({ plots, projectId, projects, customers, agent
           <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "repeat(auto-fill,minmax(160px,1fr))", gap: 12 }}>
             {projectPlots.map((p) => (
               <div key={p.id} onClick={() => setOpenPlot(p)} className="cip-card cip-card-h cip-tap cip-in-fast"
-                style={{ background: C.panel, border: `1px solid ${C.line}`, borderLeft: `4px solid ${statusColor[p.status]}`, borderRadius: 0, padding: 14, cursor: "pointer" }}>
+                style={{ background: C.panel, border: `1px solid ${C.line}`, borderLeft: `4px solid ${statusColor[p.status]}`, borderRadius: 8, padding: 14, cursor: "pointer" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
                   <span style={{ fontWeight: 600, color: C.ink }}>{p.plot_no}</span>
                   <Badge text={p.status} color={statusColor[p.status]} />
@@ -171,7 +171,7 @@ function SellPlotForm({ plot, customers, agents, onCancel, onSold }) {
           </button>
         </>
       ) : (
-        <div style={{ background: C.field, border: `1px solid ${C.line}`, borderRadius: 0, padding: 14, marginBottom: 14 }}>
+        <div style={{ background: C.field, border: `1px solid ${C.line}`, borderRadius: 8, padding: 14, marginBottom: 14 }}>
           <Field label="Name" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Customer name" />
           <Field label="Phone" value={newPhone} onChange={(e) => setNewPhone(e.target.value)} placeholder="98480 00000" />
           <div style={{ display: "flex", gap: 8 }}>
@@ -185,7 +185,7 @@ function SellPlotForm({ plot, customers, agents, onCancel, onSold }) {
         options={activeAgents.map((a) => ({ v: a.id, l: `${a.name} · quota ${a.quota_percent}%` }))} />
       <Field label="Sale date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
       {agent && (
-        <div style={{ background: C.goldSoft, borderRadius: 0, padding: 14, marginBottom: 14, fontSize: 14, color: C.ink }}>
+        <div style={{ background: C.goldSoft, borderRadius: 8, padding: 14, marginBottom: 14, fontSize: 14, color: C.ink }}>
           Commission pool: <b>{fmt(pool)}</b> ({agent.quota_percent}% of {fmt(plot.price)}) — split per {agent.name}'s tree.
         </div>
       )}

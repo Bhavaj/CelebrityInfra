@@ -12,7 +12,11 @@ style.textContent = `
     -webkit-font-smoothing:antialiased;
     -moz-osx-font-smoothing:grayscale;
     text-rendering:optimizeLegibility;
-    background:#000000;
+    background:
+      radial-gradient(60% 40% at 12% 0%, rgba(242,202,80,.07), transparent 60%),
+      radial-gradient(50% 36% at 100% 12%, rgba(47,191,143,.05), transparent 55%),
+      #000000;
+    background-attachment:fixed;
     -webkit-text-size-adjust:100%;
   }
   ::selection{background:#f2ca50;color:#1A1200}
@@ -21,10 +25,10 @@ style.textContent = `
     font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24;
   }
 
-  /* Card hover lift — sharp edges, gold-glow border, no rounded shadow */
-  .cip-card{transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease}
+  /* Card hover lift — soft rounded edges, gold-glow border and a gentle rise */
+  .cip-card{transition:transform .2s cubic-bezier(.16,1,.3,1), box-shadow .2s ease, border-color .2s ease}
   @media (hover:hover){
-    .cip-card-h:hover{border-color:#f2ca50;box-shadow:0 0 20px rgba(242,202,80,.15)}
+    .cip-card-h:hover{border-color:#f2ca50;box-shadow:0 12px 28px -10px rgba(242,202,80,.25);transform:translateY(-2px)}
   }
   .cip-glow{box-shadow:0 0 0 rgba(242,202,80,0)}
   @media (hover:hover){ .cip-glow:hover{box-shadow:0 0 15px rgba(242,202,80,.35)} }

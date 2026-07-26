@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#08090D" />
 <title>Celebrity's Park-1 — Celebrity Infra Pvt Ltd</title>
+<link rel="icon" type="image/jpeg" href="/logo.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Jost:wght@300;400;500;600&family=Cormorant+SC:wght@500;600&display=swap" rel="stylesheet">
@@ -77,7 +78,8 @@
   }
   nav.scrolled{background:rgba(8,9,13,.86);backdrop-filter:blur(14px);padding:13px 6vw;box-shadow:0 1px 0 var(--line-gold);border-bottom-color:var(--line)}
   .brand{display:flex;align-items:center;gap:12px}
-  .brand .mark{width:38px;height:38px;flex:none}
+  .brand .mark{width:38px;height:38px;flex:none;border-radius:50%;overflow:hidden;background:#F3EFE2;border:1.5px solid var(--gold);box-shadow:0 0 14px rgba(201,162,39,.35);display:flex;align-items:center;justify-content:center}
+  .brand .mark img{width:84%;height:84%;object-fit:contain}
   .brand .name{line-height:1.05}
   .brand .name b{font-family:'Cormorant SC',serif;font-size:19px;font-weight:600;letter-spacing:2px;color:var(--gold-lt);display:block}
   .brand .name span{font-size:9px;letter-spacing:4px;color:rgba(243,240,232,.55)}
@@ -284,13 +286,7 @@
 
 <nav id="nav">
   <div class="brand">
-    <svg class="mark" viewBox="0 0 48 48" aria-hidden="true">
-      <path d="M15 15 L20 9 L24 13 L28 9 L33 15 Z" fill="#E8C874"/>
-      <circle cx="20" cy="9.5" r="1.5" fill="#F5E6B8"/><circle cx="24" cy="13" r="1.5" fill="#F5E6B8"/><circle cx="28" cy="9.5" r="1.5" fill="#F5E6B8"/>
-      <path d="M11 25 Q9 34 18 40" fill="none" stroke="#C9A227" stroke-width="1.4" stroke-linecap="round"/>
-      <path d="M37 25 Q39 34 30 40" fill="none" stroke="#C9A227" stroke-width="1.4" stroke-linecap="round"/>
-      <text x="24" y="34" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="22" font-weight="700" fill="#E8C874">C</text>
-    </svg>
+    <span class="mark"><img src="/logo.jpg" alt="Celebrity Infra Pvt Ltd" /></span>
     <div class="name"><b>Celebrity</b><span>INFRA PVT LTD</span></div>
   </div>
   <div class="nav-links" id="navLinks">

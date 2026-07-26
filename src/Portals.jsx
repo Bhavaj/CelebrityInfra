@@ -209,7 +209,7 @@ export function CustomerPortal({ customerId }) {
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 6, color: C.ink }}>
             <span>{pct}% paid</span>
           </div>
-          <div style={{ height: 12, background: C.field, borderRadius: 0, overflow: "hidden" }}>
+          <div style={{ height: 12, background: C.field, borderRadius: 8, overflow: "hidden" }}>
             <div style={{ width: `${pct}%`, height: "100%", background: `linear-gradient(90deg,${C.goldDeep},${C.gold})` }} />
           </div>
         </Panel>
