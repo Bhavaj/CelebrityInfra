@@ -13,7 +13,7 @@ export function Divider() {
 
 export function BackButton({ onClick }) {
   return (
-    <button onClick={onClick} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: 11, marginTop: 20, padding: 0, fontFamily: MONO, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+    <button onClick={onClick} className="cip-tap" style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: 11, marginTop: 20, padding: "6px 0", fontFamily: MONO, textTransform: "uppercase", letterSpacing: "0.1em", borderRadius: 4 }}>
       ← Back
     </button>
   );
@@ -23,12 +23,13 @@ export function TabToggle({ value, onChange, options }) {
   return (
     <div style={{ display: "flex", gap: 4, background: C.field, border: `1px solid ${C.line}`, borderRadius: 10, padding: 4, marginBottom: 22 }}>
       {options.map((o) => (
-        <button key={o.value} type="button" onClick={() => onChange(o.value)}
+        <button key={o.value} type="button" onClick={() => onChange(o.value)} className="cip-tap"
           style={{
             flex: 1, padding: "10px 10px", borderRadius: 7, border: "none", cursor: "pointer",
             fontFamily: MONO, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em",
             background: value === o.value ? C.goldLt : "transparent",
             color: value === o.value ? "#1A1200" : C.muted,
+            transition: "background .18s ease, color .18s ease",
           }}>
           {o.label}
         </button>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "./supabase";
-import { C, Panel, Th, Td, Button, TableScroll, Empty, RowCard, RowLine, useIsMobile } from "./ui";
+import { C, Panel, Th, Td, Button, TableScroll, Empty, RowCard, RowLine, useIsMobile, Select, Modal } from "./ui";
 
 export default function LinkUsers({ agents, customers, onDone }) {
   const mobile = useIsMobile();
@@ -52,6 +52,7 @@ function UserRow({ u, agents, customers, onSaved, setMsg, mobile }) {
   const [role, setRole] = useState(u.role || "customer");
   const [recordId, setRecordId] = useState(u.agent_id || u.customer_id || "");
   const [busy, setBusy] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const linkedLabel = u.agent_id
     ? "Agent: " + (agents.find((a) => a.id === u.agent_id)?.name ?? "?")
@@ -59,14 +60,7 @@ function UserRow({ u, agents, customers, onSaved, setMsg, mobile }) {
     ? "Customer: " + (customers.find((c) => c.id === u.customer_id)?.name ?? "?")
     : u.role === "admin" ? "— (admin)" : "— not linked";
 
-  async function save() {
-    const alreadyLinked = u.agent_id || u.customer_id;
-    if (alreadyLinked) {
-      const ok = window.confirm(
-        `${u.email} is already linked to ${linkedLabel}. Change it to the new selection?`
-      );
-      if (!ok) return;
-    }
+  async function commit() {
     setBusy(true); setMsg("");
     const args = { p_user_id: u.id, p_role: role, p_agent_id: null, p_customer_id: null };
     if (role === "agent") args.p_agent_id = recordId || null;
@@ -77,24 +71,40 @@ function UserRow({ u, agents, customers, onSaved, setMsg, mobile }) {
     onSaved();
   }
 
+  function save() {
+    const alreadyLinked = u.agent_id || u.customer_id;
+    if (alreadyLinked) { setConfirmOpen(true); return; }
+    commit();
+  }
+
   const options = role === "agent" ? agents : role === "customer" ? customers : [];
 
   const controls = (
-    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-      <select value={role} onChange={(e) => { setRole(e.target.value); setRecordId(""); }} style={sel}>
-        <option value="admin">Admin</option>
-        <option value="agent">Agent</option>
-        <option value="customer">Customer</option>
-      </select>
+    <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
+      <div style={{ minWidth: 140 }}>
+        <Select value={role} onChange={(v) => { setRole(v); setRecordId(""); }}
+          options={[{ v: "admin", l: "Admin" }, { v: "agent", l: "Agent" }, { v: "customer", l: "Customer" }]} />
+      </div>
       {(role === "agent" || role === "customer") && (
-        <select value={recordId} onChange={(e) => setRecordId(e.target.value)} style={sel}>
-          <option value="">— pick {role} —</option>
-          {options.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
-        </select>
+        <div style={{ minWidth: 160 }}>
+          <Select value={recordId} onChange={setRecordId} placeholder={`— pick ${role} —`}
+            options={options.map((o) => ({ v: o.id, l: o.name }))} />
+        </div>
       )}
       <Button onClick={save} disabled={busy || ((role !== "admin") && !recordId)}>
         {busy ? "…" : "Link"}
       </Button>
+      {confirmOpen && (
+        <Modal title="Change link?" onClose={() => setConfirmOpen(false)} maxWidth={420}>
+          <p style={{ margin: "0 0 22px", fontSize: 14.5, color: C.ink, lineHeight: 1.6 }}>
+            {u.email} is already linked to {linkedLabel}. Change it to the new selection?
+          </p>
+          <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+            <Button kind="ghostLight" onClick={() => setConfirmOpen(false)}>Cancel</Button>
+            <Button onClick={() => { setConfirmOpen(false); commit(); }}>Confirm</Button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 
@@ -116,5 +126,3 @@ function UserRow({ u, agents, customers, onSaved, setMsg, mobile }) {
     </tr>
   );
 }
-
-const sel = { padding: "8px 10px", border: `1px solid ${C.line}`, borderRadius: 8, fontFamily: "'Hanken Grotesk',sans-serif", fontSize: 14, background: C.field, color: C.ink };

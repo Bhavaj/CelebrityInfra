@@ -117,17 +117,19 @@ function CreateCustomer({ agents, onDone }) {
 }
 
 function CustomerCard({ customer, plot, transactions, linked, agentName, onClose, onChanged, onPaymentAdded }) {
+  const [msg, setMsg] = useState("");
   const paid = transactions.reduce((s, t) => s + Number(t.amount), 0);
   const deletable = !plot && transactions.length === 0;
 
   async function remove() {
     const { data, error } = await supabase.from("customers").delete().eq("id", customer.id).select();
-    if (error || !data || data.length === 0) { alert(error?.message || "Delete didn't go through — this customer has history."); return; }
+    if (error || !data || data.length === 0) { setMsg(error?.message || "Delete didn't go through — this customer has history."); return; }
     onChanged();
   }
 
   return (
     <Modal title={customer.name} onClose={onClose}>
+      {msg && <p style={{ color: C.red, fontSize: 13, marginBottom: 12 }}>{msg}</p>}
       <KV k="Member ID" v={customer.member_code} />
       <KV k="Phone" v={customer.phone} />
       <KV k="Referred by" v={customer.agent_id ? agentName(customer.agent_id) : "—"} />

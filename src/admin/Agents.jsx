@@ -34,7 +34,7 @@ export default function Agents({ agents, customers, commissions, plots, users, a
 
 function ViewToggle({ active, onClick, children }) {
   return (
-    <button onClick={onClick}
+    <button onClick={onClick} className="cip-tap"
       style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${active ? C.gold : C.line}`,
         background: active ? C.goldSoft : "transparent", color: active ? C.goldLt : C.muted,
         fontWeight: active ? 600 : 400, cursor: "pointer", fontSize: 13, fontFamily: "'Hanken Grotesk',sans-serif" }}>
@@ -170,8 +170,8 @@ function AgentCard({ agent, agents, customers, commissions, users, onClose, onOp
         <div style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8, fontFamily: MONO }}>Agents referred ({downline.length})</div>
         {downline.length === 0 ? <p style={{ fontSize: 14, color: C.muted }}>None yet.</p> :
           downline.map((d) => (
-            <button key={d.id} onClick={() => onOpenOther(d)}
-              style={{ display: "block", background: "none", border: "none", color: C.gold, textDecoration: "underline", cursor: "pointer", fontSize: 14, padding: "4px 0", fontFamily: "'Hanken Grotesk',sans-serif" }}>
+            <button key={d.id} onClick={() => onOpenOther(d)} className="cip-tap"
+              style={{ display: "block", background: "none", border: "none", color: C.gold, textDecoration: "underline", cursor: "pointer", fontSize: 14, padding: "4px 0", fontFamily: "'Hanken Grotesk',sans-serif", borderRadius: 4 }}>
               {d.name} →
             </button>
           ))}
@@ -189,8 +189,6 @@ function AgentCard({ agent, agents, customers, commissions, users, onClose, onOp
     </Modal>
   );
 }
-
-const selStyle = { padding: "9px 12px", border: `1px solid ${C.line}`, borderRadius: 8, fontFamily: "'Hanken Grotesk',sans-serif", fontSize: 14, background: C.field, color: C.ink };
 
 function CreateAgent({ agents, onDone }) {
   const activeAgents = agents.filter((a) => !a.archived);
@@ -282,11 +280,10 @@ function CommissionsLedger({ commissions, plots, agentName }) {
     <Panel title="Commission ledger" right={
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", flexDirection: mobile ? "column" : "row" }}>
         <SearchBar value={q} onChange={setQ} placeholder="Search agent, plot…" />
-        <select value={kind} onChange={(e) => setKind(e.target.value)} style={{ ...selStyle, width: mobile ? "100%" : undefined }}>
-          <option value="">All types</option>
-          <option value="Direct">Direct</option>
-          <option value="Referral bonus">Referral bonus</option>
-        </select>
+        <div style={{ width: mobile ? "100%" : undefined }}>
+          <Select compact={!mobile} value={kind} onChange={setKind} placeholder="All types"
+            options={[{ v: "Direct", l: "Direct" }, { v: "Referral bonus", l: "Referral bonus" }]} />
+        </div>
       </div>
     }>
       <div style={{ fontSize: 13, color: C.muted, marginBottom: 12 }}>{rows.length} entries · total {fmt(total)}</div>

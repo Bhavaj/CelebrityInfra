@@ -59,6 +59,12 @@ style.textContent = `
   }
   select option{background:#121317;color:#e3e2e7}
 
+  /* Keyboard focus ring for buttons/links — gold, only shown for keyboard nav */
+  button:focus-visible, a:focus-visible{
+    outline:2px solid #f2ca50;outline-offset:2px;border-radius:4px;
+  }
+  button:focus:not(:focus-visible), a:focus:not(:focus-visible){outline:none}
+
   /* Quiet row hover for data tables — helps scanning without adding visual noise */
   table tbody tr{transition:background .12s ease}
   @media (hover:hover){ table tbody tr:hover td{background:rgba(227,226,231,.03)} }

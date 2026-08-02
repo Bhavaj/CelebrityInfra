@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { supabase } from "../supabase";
-import { C, MONO, Panel, Badge, Th, Td, Button, ConfirmButton, SearchBar, TableScroll, Empty, useIsMobile, RowCard, RowLine } from "../ui";
+import { C, MONO, Panel, Badge, Th, Td, Button, ConfirmButton, SearchBar, TableScroll, Empty, useIsMobile, RowCard, RowLine, Select } from "../ui";
 
 const STATUS = ["new", "site_visit", "negotiating", "booked", "lost"];
 const statusLabel = { new: "New", site_visit: "Site Visit", negotiating: "Negotiating", booked: "Booked", lost: "Lost" };
@@ -46,11 +46,10 @@ export default function Leads({ leads, onDone }) {
     <Panel title="Leads & Enquiries" right={
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", flexDirection: mobile ? "column" : "row" }}>
         <SearchBar value={q} onChange={setQ} placeholder="Search name, phone, email…" />
-        <select value={status} onChange={(e) => setStatus(e.target.value)}
-          style={{ padding: "9px 12px", border: `1px solid ${C.line}`, borderRadius: 8, fontFamily: "'Hanken Grotesk',sans-serif", fontSize: 14, background: C.field, color: C.ink, width: mobile ? "100%" : undefined }}>
-          <option value="">All stages</option>
-          {STATUS.map((s) => <option key={s} value={s}>{statusLabel[s]}</option>)}
-        </select>
+        <div style={{ width: mobile ? "100%" : undefined }}>
+          <Select compact={!mobile} value={status} onChange={setStatus} placeholder="All stages"
+            options={STATUS.map((s) => ({ v: s, l: statusLabel[s] }))} />
+        </div>
       </div>
     }>
       {msg && <p style={{ color: C.red, fontSize: 13, marginBottom: 10 }}>{msg}</p>}
@@ -69,10 +68,10 @@ export default function Leads({ leads, onDone }) {
               <RowLine label="Pref. date" value={l.preferred_date || "—"} />
               <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${C.line}` }}>
                 <div style={{ fontSize: 10.5, color: C.muted, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6, fontFamily: MONO }}>Stage</div>
-                <select value={l.status} onChange={(e) => setStatusFor(l, e.target.value)}
-                  style={{ width: "100%", padding: "10px 10px", border: `1px solid ${C.line}`, borderRadius: 8, fontFamily: "'Hanken Grotesk',sans-serif", fontSize: 14, background: C.field, color: C.ink, marginBottom: 10 }}>
-                  {STATUS.map((s) => <option key={s} value={s}>{statusLabel[s]}</option>)}
-                </select>
+                <div style={{ marginBottom: 10 }}>
+                  <Select value={l.status} onChange={(v) => setStatusFor(l, v)}
+                    options={STATUS.map((s) => ({ v: s, l: statusLabel[s] }))} />
+                </div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   {l.converted_customer_id
                     ? <span style={{ fontSize: 12, color: C.emeraldLt }}>✓ Converted</span>
@@ -100,10 +99,8 @@ export default function Leads({ leads, onDone }) {
                   <Td>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <Badge text={statusLabel[l.status]} color={statusColor[l.status]} />
-                      <select value={l.status} onChange={(e) => setStatusFor(l, e.target.value)}
-                        style={{ padding: "5px 8px", border: `1px solid ${C.line}`, borderRadius: 8, fontFamily: "'Hanken Grotesk',sans-serif", fontSize: 12, background: C.field, color: C.ink }}>
-                        {STATUS.map((s) => <option key={s} value={s}>{statusLabel[s]}</option>)}
-                      </select>
+                      <Select compact value={l.status} onChange={(v) => setStatusFor(l, v)}
+                        options={STATUS.map((s) => ({ v: s, l: statusLabel[s] }))} />
                     </div>
                   </Td>
                   <Td>

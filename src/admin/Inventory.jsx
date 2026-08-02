@@ -59,6 +59,7 @@ export default function Inventory({ plots, projectId, projects, customers, agent
 
 function PlotCard({ plot, customers, agents, transactions, onClose, onChanged, onPaymentAdded, onSold }) {
   const [selling, setSelling] = useState(false);
+  const [msg, setMsg] = useState("");
   const cust = customers.find((c) => c.id === plot.customer_id);
   const closer = agents.find((a) => a.id === plot.closed_by_agent_id);
   const tx = transactions.filter((t) => t.plot_id === plot.id).sort((a, b) => (a.date < b.date ? 1 : -1));
@@ -72,12 +73,13 @@ function PlotCard({ plot, customers, agents, transactions, onClose, onChanged, o
 
   async function remove() {
     const { data, error } = await supabase.from("plots").delete().eq("id", plot.id).select();
-    if (error || !data || data.length === 0) { alert(error?.message || "Delete didn't go through — this plot may have history."); return; }
+    if (error || !data || data.length === 0) { setMsg(error?.message || "Delete didn't go through — this plot may have history."); return; }
     onChanged();
   }
 
   return (
     <Modal title={`Plot ${plot.plot_no}`} onClose={onClose}>
+      {msg && <p style={{ color: C.red, fontSize: 13, marginBottom: 12 }}>{msg}</p>}
       <KV k="Status" v={<Badge text={plot.status} color={statusColor[plot.status]} />} />
       <KV k="Size" v={`${plot.size_sqyd} sq.yd`} />
       <KV k="Price" v={fmt(plot.price)} />
@@ -165,8 +167,8 @@ function SellPlotForm({ plot, customers, agents, onCancel, onSold }) {
         <>
           <Select label="Customer" value={customerId} placeholder="— Select customer —" onChange={setCustomerId}
             options={custList.map((c) => ({ v: c.id, l: c.name }))} />
-          <button onClick={() => setNewCust(true)} type="button"
-            style={{ background: "none", border: "none", color: C.gold, textDecoration: "underline", cursor: "pointer", fontSize: 13, padding: 0, marginBottom: 14, fontFamily: "'Hanken Grotesk',sans-serif" }}>
+          <button onClick={() => setNewCust(true)} type="button" className="cip-tap"
+            style={{ background: "none", border: "none", color: C.gold, textDecoration: "underline", cursor: "pointer", fontSize: 13, padding: "2px 0", marginBottom: 14, fontFamily: "'Hanken Grotesk',sans-serif", borderRadius: 4 }}>
             + New customer
           </button>
         </>

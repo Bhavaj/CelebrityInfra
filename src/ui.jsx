@@ -162,13 +162,25 @@ export function Button({ children, onClick, disabled, kind = "gold", size = "md"
   );
 }
 
-// Wraps a destructive action behind a native confirm() — matches the pattern
-// already used in LinkUsers.jsx, just avoids retyping the wrapper each time.
+// Destructive action gated behind an on-brand confirm dialog (replaces the
+// native window.confirm(), which broke out of the Enterprise Noir theme).
 export function ConfirmButton({ children, confirmText, onConfirm, kind = "danger", size = "sm", ...props }) {
+  const [open, setOpen] = useState(false);
   return (
-    <Button {...props} kind={kind} size={size} onClick={() => { if (window.confirm(confirmText)) onConfirm(); }}>
-      {children}
-    </Button>
+    <>
+      <Button {...props} kind={kind} size={size} onClick={() => setOpen(true)}>
+        {children}
+      </Button>
+      {open && (
+        <Modal title="Please confirm" onClose={() => setOpen(false)} maxWidth={420}>
+          <p style={{ margin: "0 0 22px", fontFamily: FONT, fontSize: 14.5, color: C.ink, lineHeight: 1.6 }}>{confirmText}</p>
+          <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+            <Button kind="ghostLight" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button kind="danger" onClick={() => { setOpen(false); onConfirm(); }}>Confirm</Button>
+          </div>
+        </Modal>
+      )}
+    </>
   );
 }
 
@@ -182,12 +194,13 @@ export function Field({ label, ...props }) {
   );
 }
 
-export function Select({ label, value, onChange, options, placeholder }) {
+// compact=true drops the block label/margin for inline use (filter bars, table cells)
+export function Select({ label, value, onChange, options, placeholder, compact }) {
   return (
-    <label style={{ display: "block", marginBottom: 14 }}>
+    <label style={{ display: "block", marginBottom: compact ? 0 : 14 }}>
       {label && <span style={{ display: "block", fontSize: 11, color: C.muted, marginBottom: 6, letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: MONO }}>{label}</span>}
       <select value={value} onChange={(e) => onChange(e.target.value)}
-        style={{ width: "100%", padding: "11px 13px", border: `1px solid ${C.line}`, borderRadius: R.sm, fontFamily: FONT, fontSize: 15, color: C.ink, background: C.field }}>
+        style={{ width: compact ? "auto" : "100%", padding: compact ? "8px 10px" : "11px 13px", border: `1px solid ${C.line}`, borderRadius: R.sm, fontFamily: FONT, fontSize: compact ? 13.5 : 15, color: C.ink, background: C.field, cursor: "pointer" }}>
         {placeholder && <option value="">{placeholder}</option>}
         {options.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
       </select>
