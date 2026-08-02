@@ -78,6 +78,7 @@ export default function Admin() {
 
         {loading && <p style={{ color: C.muted }}>Loading…</p>}
 
+        <div key={tab} className="cip-in-fast">
         {!loading && tab === "overview" && (
           pickableProjects.length === 0 ? (
             <Panel title="No projects yet">
@@ -119,6 +120,7 @@ export default function Admin() {
         {!loading && tab === "leads" && (
           <Leads leads={data.leads} onDone={load} />
         )}
+        </div>
       </div>
 
       {settingsOpen && (

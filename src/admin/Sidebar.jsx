@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { C, FONT, MONO, R, Icon, useIsMobile } from "../ui";
+import { C, FONT, MONO, R, Icon, useIsMobile, goldGradient } from "../ui";
 
 const NAV = [
   ["overview", "Overview", "dashboard"],
@@ -21,19 +21,27 @@ export default function Sidebar({ active, onSelect, onOpenSettings }) {
 
   const activeLabel = NAV.find(([k]) => k === active)?.[1] ?? "";
   const select = (k) => { onSelect(k); setOpen(false); };
+  const activeIndex = Math.max(0, NAV.findIndex(([k]) => k === active));
+  const ITEM_H = 44, ITEM_GAP = 4;
 
   const navList = (
-    <nav style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+    <nav style={{ position: "relative", display: "flex", flexDirection: "column", gap: ITEM_GAP }}>
+      {/* Sliding active-item pill — glides between nav rows instead of snapping */}
+      <div aria-hidden="true" style={{
+        position: "absolute", top: 0, left: 0, right: 0, height: ITEM_H, borderRadius: R.sm,
+        background: goldGradient, boxShadow: "0 6px 18px -6px rgba(212,175,55,.5)",
+        transform: `translateY(${activeIndex * (ITEM_H + ITEM_GAP)}px)`,
+        transition: "transform .38s cubic-bezier(.16,1,.3,1)", zIndex: 0,
+      }} />
       {NAV.map(([k, label, icon]) => (
-        <button key={k} onClick={() => select(k)}
-          className={active === k ? "cip-glow cip-tap" : "cip-tap"}
+        <button key={k} onClick={() => select(k)} className="cip-tap"
           style={{
-            textAlign: "left", padding: "13px 14px", borderRadius: R.sm, fontFamily: MONO,
+            position: "relative", zIndex: 1, height: ITEM_H,
+            textAlign: "left", padding: "0 14px", borderRadius: R.sm, fontFamily: MONO,
             fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer", border: "none",
-            display: "flex", alignItems: "center", gap: 10,
-            background: active === k ? C.goldLt : "transparent",
+            display: "flex", alignItems: "center", gap: 10, background: "transparent",
             color: active === k ? "#1A1200" : C.muted, fontWeight: active === k ? 700 : 500,
-            transition: "background .15s ease, color .15s ease",
+            transition: "color .2s ease",
           }}>
           <Icon name={icon} size={18} style={{ fontVariationSettings: active === k ? "'FILL' 1" : undefined }} />
           {label}

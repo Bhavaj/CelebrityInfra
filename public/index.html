@@ -108,6 +108,18 @@
     content:"";position:absolute;inset:0;pointer-events:none;
     background:radial-gradient(480px circle at var(--mx) var(--my), rgba(201,162,39,.11), transparent 62%);
   }
+  /* Aurora — two slow-drifting gradient blobs behind the hero content, the
+     first "wow" a visitor sees. Pure CSS, GPU-cheap (transform-only). */
+  .aurora{position:absolute;inset:-10% -10% auto -10%;height:120%;pointer-events:none;z-index:0;overflow:hidden}
+  .aurora span{position:absolute;border-radius:50%;filter:blur(70px);opacity:.5;mix-blend-mode:screen}
+  .aurora span.a1{width:46vw;height:46vw;left:-8vw;top:4vh;background:radial-gradient(circle,rgba(201,162,39,.55),transparent 70%);animation:auroraDrift1 22s ease-in-out infinite}
+  .aurora span.a2{width:38vw;height:38vw;right:-6vw;top:16vh;background:radial-gradient(circle,rgba(47,191,143,.4),transparent 70%);animation:auroraDrift2 26s ease-in-out infinite}
+  .aurora span.a3{width:30vw;height:30vw;left:32vw;bottom:-6vh;background:radial-gradient(circle,rgba(232,200,116,.28),transparent 70%);animation:auroraDrift3 30s ease-in-out infinite}
+  @keyframes auroraDrift1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(6vw,4vh) scale(1.12)}}
+  @keyframes auroraDrift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-5vw,3vh) scale(1.08)}}
+  @keyframes auroraDrift3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(3vw,-4vh) scale(1.15)}}
+  @media(prefers-reduced-motion:reduce){.aurora span{animation:none!important}}
+  .hero > *{position:relative;z-index:1}
   .hero-noise{position:absolute;inset:0;opacity:.5;pointer-events:none;mix-blend-mode:overlay;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
   }
@@ -127,12 +139,21 @@
   .hero .loc{margin-top:14px;font-size:14px;letter-spacing:2px;color:rgba(243,240,232,.5);opacity:0}
   .hero-cta{margin-top:46px;display:flex;gap:18px;flex-wrap:wrap;justify-content:center;opacity:0}
   .btn-gold{
+    position:relative;overflow:hidden;
     background:linear-gradient(180deg,var(--gold-lt),var(--gold));
     color:#1A1200;border:none;padding:16px 40px;border-radius:2px;
     font-family:'Jost';font-size:13px;letter-spacing:2px;font-weight:600;text-transform:uppercase;
     cursor:pointer;transition:transform .25s,box-shadow .25s;box-shadow:0 8px 30px rgba(201,162,39,.22);
   }
   .btn-gold:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(201,162,39,.36)}
+  /* Light sweep across gold buttons on hover */
+  .btn-gold::after{
+    content:"";position:absolute;top:0;bottom:0;left:-60%;width:40%;
+    background:linear-gradient(115deg,transparent,rgba(255,255,255,.55),transparent);
+    transform:skewX(-20deg);transition:left .6s cubic-bezier(.16,1,.3,1);
+  }
+  .btn-gold:hover::after{left:130%}
+  @media(prefers-reduced-motion:reduce){.btn-gold::after{transition:none;display:none}}
   .btn-ghost{
     background:transparent;color:var(--ivory);border:1px solid rgba(243,240,232,.3);
     padding:16px 40px;border-radius:2px;font-family:'Jost';font-size:13px;letter-spacing:2px;
@@ -141,6 +162,14 @@
   .btn-ghost:hover{border-color:var(--gold-lt);color:var(--gold-lt)}
   .scroll-hint{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);color:rgba(243,240,232,.4);font-size:11px;letter-spacing:3px;opacity:0;animation:fadeUp 1s ease 1.8s forwards}
   .scroll-hint .arrow{display:block;margin:8px auto 0;width:1px;height:26px;background:linear-gradient(var(--gold),transparent);animation:bob 2s ease-in-out infinite}
+
+  /* ---------- MARQUEE ---------- */
+  .marquee{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:rgba(24,29,39,.4);overflow:hidden;padding:18px 0}
+  .marquee-track{display:flex;width:max-content;gap:56px;animation:marqueeScroll 34s linear infinite}
+  .marquee-track span{display:flex;align-items:center;gap:10px;font-family:'Cormorant SC',serif;font-size:15px;letter-spacing:2px;color:rgba(243,240,232,.55);white-space:nowrap;text-transform:uppercase}
+  .marquee-track span::before{content:"";width:5px;height:5px;background:var(--gold);transform:rotate(45deg);flex:none}
+  @keyframes marqueeScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  @media(prefers-reduced-motion:reduce){.marquee-track{animation:none;flex-wrap:wrap}}
 
   @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
   @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
@@ -160,12 +189,14 @@
   .offer{background:linear-gradient(180deg, rgba(24,29,39,.55) 0%, rgba(8,9,13,0) 100%);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
   .price-wrap{display:grid;grid-template-columns:1fr 1.15fr;gap:60px;max-width:1100px;margin:0 auto;align-items:center}
   .price-card{
+    --rx:0deg;--ry:0deg;
     border:1px solid var(--line-gold);padding:52px 44px;text-align:center;position:relative;border-radius:4px;
     background:linear-gradient(180deg,rgba(201,162,39,.07),rgba(18,21,28,.4));
-    backdrop-filter:blur(8px);
-    transition:box-shadow .3s, transform .3s;
+    backdrop-filter:blur(8px);transform-style:preserve-3d;perspective:800px;
+    transform:rotateX(var(--rx)) rotateY(var(--ry));
+    transition:box-shadow .3s, transform .5s cubic-bezier(.16,1,.3,1);
   }
-  .price-card:hover{box-shadow:0 20px 50px rgba(0,0,0,.4), 0 0 0 1px var(--line-gold);transform:translateY(-3px)}
+  .price-card:hover{box-shadow:0 20px 50px rgba(0,0,0,.4), 0 0 0 1px var(--line-gold)}
   .price-card .corner{position:absolute;width:16px;height:16px;border:1px solid var(--gold)}
   .price-card .corner.a{top:-1px;left:-1px;border-right:0;border-bottom:0}
   .price-card .corner.b{top:-1px;right:-1px;border-left:0;border-bottom:0}
@@ -185,9 +216,11 @@
 
   /* ---------- WHY ---------- */
   .why-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;max-width:1100px;margin:0 auto;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
-  .why-cell{padding:46px 34px;background:var(--surface);transition:background .3s}
-  .why-cell:hover{background:var(--surface-2)}
-  .why-cell .icon{width:44px;height:44px;border-radius:50%;border:1px solid var(--line-gold);display:flex;align-items:center;justify-content:center;margin-bottom:22px}
+  .why-cell{padding:46px 34px;background:var(--surface);transition:background .3s,transform .35s cubic-bezier(.16,1,.3,1);position:relative;z-index:0}
+  .why-cell:hover{background:var(--surface-2);transform:translateY(-6px) scale(1.015);z-index:1;box-shadow:0 20px 40px -18px rgba(0,0,0,.5)}
+  .why-cell .icon{width:44px;height:44px;border-radius:50%;border:1px solid var(--line-gold);display:flex;align-items:center;justify-content:center;margin-bottom:22px;transition:transform .35s cubic-bezier(.16,1,.3,1),border-color .35s}
+  .why-cell:hover .icon{transform:scale(1.12) rotate(-6deg);border-color:var(--gold)}
+  @media(prefers-reduced-motion:reduce){.why-cell,.why-cell .icon{transition:none!important;transform:none!important}}
   .why-cell .icon svg{width:20px;height:20px;stroke:var(--gold-lt);fill:none;stroke-width:1.5}
   .why-cell .idx{font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--gold);letter-spacing:2px;margin-bottom:10px}
   .why-cell h3{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:26px;color:var(--ivory);margin-bottom:12px}
@@ -300,6 +333,7 @@
 </nav>
 
 <header class="hero" id="heroSection">
+  <div class="aurora"><span class="a1"></span><span class="a2"></span><span class="a3"></span></div>
   <div class="hero-noise"></div>
   <div class="frame tl"></div><div class="frame tr"></div><div class="frame bl"></div><div class="frame br"></div>
   <div class="hero-badge rise d1"><span class="pip"></span>Grand Venture Opening &middot; 12 July 2026</div>
@@ -313,6 +347,13 @@
   </div>
   <div class="scroll-hint">EXPLORE<span class="arrow"></span></div>
 </header>
+
+<div class="marquee" aria-hidden="true">
+  <div class="marquee-track">
+    <span>Clear &amp; Ready Titles</span><span>Gated Community</span><span>Easy EMI</span><span>Free Resort Membership</span><span>Appreciating Corridor</span><span>Narayankhed, Telangana</span>
+    <span>Clear &amp; Ready Titles</span><span>Gated Community</span><span>Easy EMI</span><span>Free Resort Membership</span><span>Appreciating Corridor</span><span>Narayankhed, Telangana</span>
+  </div>
+</div>
 
 <section id="venture">
   <div class="sec-head reveal">
@@ -491,6 +532,21 @@
       const r=hero.getBoundingClientRect();
       hero.style.setProperty('--mx',(e.clientX-r.left)+'px');
       hero.style.setProperty('--my',(e.clientY-r.top)+'px');
+    });
+  }
+
+  // Magnetic 3D tilt on the price card — follows the cursor, springs back on leave
+  const priceCard=document.querySelector('.price-card');
+  if(priceCard && matchMedia('(pointer:fine)').matches && !matchMedia('(prefers-reduced-motion: reduce)').matches){
+    priceCard.addEventListener('pointermove',(e)=>{
+      const r=priceCard.getBoundingClientRect();
+      const px=(e.clientX-r.left)/r.width-0.5, py=(e.clientY-r.top)/r.height-0.5;
+      priceCard.style.setProperty('--ry',(px*10)+'deg');
+      priceCard.style.setProperty('--rx',(-py*10)+'deg');
+    });
+    priceCard.addEventListener('pointerleave',()=>{
+      priceCard.style.setProperty('--rx','0deg');
+      priceCard.style.setProperty('--ry','0deg');
     });
   }
 
