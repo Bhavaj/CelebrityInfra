@@ -1,18 +1,20 @@
 import React, { useEffect, useState } from "react";
 import logoUrl from "./assets/logo.jpg";
 
-// "Enterprise Noir" — pure-black canvas, sharp/square edges, glass-panel
-// surfaces, gold as the sole accent. Display type is Hanken Grotesk; all
+// "Editorial Charcoal" — architectural charcoal canvas, restrained ivory
+// type, emerald as the sole primary accent (warm amber + teal reserved for
+// secondary status semantics). Display type is Hanken Grotesk; all
 // uppercase/tracked labels (buttons, table headers, chips, nav) run in
-// JetBrains Mono, matching the Stitch "Enterprise Noir" screens.
+// JetBrains Mono. Token names (gold/goldLt/emerald/…) are kept stable even
+// though the hues moved, to avoid a sweeping rename across every screen.
 export const C = {
-  bg: "#000000", panel: "#121317", panel2: "#1a1b1f", field: "#1e1f23",
-  ink: "#e3e2e7", muted: "#99907c", faint: "#6b6355",
-  navy: "#101A33", navy2: "#182848", steel: "#7C9CC9",
-  gold: "#d4af37", goldLt: "#f2ca50", goldDeep: "#8C6C1E", goldSoft: "rgba(242,202,80,.12)",
-  emerald: "#2FBF8F", emeraldLt: "#5FE0B5", emeraldDeep: "#154B3B", emeraldSoft: "rgba(47,191,143,.14)",
-  line: "#2C2C2E", lineGold: "rgba(242,202,80,.35)",
-  green: "#34C795", red: "#E2685A",
+  bg: "#101314", panel: "#171b1a", panel2: "#1c211f", field: "#1a201f",
+  ink: "#F4F1EA", muted: "#9aa39e", faint: "#5f6864",
+  navy: "#101A33", navy2: "#182848", steel: "#7C96A8",
+  gold: "#10B981", goldLt: "#34D399", goldDeep: "#047857", goldSoft: "rgba(16,185,129,.14)",
+  emerald: "#D9A441", emeraldLt: "#F0C368", emeraldDeep: "#8A6420", emeraldSoft: "rgba(217,164,65,.14)",
+  line: "#262B29", lineGold: "rgba(16,185,129,.35)",
+  green: "#2DD4BF", red: "#E2685A",
 };
 
 export const FONT = "'Hanken Grotesk',sans-serif";
@@ -39,6 +41,30 @@ export function useIsMobile(breakpoint = 640) {
     return () => (mql.removeEventListener ? mql.removeEventListener("change", onChange) : mql.removeListener(onChange));
   }, [query]);
   return isMobile;
+}
+
+// Pointer-follow 3D tilt — spread the returned handlers onto any element
+// carrying the "cip-tilt" class (see main.jsx) for a magnetic, spring-back
+// perspective effect. Strength is in degrees of max rotation.
+export function useTilt(strength = 7) {
+  return {
+    onPointerMove: (e) => {
+      if (e.pointerType !== "mouse") return;
+      const el = e.currentTarget;
+      const r = el.getBoundingClientRect();
+      const px = (e.clientX - r.left) / r.width - 0.5;
+      const py = (e.clientY - r.top) / r.height - 0.5;
+      el.style.setProperty("--ry", (px * strength).toFixed(2) + "deg");
+      el.style.setProperty("--rx", (-py * strength).toFixed(2) + "deg");
+      el.style.setProperty("--tilt-scale", "1.012");
+    },
+    onPointerLeave: (e) => {
+      const el = e.currentTarget;
+      el.style.setProperty("--rx", "0deg");
+      el.style.setProperty("--ry", "0deg");
+      el.style.setProperty("--tilt-scale", "1");
+    },
+  };
 }
 
 // Material Symbols glyph — used throughout nav/chrome to match the Enterprise Noir icon language.
@@ -77,7 +103,7 @@ export function Crest({ size = 34 }) {
       style={{
         width: size, height: size, flex: "none", borderRadius: "50%", overflow: "hidden",
         background: "#F3EFE2", border: `1.5px solid ${C.gold}`,
-        boxShadow: `0 0 ${Math.round(size * 0.4)}px rgba(212,175,55,.35)`,
+        boxShadow: `0 0 ${Math.round(size * 0.4)}px rgba(16,185,129,.35)`,
         display: "flex", alignItems: "center", justifyContent: "center",
       }}
     >
@@ -89,12 +115,13 @@ export function Crest({ size = 34 }) {
   );
 }
 
-const glass = { background: "rgba(18,19,23,.7)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)" };
+const glass = { background: "rgba(23,27,26,.7)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)" };
 
 export function Panel({ title, children, right }) {
   const mobile = useIsMobile();
+  const tilt = useTilt(2.5);
   return (
-    <div className="cip-card cip-in" style={{ ...glass, border: `1px solid ${C.line}`, borderRadius: R.lg, padding: mobile ? 16 : 24, marginBottom: mobile ? 16 : 20, boxShadow: "0 12px 32px -16px rgba(0,0,0,.5)" }}>
+    <div className="cip-card cip-in cip-tilt" {...tilt} style={{ ...glass, border: `1px solid ${C.line}`, borderRadius: R.lg, padding: mobile ? 16 : 24, marginBottom: mobile ? 16 : 20, boxShadow: "0 12px 32px -16px rgba(0,0,0,.5)" }}>
       {title && (
         <div style={{ display: "flex", alignItems: mobile ? "flex-start" : "center", flexDirection: mobile ? "column" : "row", gap: mobile ? 12 : 0, marginBottom: 18, paddingBottom: 16, borderBottom: `1px solid ${C.line}` }}>
           <h3 style={{ margin: 0, fontFamily: FONT, fontWeight: 700, fontSize: 20, textTransform: "uppercase", letterSpacing: "-0.01em", color: C.ink }}>{title}</h3>
@@ -109,8 +136,9 @@ export function Panel({ title, children, right }) {
 export function Stat({ label, value, accent }) {
   const mobile = useIsMobile();
   const barColor = accent || C.gold;
+  const tilt = useTilt(10);
   return (
-    <div className="cip-card cip-card-h cip-in-fast" style={{ ...glass, position: "relative", overflow: "hidden", border: `1px solid ${C.line}`, borderRadius: R.md, padding: "18px 20px", flex: mobile ? "1 1 100%" : "1 1 160px" }}>
+    <div className="cip-card cip-card-h cip-in-fast cip-tilt" {...tilt} style={{ ...glass, position: "relative", overflow: "hidden", border: `1px solid ${C.line}`, borderRadius: R.md, padding: "18px 20px", flex: mobile ? "1 1 100%" : "1 1 160px" }}>
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, transparent, ${barColor}, transparent)` }} />
       <div style={{ fontSize: 11, color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: MONO }}>{label}</div>
       <div style={{ fontFamily: FONT, fontSize: 32, fontWeight: 700, marginTop: 6, lineHeight: 1.1, letterSpacing: "-0.02em", color: accent || C.ink }}>{value}</div>
@@ -144,7 +172,7 @@ export function Td({ children, right, bold }) {
 // chips ("Call Client", "Log Note") in the Noir screens, just lower-emphasis.
 export function Button({ children, onClick, disabled, kind = "gold", size = "md", type = "button" }) {
   const styles = kind === "gold"
-    ? { background: goldGradient, color: "#1A1200", border: "none", fontWeight: 700, boxShadow: "0 6px 20px -4px rgba(212,175,55,.45)" }
+    ? { background: goldGradient, color: "#062B1E", border: "none", fontWeight: 700, boxShadow: "0 6px 20px -4px rgba(16,185,129,.45)" }
     : kind === "ghostLight"
     ? { background: "transparent", color: C.ink, border: `1px solid ${C.line}`, fontWeight: 600 }
     : kind === "danger"
@@ -247,8 +275,9 @@ export function SearchBar({ value, onChange, placeholder }) {
 // Mobile stand-in for a table row — a tappable bordered card used when a
 // data table's columns would otherwise force horizontal scrolling on phones.
 export function RowCard({ children, onClick }) {
+  const tilt = useTilt(4);
   return (
-    <div onClick={onClick} className="cip-card cip-card-h cip-tap cip-in-fast"
+    <div onClick={onClick} className="cip-card cip-card-h cip-tap cip-in-fast cip-tilt" {...tilt}
       style={{ background: C.panel, border: `1px solid ${C.line}`, borderRadius: R.md, padding: "13px 14px", marginBottom: 8, cursor: onClick ? "pointer" : "default" }}>
       {children}
     </div>

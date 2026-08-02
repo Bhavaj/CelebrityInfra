@@ -29,7 +29,7 @@ export default function Sidebar({ active, onSelect, onOpenSettings }) {
       {/* Sliding active-item pill — glides between nav rows instead of snapping */}
       <div aria-hidden="true" style={{
         position: "absolute", top: 0, left: 0, right: 0, height: ITEM_H, borderRadius: R.sm,
-        background: goldGradient, boxShadow: "0 6px 18px -6px rgba(212,175,55,.5)",
+        background: goldGradient, boxShadow: "0 6px 18px -6px rgba(16,185,129,.5)",
         transform: `translateY(${activeIndex * (ITEM_H + ITEM_GAP)}px)`,
         transition: "transform .38s cubic-bezier(.16,1,.3,1)", zIndex: 0,
       }} />
@@ -40,7 +40,7 @@ export default function Sidebar({ active, onSelect, onOpenSettings }) {
             textAlign: "left", padding: "0 14px", borderRadius: R.sm, fontFamily: MONO,
             fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer", border: "none",
             display: "flex", alignItems: "center", gap: 10, background: "transparent",
-            color: active === k ? "#1A1200" : C.muted, fontWeight: active === k ? 700 : 500,
+            color: active === k ? "#062B1E" : C.muted, fontWeight: active === k ? 700 : 500,
             transition: "color .2s ease",
           }}>
           <Icon name={icon} size={18} style={{ fontVariationSettings: active === k ? "'FILL' 1" : undefined }} />

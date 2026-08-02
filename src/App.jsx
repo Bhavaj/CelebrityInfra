@@ -89,7 +89,7 @@ export default function App() {
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: FONT }}>
-      <div style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(18,19,23,.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderBottom: `1px solid ${C.line}`, boxShadow: "0 1px 0 rgba(242,202,80,.15)", paddingTop: "env(safe-area-inset-top)" }} className="cip-in-fade">
+      <div style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(23,27,26,.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderBottom: `1px solid ${C.line}`, boxShadow: "0 1px 0 rgba(16,185,129,.15)", paddingTop: "env(safe-area-inset-top)" }} className="cip-in-fade">
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
           <Crest size={32} />
           {!mobile && <div style={{ fontFamily: MONO, fontSize: 15, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: C.ink }}>Celebrity's Park-1</div>}
