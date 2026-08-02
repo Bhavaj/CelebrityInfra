@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "./supabase";
-import { C, MONO, fmt, Panel, Stat, Modal, Select, useIsMobile } from "./ui";
+import { C, DISPLAY, FONT, fmt, Panel, Stat, Modal, Select, Icon, useIsMobile } from "./ui";
 import Sidebar from "./admin/Sidebar";
 import Inventory from "./admin/Inventory";
 import Customers from "./admin/Customers";
 import Agents from "./admin/Agents";
 import Leads from "./admin/Leads";
 import LinkUsers from "./LinkUsers";
+
+const TAB_LABEL = { overview: "Overview", inventory: "Plots", customers: "Customers", agents: "Agents", leads: "Leads" };
 
 export default function Admin() {
   const mobile = useIsMobile(900);
@@ -60,15 +62,25 @@ export default function Admin() {
   const newLeadsCount = data.leads.filter((l) => l.status === "new").length;
 
   const onSold = () => { load(); setTab("agents"); setAgentsView("commissions"); };
+  const pageLabel = TAB_LABEL[tab] || "Overview";
 
   return (
     <div style={{ display: "flex", flexDirection: mobile ? "column" : "row", alignItems: mobile ? "stretch" : "flex-start", gap: mobile ? 0 : 20 }}>
       <Sidebar active={tab} onSelect={setTab} onOpenSettings={() => setSettingsOpen(true)} />
 
       <div style={{ flex: 1, minWidth: 0 }}>
+        {!mobile && (
+          <div className="cip-in-fade" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20, paddingBottom: 16, borderBottom: `1px solid ${C.line}` }}>
+            <Icon name="widgets" size={16} style={{ color: C.faint }} />
+            <span style={{ fontFamily: FONT, fontSize: 13.5, color: C.faint }}>Admin</span>
+            <Icon name="chevron_right" size={15} style={{ color: C.faint }} />
+            <span style={{ fontFamily: DISPLAY, fontSize: 15, fontWeight: 600, color: C.ink }}>{pageLabel}</span>
+          </div>
+        )}
+
         {(tab === "overview" || tab === "inventory") && pickableProjects.length > 0 && (
           <div style={{ display: "flex", alignItems: mobile ? "stretch" : "center", flexDirection: mobile ? "column" : "row", gap: mobile ? 6 : 12, marginBottom: 18 }}>
-            <span style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: MONO }}>Active project</span>
+            <span style={{ fontSize: 13, color: C.muted, fontFamily: FONT, fontWeight: 500 }}>Active project</span>
             <div style={{ minWidth: mobile ? "100%" : 220 }}>
               <Select value={activeProject} onChange={setActiveProject}
                 options={pickableProjects.map((p) => ({ v: p.id, l: p.name }))} />
@@ -86,15 +98,15 @@ export default function Admin() {
             </Panel>
           ) : (
             <>
-              <h2 style={{ fontFamily: "'Hanken Grotesk',serif", fontWeight: 600, fontSize: 28, color: C.ink, margin: "0 0 16px" }}>{activeName}</h2>
+              <h2 style={{ fontFamily: DISPLAY, fontWeight: 600, fontSize: 26, color: C.ink, margin: "0 0 16px" }}>{activeName}</h2>
               <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 18 }}>
-                <Stat label="Revenue booked" value={fmt(revenue)} accent={C.steel} />
-                <Stat label="Collected" value={fmt(collected)} accent={C.green} />
-                <Stat label="Commission payout" value={fmt(payout)} accent={C.gold} />
-                <Stat label="Plots sold" value={`${sold.length}/${projectPlots.length}`} />
-                <Stat label="Customers" value={projectCustomerIds.size} />
-                <Stat label="Agents" value={data.agents.length} />
-                <Stat label="New leads" value={newLeadsCount} accent={newLeadsCount > 0 ? C.gold : undefined} />
+                <Stat label="Revenue booked" value={fmt(revenue)} accent={C.steel} icon="payments" />
+                <Stat label="Collected" value={fmt(collected)} accent={C.green} icon="account_balance_wallet" />
+                <Stat label="Commission payout" value={fmt(payout)} accent={C.gold} icon="percent" />
+                <Stat label="Plots sold" value={`${sold.length}/${projectPlots.length}`} icon="domain" />
+                <Stat label="Customers" value={projectCustomerIds.size} icon="group" />
+                <Stat label="Agents" value={data.agents.length} icon="handshake" />
+                <Stat label="New leads" value={newLeadsCount} accent={newLeadsCount > 0 ? C.gold : undefined} icon="campaign" />
               </div>
             </>
           )

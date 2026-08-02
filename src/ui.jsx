@@ -3,21 +3,24 @@ import logoUrl from "./assets/logo.jpg";
 
 // "Editorial Charcoal" — architectural charcoal canvas, restrained ivory
 // type, emerald as the sole primary accent (warm amber + teal reserved for
-// secondary status semantics). Display type is Hanken Grotesk; all
-// uppercase/tracked labels (buttons, table headers, chips, nav) run in
-// JetBrains Mono. Token names (gold/goldLt/emerald/…) are kept stable even
-// though the hues moved, to avoid a sweeping rename across every screen.
+// secondary status semantics). Display type is Space Grotesk (headings,
+// numbers), body/UI copy runs in Inter, JetBrains Mono is reserved for
+// truly tabular/code-like content (member codes, ledger figures) instead
+// of being the default voice for every button and label. Token names
+// (gold/goldLt/emerald/…) are kept stable even though the hues moved, to
+// avoid a sweeping rename across every screen.
 export const C = {
-  bg: "#101314", panel: "#171b1a", panel2: "#1c211f", field: "#1a201f",
-  ink: "#F4F1EA", muted: "#9aa39e", faint: "#5f6864",
+  bg: "#0F1211", panel: "#161B19", panel2: "#1B211F", field: "#1E2624",
+  ink: "#F5F2EA", muted: "#A7B0AB", faint: "#6B7470",
   navy: "#101A33", navy2: "#182848", steel: "#7C96A8",
   gold: "#10B981", goldLt: "#34D399", goldDeep: "#047857", goldSoft: "rgba(16,185,129,.14)",
   emerald: "#D9A441", emeraldLt: "#F0C368", emeraldDeep: "#8A6420", emeraldSoft: "rgba(217,164,65,.14)",
-  line: "#262B29", lineGold: "rgba(16,185,129,.35)",
+  line: "#2E3835", lineGold: "rgba(16,185,129,.35)",
   green: "#2DD4BF", red: "#E2685A",
 };
 
-export const FONT = "'Hanken Grotesk',sans-serif";
+export const DISPLAY = "'Space Grotesk',sans-serif";
+export const FONT = "'Inter',sans-serif";
 export const MONO = "'JetBrains Mono',monospace";
 
 // Shared corner radii — a soft, modern scale replacing the old sharp-edged look.
@@ -67,7 +70,7 @@ export function useTilt(strength = 7) {
   };
 }
 
-// Material Symbols glyph — used throughout nav/chrome to match the Enterprise Noir icon language.
+// Material Symbols glyph — used throughout nav/chrome to match the icon language.
 export function Icon({ name, size = 20, style }) {
   return (
     <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: size, lineHeight: 1, ...style }}>
@@ -115,16 +118,16 @@ export function Crest({ size = 34 }) {
   );
 }
 
-const glass = { background: "rgba(23,27,26,.7)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)" };
+const glass = { background: "rgba(22,27,25,.7)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)" };
 
 export function Panel({ title, children, right }) {
   const mobile = useIsMobile();
   const tilt = useTilt(2.5);
   return (
-    <div className="cip-card cip-in cip-tilt" {...tilt} style={{ ...glass, border: `1px solid ${C.line}`, borderRadius: R.lg, padding: mobile ? 16 : 24, marginBottom: mobile ? 16 : 20, boxShadow: "0 12px 32px -16px rgba(0,0,0,.5)" }}>
+    <div className="cip-card cip-in cip-tilt" {...tilt} style={{ ...glass, border: `1px solid ${C.line}`, borderRadius: R.xl, padding: mobile ? 16 : 24, marginBottom: mobile ? 16 : 20, boxShadow: "0 16px 40px -20px rgba(0,0,0,.6)" }}>
       {title && (
         <div style={{ display: "flex", alignItems: mobile ? "flex-start" : "center", flexDirection: mobile ? "column" : "row", gap: mobile ? 12 : 0, marginBottom: 18, paddingBottom: 16, borderBottom: `1px solid ${C.line}` }}>
-          <h3 style={{ margin: 0, fontFamily: FONT, fontWeight: 700, fontSize: 20, textTransform: "uppercase", letterSpacing: "-0.01em", color: C.ink }}>{title}</h3>
+          <h3 style={{ margin: 0, fontFamily: DISPLAY, fontWeight: 600, fontSize: 19, letterSpacing: "-0.01em", color: C.ink }}>{title}</h3>
           {right && <div style={{ marginLeft: mobile ? 0 : "auto", width: mobile ? "100%" : "auto" }}>{right}</div>}
         </div>
       )}
@@ -133,15 +136,22 @@ export function Panel({ title, children, right }) {
   );
 }
 
-export function Stat({ label, value, accent }) {
+// Bento-style stat tile — icon chip, big Space Grotesk number, quiet label.
+// `icon` is optional so existing call sites keep working unchanged.
+export function Stat({ label, value, accent, icon }) {
   const mobile = useIsMobile();
   const barColor = accent || C.gold;
-  const tilt = useTilt(10);
+  const tilt = useTilt(9);
   return (
-    <div className="cip-card cip-card-h cip-in-fast cip-tilt" {...tilt} style={{ ...glass, position: "relative", overflow: "hidden", border: `1px solid ${C.line}`, borderRadius: R.md, padding: "18px 20px", flex: mobile ? "1 1 100%" : "1 1 160px" }}>
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, transparent, ${barColor}, transparent)` }} />
-      <div style={{ fontSize: 11, color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: MONO }}>{label}</div>
-      <div style={{ fontFamily: FONT, fontSize: 32, fontWeight: 700, marginTop: 6, lineHeight: 1.1, letterSpacing: "-0.02em", color: accent || C.ink }}>{value}</div>
+    <div className="cip-card cip-card-h cip-in-fast cip-tilt" {...tilt} style={{ ...glass, position: "relative", overflow: "hidden", border: `1px solid ${C.line}`, borderRadius: R.lg, padding: "18px 20px", flex: mobile ? "1 1 100%" : "1 1 170px" }}>
+      <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 3, background: barColor, opacity: .8 }} />
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+        <div style={{ width: 30, height: 30, borderRadius: R.sm, background: `${barColor}1f`, border: `1px solid ${barColor}55`, display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
+          <Icon name={icon || "monitoring"} size={16} style={{ color: barColor }} />
+        </div>
+        <div style={{ fontSize: 12, color: C.muted, fontFamily: FONT, fontWeight: 500 }}>{label}</div>
+      </div>
+      <div style={{ fontFamily: DISPLAY, fontSize: 30, fontWeight: 700, lineHeight: 1.1, letterSpacing: "-0.02em", color: accent || C.ink }}>{value}</div>
     </div>
   );
 }
@@ -150,8 +160,8 @@ export function Stat({ label, value, accent }) {
 export function Badge({ text, color }) {
   return (
     <span style={{
-      fontSize: 10, fontWeight: 700, color, background: `${color}1f`, border: `1px solid ${color}66`,
-      padding: "4px 10px", borderRadius: R.pill, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: MONO,
+      fontSize: 11, fontWeight: 600, color, background: `${color}1f`, border: `1px solid ${color}55`,
+      padding: "3px 10px", borderRadius: R.pill, fontFamily: FONT, letterSpacing: "0.01em",
     }}>
       {text}
     </span>
@@ -159,39 +169,38 @@ export function Badge({ text, color }) {
 }
 
 export function Th({ children, right }) {
-  return <th style={{ textAlign: right ? "right" : "left", fontSize: 10.5, letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 500, color: C.muted, padding: "10px 12px", borderBottom: `1px solid ${C.line}`, whiteSpace: "nowrap", fontFamily: MONO }}>{children}</th>;
+  return <th style={{ textAlign: right ? "right" : "left", fontSize: 12, fontWeight: 600, color: C.muted, padding: "10px 12px", borderBottom: `1px solid ${C.line}`, whiteSpace: "nowrap", fontFamily: FONT }}>{children}</th>;
 }
 export function Td({ children, right, bold }) {
   return <td style={{ textAlign: right ? "right" : "left", padding: "11px 12px", borderBottom: `1px solid ${C.line}`, fontSize: 14, fontWeight: bold ? 600 : 400, color: C.ink, whiteSpace: "nowrap", fontFamily: FONT }}>{children}</td>;
 }
 
-// size="md" (default) is the loud, letter-spaced CTA treatment — reserve it for
-// the one or two primary actions on a screen (Sign in, Create project, Confirm sale).
-// size="sm" is a quiet control for row/inline actions in tables and modals
-// (Archive, Delete, Convert…) — still mono/uppercase, matching the small action
-// chips ("Call Client", "Log Note") in the Noir screens, just lower-emphasis.
+// size="md" (default) is the primary CTA treatment — reserve it for the one
+// or two primary actions on a screen (Sign in, Create project, Confirm sale).
+// size="sm" is a quiet control for row/inline actions in tables and modals.
+// Normal-case, medium-weight Inter — not the old all-caps mono chip look.
 export function Button({ children, onClick, disabled, kind = "gold", size = "md", type = "button" }) {
   const styles = kind === "gold"
-    ? { background: goldGradient, color: "#062B1E", border: "none", fontWeight: 700, boxShadow: "0 6px 20px -4px rgba(16,185,129,.45)" }
+    ? { background: goldGradient, color: "#062B1E", border: "none", fontWeight: 600, boxShadow: "0 6px 20px -4px rgba(16,185,129,.4)" }
     : kind === "ghostLight"
-    ? { background: "transparent", color: C.ink, border: `1px solid ${C.line}`, fontWeight: 600 }
+    ? { background: "transparent", color: C.ink, border: `1px solid ${C.line}`, fontWeight: 500 }
     : kind === "danger"
-    ? { background: "transparent", color: C.red, border: `1px solid ${C.red}`, fontWeight: 600 }
-    : { background: "transparent", color: C.muted, border: `1px solid ${C.line}`, fontWeight: 600 };
+    ? { background: "transparent", color: C.red, border: `1px solid ${C.red}`, fontWeight: 500 }
+    : { background: "transparent", color: C.muted, border: `1px solid ${C.line}`, fontWeight: 500 };
   const sizing = size === "sm"
-    ? { padding: "6px 12px", fontSize: 11, borderRadius: R.sm }
-    : { padding: "12px 24px", fontSize: 12.5, borderRadius: R.md };
+    ? { padding: "7px 14px", fontSize: 13, borderRadius: R.sm }
+    : { padding: "11px 22px", fontSize: 14, borderRadius: R.md };
   return (
     <button type={type} onClick={onClick} disabled={disabled}
       className={kind === "gold" && !disabled ? "cip-glow" : undefined}
-      style={{ ...styles, ...sizing, fontFamily: MONO, textTransform: "uppercase", letterSpacing: "0.1em", cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.5 : 1, transition: "all .15s ease" }}>
+      style={{ ...styles, ...sizing, fontFamily: FONT, letterSpacing: "0", cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.5 : 1, transition: "all .15s ease" }}>
       {children}
     </button>
   );
 }
 
 // Destructive action gated behind an on-brand confirm dialog (replaces the
-// native window.confirm(), which broke out of the Enterprise Noir theme).
+// native window.confirm(), which broke out of the theme).
 export function ConfirmButton({ children, confirmText, onConfirm, kind = "danger", size = "sm", ...props }) {
   const [open, setOpen] = useState(false);
   return (
@@ -215,7 +224,7 @@ export function ConfirmButton({ children, confirmText, onConfirm, kind = "danger
 export function Field({ label, ...props }) {
   return (
     <label style={{ display: "block", marginBottom: 14 }}>
-      <span style={{ display: "block", fontSize: 11, color: C.muted, marginBottom: 6, letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: MONO }}>{label}</span>
+      <span style={{ display: "block", fontSize: 13, color: C.muted, marginBottom: 6, fontFamily: FONT, fontWeight: 500 }}>{label}</span>
       <input {...props}
         style={{ width: "100%", padding: "11px 13px", border: `1px solid ${C.line}`, borderRadius: R.sm, fontFamily: FONT, fontSize: 15, color: C.ink, background: C.field }} />
     </label>
@@ -226,7 +235,7 @@ export function Field({ label, ...props }) {
 export function Select({ label, value, onChange, options, placeholder, compact }) {
   return (
     <label style={{ display: "block", marginBottom: compact ? 0 : 14 }}>
-      {label && <span style={{ display: "block", fontSize: 11, color: C.muted, marginBottom: 6, letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: MONO }}>{label}</span>}
+      {label && <span style={{ display: "block", fontSize: 13, color: C.muted, marginBottom: 6, fontFamily: FONT, fontWeight: 500 }}>{label}</span>}
       <select value={value} onChange={(e) => onChange(e.target.value)}
         style={{ width: compact ? "auto" : "100%", padding: compact ? "8px 10px" : "11px 13px", border: `1px solid ${C.line}`, borderRadius: R.sm, fontFamily: FONT, fontSize: compact ? 13.5 : 15, color: C.ink, background: C.field, cursor: "pointer" }}>
         {placeholder && <option value="">{placeholder}</option>}
@@ -249,7 +258,7 @@ export function Modal({ title, onClose, children, maxWidth = 620 }) {
           boxShadow: "0 24px 60px -20px rgba(0,0,0,.6)",
           padding: mobile ? "18px 18px calc(18px + env(safe-area-inset-bottom))" : 26 }}>
         <div style={{ display: "flex", alignItems: "center", marginBottom: 18, gap: 12 }}>
-          <h3 style={{ margin: 0, fontFamily: FONT, fontWeight: 700, fontSize: mobile ? 20 : 24, color: C.ink }}>{title}</h3>
+          <h3 style={{ margin: 0, fontFamily: DISPLAY, fontWeight: 600, fontSize: mobile ? 19 : 22, color: C.ink }}>{title}</h3>
           <button onClick={onClose} aria-label="Close"
             style={{ marginLeft: "auto", flexShrink: 0, background: "none", border: `1px solid ${C.line}`, borderRadius: R.pill, width: 34, height: 34, cursor: "pointer", color: C.muted }}>
             <Icon name="close" size={18} />
@@ -289,7 +298,7 @@ export function RowCard({ children, onClick }) {
 export function RowLine({ label, value, bold }) {
   return (
     <div style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "3px 0", fontSize: 13.5 }}>
-      <span style={{ color: C.muted, fontFamily: MONO, fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.06em", alignSelf: "center" }}>{label}</span>
+      <span style={{ color: C.muted, fontFamily: FONT, fontSize: 12.5, fontWeight: 500, alignSelf: "center" }}>{label}</span>
       <span style={{ color: C.ink, fontWeight: bold ? 700 : 500, textAlign: "right" }}>{value}</span>
     </div>
   );
@@ -298,7 +307,7 @@ export function RowLine({ label, value, bold }) {
 export function KV({ k, v }) {
   return (
     <div style={{ display: "flex", justifyContent: "space-between", padding: "9px 0", borderBottom: `1px solid ${C.line}` }}>
-      <span style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: MONO }}>{k}</span>
+      <span style={{ fontSize: 13, color: C.muted, fontFamily: FONT, fontWeight: 500 }}>{k}</span>
       <span style={{ fontSize: 14, color: C.ink, fontWeight: 500, fontFamily: FONT }}>{v}</span>
     </div>
   );

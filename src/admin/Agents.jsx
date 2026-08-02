@@ -37,7 +37,7 @@ function ViewToggle({ active, onClick, children }) {
     <button onClick={onClick} className="cip-tap"
       style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${active ? C.gold : C.line}`,
         background: active ? C.goldSoft : "transparent", color: active ? C.goldLt : C.muted,
-        fontWeight: active ? 600 : 400, cursor: "pointer", fontSize: 13, fontFamily: "'Hanken Grotesk',sans-serif" }}>
+        fontWeight: active ? 600 : 400, cursor: "pointer", fontSize: 13, fontFamily: "'Inter',sans-serif" }}>
       {children}
     </button>
   );
@@ -171,7 +171,7 @@ function AgentCard({ agent, agents, customers, commissions, users, onClose, onOp
         {downline.length === 0 ? <p style={{ fontSize: 14, color: C.muted }}>None yet.</p> :
           downline.map((d) => (
             <button key={d.id} onClick={() => onOpenOther(d)} className="cip-tap"
-              style={{ display: "block", background: "none", border: "none", color: C.gold, textDecoration: "underline", cursor: "pointer", fontSize: 14, padding: "4px 0", fontFamily: "'Hanken Grotesk',sans-serif", borderRadius: 4 }}>
+              style={{ display: "block", background: "none", border: "none", color: C.gold, textDecoration: "underline", cursor: "pointer", fontSize: 14, padding: "4px 0", fontFamily: "'Inter',sans-serif", borderRadius: 4 }}>
               {d.name} →
             </button>
           ))}
@@ -257,7 +257,7 @@ function SplitRow({ label, value, onChange }) {
     <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
       <span style={{ flex: 1, fontSize: 14, color: C.ink }}>{label}</span>
       <input type="number" value={value} onChange={(e) => onChange(e.target.value)} placeholder="0"
-        style={{ width: 80, padding: "8px 10px", border: `1px solid ${C.line}`, borderRadius: 8, fontFamily: "'Hanken Grotesk',sans-serif", fontSize: 15, textAlign: "right", background: C.field, color: C.ink }} />
+        style={{ width: 80, padding: "8px 10px", border: `1px solid ${C.line}`, borderRadius: 8, fontFamily: "'Inter',sans-serif", fontSize: 15, textAlign: "right", background: C.field, color: C.ink }} />
       <span style={{ color: C.muted }}>%</span>
     </div>
   );

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { C, FONT, MONO, R, Icon, useIsMobile, goldGradient } from "../ui";
+import { C, DISPLAY, FONT, R, Icon, useIsMobile, Crest } from "../ui";
 
 const NAV = [
   ["overview", "Overview", "dashboard"],
@@ -8,6 +8,8 @@ const NAV = [
   ["agents", "Agents", "handshake"],
   ["leads", "Leads", "campaign"],
 ];
+
+const ITEM_H = 38, ITEM_GAP = 2;
 
 export default function Sidebar({ active, onSelect, onOpenSettings }) {
   const mobile = useIsMobile(900);
@@ -22,35 +24,50 @@ export default function Sidebar({ active, onSelect, onOpenSettings }) {
   const activeLabel = NAV.find(([k]) => k === active)?.[1] ?? "";
   const select = (k) => { onSelect(k); setOpen(false); };
   const activeIndex = Math.max(0, NAV.findIndex(([k]) => k === active));
-  const ITEM_H = 44, ITEM_GAP = 4;
+
+  const header = (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 6px 14px" }}>
+      <Crest size={30} />
+      <div style={{ overflow: "hidden" }}>
+        <div style={{ fontFamily: DISPLAY, fontSize: 13.5, fontWeight: 600, color: C.ink, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Celebrity Infra</div>
+        <div style={{ fontFamily: FONT, fontSize: 11.5, color: C.gold, fontWeight: 500 }}>Admin workspace</div>
+      </div>
+    </div>
+  );
 
   const navList = (
-    <nav style={{ position: "relative", display: "flex", flexDirection: "column", gap: ITEM_GAP }}>
-      {/* Sliding active-item pill — glides between nav rows instead of snapping */}
-      <div aria-hidden="true" style={{
-        position: "absolute", top: 0, left: 0, right: 0, height: ITEM_H, borderRadius: R.sm,
-        background: goldGradient, boxShadow: "0 6px 18px -6px rgba(16,185,129,.5)",
-        transform: `translateY(${activeIndex * (ITEM_H + ITEM_GAP)}px)`,
-        transition: "transform .38s cubic-bezier(.16,1,.3,1)", zIndex: 0,
-      }} />
-      {NAV.map(([k, label, icon]) => (
-        <button key={k} onClick={() => select(k)} className="cip-tap"
-          style={{
-            position: "relative", zIndex: 1, height: ITEM_H,
-            textAlign: "left", padding: "0 14px", borderRadius: R.sm, fontFamily: MONO,
-            fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer", border: "none",
-            display: "flex", alignItems: "center", gap: 10, background: "transparent",
-            color: active === k ? "#062B1E" : C.muted, fontWeight: active === k ? 700 : 500,
-            transition: "color .2s ease",
-          }}>
-          <Icon name={icon} size={18} style={{ fontVariationSettings: active === k ? "'FILL' 1" : undefined }} />
-          {label}
-        </button>
-      ))}
-      <div style={{ borderTop: `1px solid ${C.line}`, margin: "10px 4px 6px" }} />
-      <button onClick={() => { onOpenSettings(); setOpen(false); }}
-        style={{ textAlign: "left", padding: "11px 14px", borderRadius: R.sm, border: "none",
-          background: "transparent", color: C.faint, fontSize: 12, fontFamily: MONO, textTransform: "uppercase", letterSpacing: "0.1em", cursor: "pointer",
+    <nav>
+      {header}
+      <div style={{ fontFamily: FONT, fontSize: 11, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: C.faint, padding: "0 10px 8px" }}>Workspace</div>
+      <div style={{ position: "relative", display: "flex", flexDirection: "column", gap: ITEM_GAP }}>
+        {/* Sliding left-accent bar — glides between nav rows instead of snapping */}
+        <div aria-hidden="true" style={{
+          position: "absolute", left: -6, width: 3, height: ITEM_H - 10, borderRadius: R.pill, background: C.gold,
+          transform: `translateY(${activeIndex * (ITEM_H + ITEM_GAP) + 5}px)`,
+          transition: "transform .38s cubic-bezier(.16,1,.3,1)", boxShadow: `0 0 10px ${C.gold}88`,
+        }} />
+        {NAV.map(([k, label, icon]) => {
+          const isActive = active === k;
+          return (
+            <button key={k} onClick={() => select(k)} className="cip-tap"
+              style={{
+                height: ITEM_H, textAlign: "left", padding: "0 12px", borderRadius: R.sm, fontFamily: FONT,
+                fontSize: 13.5, cursor: "pointer", border: "none",
+                display: "flex", alignItems: "center", gap: 10,
+                background: isActive ? C.goldSoft : "transparent",
+                color: isActive ? C.goldLt : C.muted, fontWeight: isActive ? 600 : 500,
+                transition: "color .2s ease, background .2s ease",
+              }}>
+              <Icon name={icon} size={18} style={{ fontVariationSettings: isActive ? "'FILL' 1" : undefined }} />
+              {label}
+            </button>
+          );
+        })}
+      </div>
+      <div style={{ borderTop: `1px solid ${C.line}`, margin: "14px 4px 8px" }} />
+      <button onClick={() => { onOpenSettings(); setOpen(false); }} className="cip-tap"
+        style={{ width: "100%", textAlign: "left", padding: "0 12px", height: ITEM_H, borderRadius: R.sm, border: "none",
+          background: "transparent", color: C.faint, fontSize: 13.5, fontFamily: FONT, fontWeight: 500, cursor: "pointer",
           display: "flex", alignItems: "center", gap: 10 }}>
         <Icon name="settings" size={18} /> Settings
       </button>
@@ -59,8 +76,8 @@ export default function Sidebar({ active, onSelect, onOpenSettings }) {
 
   if (!mobile) {
     return (
-      <div className="cip-card" style={{ width: 220, flexShrink: 0, alignSelf: "flex-start", position: "sticky", top: 20,
-        background: C.panel, border: `1px solid ${C.line}`, borderRadius: R.lg, padding: 10 }}>
+      <div className="cip-card" style={{ width: 236, flexShrink: 0, alignSelf: "flex-start", position: "sticky", top: 20,
+        background: C.panel, border: `1px solid ${C.line}`, borderRadius: R.lg, padding: "14px 12px", boxShadow: "0 16px 40px -22px rgba(0,0,0,.6)" }}>
         {navList}
       </div>
     );
@@ -81,7 +98,7 @@ export default function Sidebar({ active, onSelect, onOpenSettings }) {
             style={{ background: "none", border: `1px solid ${C.line}`, borderRadius: R.sm, width: 40, height: 40, color: C.ink, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Icon name="menu" size={20} />
           </button>
-          <span style={{ fontFamily: FONT, fontSize: 17, fontWeight: 700, textTransform: "uppercase", color: C.ink }}>{activeLabel}</span>
+          <span style={{ fontFamily: DISPLAY, fontSize: 16, fontWeight: 600, color: C.ink }}>{activeLabel}</span>
           <button onClick={onOpenSettings} aria-label="Settings" className="cip-tap"
             style={{ marginLeft: "auto", background: "none", border: `1px solid ${C.line}`, borderRadius: R.sm, width: 40, height: 40, color: C.muted, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Icon name="settings" size={18} />
@@ -95,7 +112,6 @@ export default function Sidebar({ active, onSelect, onOpenSettings }) {
           <div onClick={(e) => e.stopPropagation()} className="cip-drawer-in"
             style={{ position: "fixed", top: 0, left: 0, bottom: 0, width: "min(78vw,300px)", background: C.panel,
               borderRight: `1px solid ${C.line}`, boxShadow: "8px 0 30px -10px rgba(0,0,0,.6)", padding: "18px 18px calc(18px + env(safe-area-inset-bottom))", overflowY: "auto" }}>
-            <div style={{ fontFamily: MONO, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700, color: C.goldLt, marginBottom: 18 }}>Menu</div>
             {navList}
           </div>
         </div>

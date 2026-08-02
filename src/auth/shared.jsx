@@ -3,7 +3,7 @@ import { C, FONT, MONO } from "../ui";
 
 export function Divider() {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "20px 0", color: C.faint, fontSize: 11, fontFamily: MONO, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "20px 0", color: C.faint, fontSize: 12.5, fontFamily: FONT }}>
       <span style={{ flex: 1, height: 1, background: C.line }} />
       or
       <span style={{ flex: 1, height: 1, background: C.line }} />
@@ -13,7 +13,7 @@ export function Divider() {
 
 export function BackButton({ onClick }) {
   return (
-    <button onClick={onClick} className="cip-tap" style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: 11, marginTop: 20, padding: "6px 0", fontFamily: MONO, textTransform: "uppercase", letterSpacing: "0.1em", borderRadius: 4 }}>
+    <button onClick={onClick} className="cip-tap" style={{ display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: 13.5, fontWeight: 500, marginTop: 20, padding: "6px 0", fontFamily: FONT, borderRadius: 4 }}>
       ← Back
     </button>
   );
@@ -26,7 +26,7 @@ export function TabToggle({ value, onChange, options }) {
         <button key={o.value} type="button" onClick={() => onChange(o.value)} className="cip-tap"
           style={{
             flex: 1, padding: "10px 10px", borderRadius: 7, border: "none", cursor: "pointer",
-            fontFamily: MONO, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em",
+            fontFamily: FONT, fontSize: 13.5, fontWeight: 600,
             background: value === o.value ? C.goldLt : "transparent",
             color: value === o.value ? "#062B1E" : C.muted,
             transition: "background .18s ease, color .18s ease",

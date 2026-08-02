@@ -168,7 +168,7 @@ function SellPlotForm({ plot, customers, agents, onCancel, onSold }) {
           <Select label="Customer" value={customerId} placeholder="— Select customer —" onChange={setCustomerId}
             options={custList.map((c) => ({ v: c.id, l: c.name }))} />
           <button onClick={() => setNewCust(true)} type="button" className="cip-tap"
-            style={{ background: "none", border: "none", color: C.gold, textDecoration: "underline", cursor: "pointer", fontSize: 13, padding: "2px 0", marginBottom: 14, fontFamily: "'Hanken Grotesk',sans-serif", borderRadius: 4 }}>
+            style={{ background: "none", border: "none", color: C.gold, textDecoration: "underline", cursor: "pointer", fontSize: 13, padding: "2px 0", marginBottom: 14, fontFamily: "'Inter',sans-serif", borderRadius: 4 }}>
             + New customer
           </button>
         </>

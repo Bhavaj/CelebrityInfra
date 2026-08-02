@@ -32,7 +32,7 @@ export default function EmailPasswordForm() {
         <ErrorText>{msg}</ErrorText>
       </form>
       <button type="button" onClick={() => { setMode("reset"); setMsg(""); }}
-        style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: 13, marginTop: 14, padding: 0, fontFamily: "'Hanken Grotesk',sans-serif", textDecoration: "underline" }}>
+        style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: 13, marginTop: 14, padding: 0, fontFamily: "'Inter',sans-serif", textDecoration: "underline" }}>
         Forgot password, or haven't set one yet?
       </button>
     </div>

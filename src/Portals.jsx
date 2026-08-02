@@ -42,7 +42,7 @@ export function AgentPortal({ agentId }) {
   return (
     <>
       <div style={{ marginBottom: 20 }}>
-        <h2 style={{ fontFamily: "'Hanken Grotesk',serif", fontWeight: 600, fontSize: 28, margin: "0 0 2px", color: C.ink }}>{d.agent.name}</h2>
+        <h2 style={{ fontFamily: "'Space Grotesk',serif", fontWeight: 600, fontSize: 28, margin: "0 0 2px", color: C.ink }}>{d.agent.name}</h2>
         <div style={{ fontSize: 13, color: C.muted }}>Quota {d.agent.quota_percent}% · {d.agent.sponsor_id ? "Referred agent" : "Direct agent"}</div>
       </div>
       <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 18 }}>
@@ -191,7 +191,7 @@ export function CustomerPortal({ customerId }) {
   return (
     <>
       <div style={{ marginBottom: 20 }}>
-        <h2 style={{ fontFamily: "'Hanken Grotesk',serif", fontWeight: 600, fontSize: 28, margin: "0 0 2px", color: C.ink }}>{d.customer.name}</h2>
+        <h2 style={{ fontFamily: "'Space Grotesk',serif", fontWeight: 600, fontSize: 28, margin: "0 0 2px", color: C.ink }}>{d.customer.name}</h2>
         <div style={{ fontSize: 13, color: C.muted }}>
           {d.plot ? `Plot ${d.plot.plot_no} · ` : ""}{d.plot?.projects ? `${d.plot.projects.name}${d.plot.projects.location ? " · " + d.plot.projects.location : ""}` : "Celebrity Infra Pvt Ltd"}
         </div>
@@ -202,7 +202,7 @@ export function CustomerPortal({ customerId }) {
           <div style={{ display: "flex", gap: 24, flexWrap: "wrap", alignItems: "baseline", marginBottom: 14 }}>
             <div>
               <div style={{ fontSize: 11, color: C.muted, letterSpacing: 0.8, textTransform: "uppercase" }}>Balance due</div>
-              <div style={{ fontFamily: "'Hanken Grotesk',serif", fontSize: 36, fontWeight: 600, color: balance > 0 ? C.red : C.green }}>{fmt(balance)}</div>
+              <div style={{ fontFamily: "'Space Grotesk',serif", fontSize: 36, fontWeight: 600, color: balance > 0 ? C.red : C.green }}>{fmt(balance)}</div>
             </div>
             <div style={{ fontSize: 13, color: C.muted }}>{fmt(paid)} paid of {fmt(total)}</div>
           </div>
