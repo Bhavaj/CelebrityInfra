@@ -17,23 +17,19 @@ export function scheduleStatus(installments, paid) {
   return { overdue, nextDueDate: next?.due_date || null, dueSoFar };
 }
 
-export default function Inventory({ plots, projectId, projects, customers, agents, transactions, installments, customerName, onDone, onSold }) {
+export default function Inventory({ plots, projectId, customers, agents, transactions, installments, customerName, onDone, onSold }) {
   const mobile = useIsMobile();
   const [adding, setAdding] = useState(false);
   const [openPlot, setOpenPlot] = useState(null);
-  const [manageOpen, setManageOpen] = useState(false);
 
   const projectPlots = plots.filter((p) => p.project_id === projectId);
 
   return (
     <>
       <Panel title="Plots" right={
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <Button kind="ghost" size="sm" onClick={() => setManageOpen(true)}>Manage Projects</Button>
-          {projectId && <Button onClick={() => setAdding((v) => !v)}>{adding ? "Close" : "＋ Add Plot"}</Button>}
-        </div>
+        projectId && <Button onClick={() => setAdding((v) => !v)}>{adding ? "Close" : "＋ Add Plot"}</Button>
       }>
-        {!projectId ? <Empty>No project selected yet — use Manage Projects to create your first one.</Empty> :
+        {!projectId ? <Empty>No project selected yet — use the "Projects" button next to the selector above to create your first one.</Empty> :
         projectPlots.length === 0 ? <Empty>No plots in this project yet. Use ＋ Add Plot to create one.</Empty> : (
           <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "repeat(auto-fill,minmax(180px,1fr))", gap: 12 }}>
             {projectPlots.map((p) => {
@@ -70,9 +66,6 @@ export default function Inventory({ plots, projectId, projects, customers, agent
           onSold={() => { setOpenPlot(null); onSold(); }} />
       )}
 
-      {manageOpen && (
-        <ManageProjects projects={projects} plots={plots} onClose={() => setManageOpen(false)} onDone={onDone} />
-      )}
     </>
   );
 }
@@ -336,7 +329,7 @@ function AddPlot({ projectId, onDone }) {
   );
 }
 
-function ManageProjects({ projects, plots, onClose, onDone }) {
+export function ManageProjects({ projects, plots, onClose, onDone }) {
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
   const [busy, setBusy] = useState(false);

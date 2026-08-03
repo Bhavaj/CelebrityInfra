@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "./supabase";
-import { C, DISPLAY, fmt, PageHeader, Panel, Stat, Modal, Select, useIsMobile } from "./ui";
+import { C, DISPLAY, fmt, PageHeader, Panel, Stat, Modal, Select, Button, useIsMobile } from "./ui";
 import Sidebar from "./admin/Sidebar";
-import Inventory from "./admin/Inventory";
+import Inventory, { ManageProjects } from "./admin/Inventory";
 import Customers from "./admin/Customers";
 import Agents from "./admin/Agents";
 import Leads from "./admin/Leads";
@@ -22,6 +22,7 @@ export default function Admin() {
   const [tab, setTab] = useState("overview");
   const [agentsView, setAgentsView] = useState("tree");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [manageProjectsOpen, setManageProjectsOpen] = useState(false);
   const [activeProject, setActiveProject] = useState("");
   const [data, setData] = useState({
     agents: [], customers: [], plots: [], projects: [], commissions: [], transactions: [],
@@ -81,10 +82,19 @@ export default function Admin() {
   // (Overview, Plots, Agents/rates+ledger) reads `activeProject`; Customers
   // stays a global list (a customer can own plots across several projects)
   // but still uses it to scope the "plots in this project" quick view.
-  const projectPicker = pickableProjects.length > 0 && (
-    <div style={{ minWidth: mobile ? "100%" : 240 }}>
-      <Select value={activeProject} onChange={setActiveProject}
-        options={pickableProjects.map((p) => ({ v: p.id, l: p.name }))} />
+  // Creating/archiving projects lives right next to the selector itself
+  // (universal, on every tab) instead of being buried inside the Plots tab.
+  const projectPicker = (
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+      {pickableProjects.length > 0 && (
+        <div style={{ minWidth: mobile ? "100%" : 240 }}>
+          <Select value={activeProject} onChange={setActiveProject}
+            options={pickableProjects.map((p) => ({ v: p.id, l: p.name }))} />
+        </div>
+      )}
+      <Button kind="ghost" size="sm" onClick={() => setManageProjectsOpen(true)}>
+        {pickableProjects.length > 0 ? "Projects" : "+ New project"}
+      </Button>
     </div>
   );
 
@@ -106,7 +116,7 @@ export default function Admin() {
         {!loading && tab === "overview" && (
           pickableProjects.length === 0 ? (
             <Panel title="No projects yet">
-              <p style={{ color: C.muted, margin: 0 }}>Create your first project (e.g. Celebrity's Park-1) from Plots → Manage Projects to begin adding plots and recording sales.</p>
+              <p style={{ color: C.muted, margin: 0 }}>Create your first project (e.g. Celebrity's Park-1) using the "+ New project" button next to the selector above to begin adding plots and recording sales.</p>
             </Panel>
           ) : (
             <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
@@ -151,6 +161,10 @@ export default function Admin() {
         <Modal title="Settings" onClose={() => setSettingsOpen(false)} maxWidth={860}>
           <LinkUsers agents={data.agents} customers={data.customers} onDone={load} />
         </Modal>
+      )}
+
+      {manageProjectsOpen && (
+        <ManageProjects projects={data.projects} plots={data.plots} onClose={() => setManageProjectsOpen(false)} onDone={load} />
       )}
     </div>
   );
