@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import logoUrl from "./assets/celebrity-logo.png";
 
 // "Royal Gold" — every previous pass called its primary accent "gold" while
@@ -94,20 +95,15 @@ export function Empty({ children }) {
   );
 }
 
-export function Crest({ size = 34 }) {
+// The crest PNG has its background removed (transparent), so it sits
+// directly on the dark UI — no white disc behind it — matching the gold
+// wordmark on the landing page instead of looking like a pasted sticker.
+export function Crest({ size = 44 }) {
   return (
-    <div
-      style={{
-        width: size, height: size, flex: "none", borderRadius: "50%", overflow: "hidden",
-        background: "#F3EFE2", border: `1.5px solid ${C.gold}`,
-        display: "flex", alignItems: "center", justifyContent: "center",
-      }}
-    >
-      <img
-        src={logoUrl} alt="Celebrity Infra Pvt Ltd" draggable={false}
-        style={{ width: "84%", height: "84%", objectFit: "contain" }}
-      />
-    </div>
+    <img
+      src={logoUrl} alt="Celebrity Infra Pvt Ltd" draggable={false}
+      style={{ width: size, height: size, flex: "none", objectFit: "contain" }}
+    />
   );
 }
 
@@ -276,17 +272,26 @@ export function Select({ label, value, onChange, options, placeholder, compact }
   );
 }
 
+// Rendered via a portal straight onto document.body — every admin/portal
+// screen wraps its tab content in a `cip-in`/`cip-in-fast` div, and those
+// entrance animations end on `transform: translateY(0)`, not the keyword
+// `none`. Per the CSS spec, ANY transform value (translateY(0) included)
+// makes that element a new containing block for `position: fixed`
+// descendants, which silently re-scopes the modal to that scrolled content
+// box instead of the real viewport — it ends up rendering low/off-center
+// instead of centered on screen. Portaling to body sidesteps that entirely,
+// the same fix already used for the mobile sidebar drawer (see Sidebar.jsx).
 export function Modal({ title, onClose, children, maxWidth = 620 }) {
   const mobile = useIsMobile();
-  return (
+  return createPortal(
     <div onClick={onClose} className="cip-in-fade"
-      style={{ position: "fixed", inset: 0, background: "rgba(6,5,3,.72)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", display: "flex", alignItems: mobile ? "flex-end" : "flex-start", justifyContent: "center", padding: mobile ? 0 : "48px 16px", zIndex: 100, overflowY: mobile ? "hidden" : "auto" }}>
+      style={{ position: "fixed", inset: 0, background: "rgba(6,5,3,.72)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: mobile ? 0 : "24px 16px", zIndex: 1000, overflowY: "auto" }}>
       <div onClick={(e) => e.stopPropagation()} className={mobile ? "cip-in-sheet" : "cip-in-scale"}
         style={{ background: C.panel, border: `1px solid ${C.line}`, borderTop: `3px solid ${C.goldLt}`,
           borderRadius: mobile ? `${R.lg}px ${R.lg}px 0 0` : R.lg, width: "100%", maxWidth: mobile ? "none" : maxWidth,
-          maxHeight: mobile ? "88dvh" : "none", overflowY: mobile ? "auto" : "visible",
+          maxHeight: mobile ? "88dvh" : "min(88vh, 860px)", overflowY: "auto", margin: mobile ? "auto 0 0" : "auto",
           padding: mobile ? "18px 18px calc(18px + env(safe-area-inset-bottom))" : 26 }}>
-        <div style={{ display: "flex", alignItems: "center", marginBottom: 18, gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", marginBottom: 18, gap: 12, position: "sticky", top: 0, background: C.panel, zIndex: 1 }}>
           <h3 style={{ margin: 0, fontFamily: DISPLAY, fontWeight: 600, fontSize: mobile ? 19 : 22, color: C.ink }}>{title}</h3>
           <button onClick={onClose} aria-label="Close"
             style={{ marginLeft: "auto", flexShrink: 0, background: "none", border: `1px solid ${C.line}`, borderRadius: R.pill, width: 34, height: 34, cursor: "pointer", color: C.muted }}>
@@ -295,7 +300,8 @@ export function Modal({ title, onClose, children, maxWidth = 620 }) {
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

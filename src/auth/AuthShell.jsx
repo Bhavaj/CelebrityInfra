@@ -24,7 +24,7 @@ export default function AuthShell({ eyebrow, title, subtitle, children }) {
         </div>
       )}
       <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 12 }} className="cip-in-fast">
-        <Crest size={mobile ? 36 : 44} />
+        <Crest size={mobile ? 48 : 60} />
         <div>
           <div style={{ fontFamily: DISPLAY, fontSize: mobile ? 17 : 20, fontWeight: 600, color: C.ink }}>Celebrity Infra</div>
           <div style={{ fontSize: 10, letterSpacing: "0.2em", color: C.faint, fontFamily: MONO, textTransform: "uppercase" }}>Pvt Ltd</div>

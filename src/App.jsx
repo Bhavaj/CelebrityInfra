@@ -91,7 +91,7 @@ export default function App() {
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: FONT }}>
       <div style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(23,27,26,.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderBottom: `1px solid ${C.line}`, boxShadow: "0 1px 0 rgba(201,162,39,.15)", paddingTop: "env(safe-area-inset-top)" }} className="cip-in-fade">
         <div style={{ padding: "14px clamp(16px, 3vw, 32px)", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-          <Crest size={32} />
+          <Crest size={42} />
           {!mobile && <div style={{ fontFamily: MONO, fontSize: 15, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: C.ink }}>Celebrity's Park-1</div>}
           <Badge text={hasAccount ? `${role} portal` : "no account"} color={hasAccount ? C.goldLt : C.red} />
           <div style={{ marginLeft: "auto", display: "flex", gap: 12, alignItems: "center", minWidth: 0, flexWrap: "wrap" }}>
