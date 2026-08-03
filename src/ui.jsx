@@ -196,9 +196,10 @@ export function DueBadge({ overdue, dueDate }) {
 }
 
 export function ProgressBar({ pct, color }) {
+  const ratio = Math.min(100, Math.max(0, pct)) / 100;
   return (
     <div style={{ height: 10, background: C.field, borderRadius: R.pill, overflow: "hidden" }}>
-      <div style={{ width: `${Math.min(100, Math.max(0, pct))}%`, height: "100%", background: color || `linear-gradient(90deg,${C.goldDeep},${C.gold})`, transition: "width .4s ease" }} />
+      <div style={{ width: "100%", height: "100%", transformOrigin: "left", transform: `scaleX(${ratio})`, background: color || `linear-gradient(90deg,${C.goldDeep},${C.gold})`, transition: "transform .4s ease" }} />
     </div>
   );
 }
