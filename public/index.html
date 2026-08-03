@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#0B0A08" />
 <title>Celebrity's Park-1 — Celebrity Infra Pvt Ltd</title>
+<meta name="description" content="Celebrity's Park-1: a gated, plotted venture at Narayankhed, Telangana. 121 sq. yd. plots from ₹2,50,000 with EMI options." />
 <link rel="icon" type="image/png" href="/celebrity-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,10 +15,11 @@
     --ink-bg:#0B0A08;
     --surface:#16130D;
     --surface-2:#1C1811;
+    --shell:#100D08;
     --field:#191510;
     --ivory:#F6F0E2;
-    --muted:#A79A85;
-    --faint:#6B6153;
+    --muted:#B4A78E;
+    --faint:#8C8270;
     --gold:#C9A227;
     --gold-lt:#E7C665;
     --gold-hi:#F6E29B;
@@ -26,8 +28,9 @@
     --wine-lt:#A5333F;
     --emerald:#1F8A55;
     --emerald-lt:#34B378;
-    --line:rgba(246,240,226,.10);
-    --line-gold:rgba(201,162,39,.30);
+    --line:rgba(246,240,226,.11);
+    --line-gold:rgba(201,162,39,.32);
+    --ease:cubic-bezier(.16,1,.3,1);
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth}
@@ -44,149 +47,139 @@
   .serif{font-family:'Cormorant Garamond',serif}
   .sc{font-family:'Cormorant SC',serif}
   img{max-width:100%}
+  a{color:inherit}
 
-  #scrollbar{position:fixed;top:0;left:0;height:2px;width:0;background:linear-gradient(90deg,var(--gold-deep),var(--gold-lt));z-index:80;transition:width .1s linear}
-
-  .gold-text{
-    background:linear-gradient(180deg,var(--gold-hi) 0%,var(--gold-lt) 40%,var(--gold) 70%,var(--gold-deep) 100%);
-    -webkit-background-clip:text;background-clip:text;color:transparent;
+  /* Fixed, non-interactive grain — breaks the flat-vector digital feel.
+     Only ever on a fixed layer, never on a scrolling container (perf). */
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
-  /* A single repeated "framed viewport" motif — corner brackets on a bordered
-     panel — used for the 3D viewport, the offer ticket, the master-plan
-     panel, the location panel, and the testimonial plaque, so the page reads
-     as one designed system instead of a stack of unrelated blocks. */
-  .plaque{position:relative;border:1px solid var(--line-gold);background:linear-gradient(180deg,rgba(201,162,39,.05),rgba(22,19,13,.6));border-radius:2px}
-  .plaque .cnr{position:absolute;width:18px;height:18px;border:1px solid var(--gold)}
-  .plaque .cnr.a{top:-1px;left:-1px;border-right:0;border-bottom:0}
-  .plaque .cnr.b{top:-1px;right:-1px;border-left:0;border-bottom:0}
-  .plaque .cnr.c{bottom:-1px;left:-1px;border-right:0;border-top:0}
-  .plaque .cnr.d{bottom:-1px;right:-1px;border-left:0;border-top:0}
+  #scrollbar{position:fixed;top:0;left:0;height:2px;width:100%;background:linear-gradient(90deg,var(--gold-deep),var(--gold-lt));z-index:80;transform-origin:left;transform:scaleX(0);transition:transform .1s linear}
 
-  /* ---------- NAV ---------- */
+  /* ---------- NAV — a floating island, detached from the top edge,
+     instead of an edge-to-edge bar glued to the viewport. ---------- */
+  .nav-shell{position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:50;width:min(94vw,1180px)}
   nav{
-    position:fixed;top:0;left:0;right:0;z-index:50;
-    display:flex;align-items:center;justify-content:space-between;
-    padding:22px 6vw;
-    transition:background .4s,padding .4s,border-color .4s;
-    border-bottom:1px solid transparent;
+    display:flex;align-items:center;justify-content:space-between;gap:18px;
+    padding:10px 10px 10px 22px;border-radius:999px;
+    background:rgba(19,16,10,.72);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    border:1px solid var(--line);
+    box-shadow:0 22px 44px -22px rgba(0,0,0,.65);
+    transition:box-shadow .4s var(--ease),background .4s var(--ease);
   }
-  nav.scrolled{background:rgba(11,10,8,.9);backdrop-filter:blur(14px);padding:14px 6vw;border-bottom-color:var(--line)}
+  nav.scrolled{background:rgba(15,13,8,.88);box-shadow:0 26px 50px -20px rgba(0,0,0,.75)}
   .brand{display:flex;align-items:center;gap:11px}
-  .brand .mark{width:46px;height:46px;flex:none;display:flex;align-items:center;justify-content:center}
+  .brand .mark{width:38px;height:38px;flex:none;display:flex;align-items:center;justify-content:center}
   .brand .mark img{width:100%;height:100%;object-fit:contain}
   .brand .name{line-height:1.05}
-  .brand .name b{font-family:'Cormorant SC',serif;font-size:18px;font-weight:600;letter-spacing:2px;color:var(--gold-lt);display:block}
-  .brand .name span{font-size:9px;letter-spacing:4px;color:var(--muted)}
-  .nav-links{display:flex;align-items:center;gap:8px}
-  .nav-links a{position:relative;color:var(--ivory);opacity:.75;text-decoration:none;font-size:13.5px;font-weight:500;padding:8px 14px;transition:opacity .2s}
-  .nav-links a::after{content:"";position:absolute;left:14px;right:14px;bottom:4px;height:1px;background:var(--gold);transform:scaleX(0);transform-origin:left;transition:transform .25s}
-  .nav-links a:hover{opacity:1}
-  .nav-links a:hover::after{transform:scaleX(1)}
-  .nav-cta{
-    border:1px solid var(--gold);color:var(--gold-lt);margin-left:10px;
-    padding:9px 22px;border-radius:2px;font-size:12.5px;font-weight:600;letter-spacing:.5px;
-    background:transparent;cursor:pointer;transition:all .25s;
+  .brand .name b{font-family:'Cormorant SC',serif;font-size:17px;font-weight:600;letter-spacing:1.6px;color:var(--gold-lt);display:block}
+  .brand .name span{font-size:11px;letter-spacing:.4px;color:var(--faint)}
+  .nav-links{display:flex;align-items:center;gap:4px}
+  .nav-links a{position:relative;color:var(--ivory);opacity:.72;text-decoration:none;font-size:13.5px;font-weight:500;padding:9px 14px;border-radius:999px;transition:opacity .25s var(--ease),background .25s var(--ease)}
+  .nav-links a:hover{opacity:1;background:rgba(246,240,226,.06)}
+  .nav-links a.nav-cta{
+    border:1px solid var(--gold);color:#181109;background:var(--gold-lt);opacity:1;
+    padding:9px 20px;border-radius:999px;font-size:12.5px;font-weight:700;letter-spacing:.3px;
+    cursor:pointer;transition:transform .3s var(--ease),box-shadow .3s var(--ease);margin-left:6px;
   }
-  .nav-cta:hover{background:var(--gold);color:#241A08}
-  .burger{display:none;background:none;border:none;color:var(--gold-lt);font-size:22px;cursor:pointer}
+  .nav-links a.nav-cta:hover{transform:translateY(-1px);box-shadow:0 10px 24px -10px rgba(0,0,0,.55);opacity:1}
+  .nav-links a.nav-cta:active{transform:scale(.97)}
+  .burger{display:none;background:none;border:none;color:var(--gold-lt);font-size:20px;cursor:pointer;width:38px;height:38px;border-radius:999px}
 
-  /* ---------- HERO (centered stack) ---------- */
-  .hero{position:relative;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:150px 6vw 90px;overflow:hidden}
+  /* ---------- HERO ---------- */
+  .hero{position:relative;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:150px 6vw 90px;overflow:hidden}
   .hero::before{content:"";position:absolute;inset:0;background:
-      radial-gradient(70% 60% at 50% 0%,rgba(201,162,39,.10),transparent 65%),
-      radial-gradient(50% 50% at 100% 100%,rgba(122,31,43,.10),transparent 60%);
+      radial-gradient(60% 55% at 50% 0%,rgba(201,162,39,.12),transparent 65%),
+      radial-gradient(45% 45% at 100% 100%,rgba(122,31,43,.12),transparent 60%),
+      radial-gradient(35% 35% at 0% 90%,rgba(31,138,85,.05),transparent 60%);
     pointer-events:none;z-index:0}
 
-  .brand-row{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:20px;opacity:0}
-  .brand-row .ring{width:168px;height:168px;flex:none;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 0 30px rgba(201,162,39,.4))}
+  .brand-row{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:24px;opacity:0}
+  .brand-row .ring{width:168px;height:168px;flex:none;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 18px 34px rgba(0,0,0,.5)) drop-shadow(0 0 20px rgba(201,162,39,.18))}
   .brand-row .ring img{width:100%;height:100%;object-fit:contain}
+  .brand-row .txt{font-size:12px;letter-spacing:.5px;color:var(--faint);text-align:center}
+  .brand-row .txt b{display:block;font-size:13.5px;letter-spacing:.4px;color:var(--gold-lt);font-family:'Cormorant SC',serif;margin-top:2px}
   @media(max-width:640px){.brand-row .ring{width:112px;height:112px}}
-  .brand-row .txt{font-size:11.5px;letter-spacing:3.5px;color:var(--muted);text-transform:uppercase;text-align:center}
-  .brand-row .txt b{display:block;font-size:13px;letter-spacing:2px;color:var(--gold-lt);font-family:'Cormorant SC',serif;margin-top:2px}
 
-  .hero-badge{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line-gold);border-radius:20px;padding:6px 16px;font-size:11px;letter-spacing:2px;color:var(--gold-lt);text-transform:uppercase;margin-bottom:24px;opacity:0;width:fit-content}
-  .hero-badge .pip{width:6px;height:6px;border-radius:50%;background:var(--emerald);box-shadow:0 0 8px var(--emerald)}
-  .hero h1{font-family:'Cormorant Garamond',serif;font-style:normal;font-weight:600;font-size:clamp(46px,7vw,92px);line-height:.98;letter-spacing:.5px;opacity:0}
-  .hero h1 .script{font-style:italic;font-weight:500;display:block;font-size:.56em;color:var(--gold-lt)}
-  /* Cormorant Garamond's lining "1" has no distinguishing flag/serif at this
-     size, so in an all-caps word like "PARK 1" it reads as a capital "I".
-     Rendering just the numeral in the sans face (Manrope, already loaded)
-     makes it unambiguously a digit while still sitting comfortably next to
-     the serif wordmark. */
+  .hero h1{font-family:'Cormorant Garamond',serif;font-style:normal;font-weight:600;font-size:clamp(52px,7vw,92px);line-height:.98;letter-spacing:.5px;opacity:0;text-wrap:balance}
+  .hero h1 .script{font-style:italic;font-weight:500;display:block;font-size:clamp(26px,.54em,60px);color:var(--gold-lt)}
   .hero h1 .num{font-family:'Manrope',sans-serif;font-style:normal;font-weight:600;display:inline-block;font-size:.72em;vertical-align:.06em;margin-left:.22em}
-  .hero .tagline{margin-top:20px;font-size:14px;letter-spacing:3.5px;color:var(--ivory);opacity:0;text-transform:uppercase;font-weight:500}
-  .hero .loc{margin:10px auto 0;font-size:14.5px;color:var(--muted);opacity:0;max-width:460px}
-  .hero-cta{margin-top:38px;display:flex;gap:16px;flex-wrap:wrap;justify-content:center;opacity:0}
-  .btn-gold{
-    position:relative;overflow:hidden;
-    background:linear-gradient(180deg,var(--gold-lt),var(--gold));
-    color:#241A08;border:none;padding:15px 34px;border-radius:2px;
-    font-family:'Manrope';font-size:13px;letter-spacing:.5px;font-weight:700;
-    cursor:pointer;transition:transform .25s,box-shadow .25s;box-shadow:0 8px 30px rgba(201,162,39,.22);
-  }
-  .btn-gold:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(201,162,39,.36)}
-  .btn-gold::after{
-    content:"";position:absolute;top:0;bottom:0;left:-60%;width:40%;
-    background:linear-gradient(115deg,transparent,rgba(255,255,255,.55),transparent);
-    transform:skewX(-20deg);transition:left .6s cubic-bezier(.16,1,.3,1);
-  }
-  .btn-gold:hover::after{left:130%}
-  .btn-ghost{
-    background:transparent;color:var(--ivory);border:1px solid rgba(246,240,226,.3);
-    padding:15px 34px;border-radius:2px;font-family:'Manrope';font-size:13px;letter-spacing:.5px;
-    font-weight:600;cursor:pointer;transition:all .25s;
-  }
-  .btn-ghost:hover{border-color:var(--gold-lt);color:var(--gold-lt)}
+  .hero .tagline{margin-top:20px;font-size:15px;letter-spacing:.5px;color:var(--ivory);opacity:0}
+  .hero .venue-line{margin-top:8px;font-size:13px;color:var(--gold-lt);opacity:0}
+  .hero .loc{margin:14px auto 0;font-size:15px;color:var(--muted);opacity:0;max-width:460px}
+  .hero-cta{margin-top:38px;display:flex;gap:14px;flex-wrap:wrap;justify-content:center;opacity:0}
+
+  .btn{border:none;cursor:pointer;font-family:'Manrope';font-size:13.5px;letter-spacing:.2px;font-weight:700;
+    border-radius:999px;transition:transform .3s var(--ease),box-shadow .3s var(--ease),background .3s var(--ease);
+    display:inline-flex;align-items:center;gap:10px}
+  .btn:active{transform:scale(.97)}
+  .btn-gold{background:linear-gradient(180deg,var(--gold-lt),var(--gold));color:#241A08;padding:6px 8px 6px 24px;
+    box-shadow:0 14px 30px -12px rgba(0,0,0,.55)}
+  .btn-gold:hover{box-shadow:0 18px 38px -10px rgba(0,0,0,.65)}
+  .btn-gold .go{width:34px;height:34px;border-radius:999px;background:rgba(36,26,8,.14);display:flex;align-items:center;justify-content:center;flex:none;transition:transform .3s var(--ease)}
+  .btn-gold:hover .go{transform:translate(2px,-1px)}
+  .btn-ghost{background:transparent;color:var(--ivory);border:1px solid rgba(246,240,226,.28);padding:15px 28px}
+  .btn-ghost:hover{border-color:var(--gold-lt);color:var(--gold-lt);background:rgba(246,240,226,.04)}
 
   .hero-facts{display:flex;gap:0;margin:52px auto 0;border-top:1px solid var(--line);padding-top:20px;opacity:0;max-width:460px;justify-content:center}
   .hero-facts .f{flex:1;padding:0 18px;border-right:1px solid var(--line)}
   .hero-facts .f:last-child{border-right:0}
-  .hero-facts .f b{display:block;font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--ivory);font-weight:600}
-  .hero-facts .f span{font-size:11px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase}
+  .hero-facts .f b{display:block;font-family:'Cormorant Garamond',serif;font-size:25px;color:var(--ivory);font-weight:600;font-variant-numeric:tabular-nums}
+  .hero-facts .f span{font-size:11px;letter-spacing:1.4px;color:var(--faint);text-transform:uppercase}
 
-  .scroll-hint{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);color:var(--muted);font-size:11px;letter-spacing:3px;opacity:0;animation:fadeUp 1s ease 1.8s forwards;z-index:2}
-  .scroll-hint .arrow{display:block;margin-top:8px;width:1px;height:26px;background:linear-gradient(var(--gold),transparent);animation:bob 2s ease-in-out infinite}
+  .scroll-hint{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);color:var(--faint);font-size:11px;letter-spacing:3px;opacity:0;animation:fadeUp 1s var(--ease) 1.8s forwards}
+  .scroll-hint .arrow{display:block;margin-top:8px;width:1px;height:26px;background:linear-gradient(var(--gold),transparent);animation:bob 2.2s ease-in-out infinite}
 
-  /* ---------- MARQUEE ---------- */
-  .marquee{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:rgba(26,22,15,.4);overflow:hidden;padding:16px 0}
-  .marquee-track{display:flex;width:max-content;gap:56px;animation:marqueeScroll 34s linear infinite}
-  .marquee-track span{display:flex;align-items:center;gap:10px;font-family:'Cormorant SC',serif;font-size:14px;letter-spacing:2px;color:var(--muted);white-space:nowrap;text-transform:uppercase}
-  .marquee-track span::before{content:"";width:5px;height:5px;background:var(--gold);transform:rotate(45deg);flex:none}
-  @keyframes marqueeScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-
-  @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeUpBlur{from{opacity:0;transform:translateY(22px);filter:blur(6px)}to{opacity:1;transform:translateY(0);filter:blur(0)}}
   @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
-  .rise{animation:fadeUp .9s ease forwards}
+  .rise{animation:fadeUp .9s var(--ease) forwards}
   .d1{animation-delay:.15s}.d2{animation-delay:.35s}.d3{animation-delay:.55s}.d4{animation-delay:.75s}.d5{animation-delay:.95s}
 
-  section{padding:110px 6vw;position:relative}
-  .sec-head{max-width:620px;margin-bottom:60px}
-  .sec-head.center{text-align:center;margin-left:auto;margin-right:auto}
-  .sec-head .kicker{font-size:11.5px;letter-spacing:4px;color:var(--gold);text-transform:uppercase;margin-bottom:16px;font-weight:600}
-  .sec-head h2{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(30px,4.5vw,46px);line-height:1.1;color:var(--ivory)}
-  .sec-head p{color:var(--muted);font-size:16px;margin-top:14px}
-  .reveal{opacity:0;transform:translateY(28px);transition:opacity .8s ease,transform .8s ease}
-  .reveal.in{opacity:1;transform:none}
+  /* ---------- TRUST STRIP — a static row, not an auto-scrolling marquee
+     that demands attention nothing here has earned. ---------- */
+  .trust{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:rgba(22,19,13,.4)}
+  .trust-row{display:flex;flex-wrap:wrap;justify-content:center;gap:14px 40px;padding:20px 6vw;max-width:1180px;margin:0 auto}
+  .trust-row span{display:flex;align-items:center;gap:10px;font-family:'Cormorant SC',serif;font-size:14px;letter-spacing:1px;color:var(--muted);white-space:nowrap}
+  .trust-row span::before{content:"";width:5px;height:5px;background:var(--gold);transform:rotate(45deg);flex:none}
 
-  /* ---------- OFFER — single "ticket" card, not two floating columns ---------- */
-  .offer{background:linear-gradient(180deg,rgba(26,22,15,.5) 0%,rgba(11,10,8,0) 100%)}
-  .ticket{max-width:980px;margin:0 auto;display:grid;grid-template-columns:1fr 1.4fr;position:relative}
+  section{padding:120px 6vw;position:relative}
+  .sec-head{max-width:620px;margin-bottom:64px}
+  .sec-head.center{text-align:center;margin-left:auto;margin-right:auto}
+  .sec-head .kicker{font-size:12px;letter-spacing:3.5px;color:var(--gold);text-transform:uppercase;margin-bottom:16px;font-weight:600}
+  .sec-head h2{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(30px,4.5vw,46px);line-height:1.12;color:var(--ivory);text-wrap:balance}
+  .sec-head p{color:var(--muted);font-size:16px;margin-top:14px;max-width:60ch}
+  .reveal{opacity:0;transform:translateY(26px);filter:blur(5px);transition:opacity .9s var(--ease),transform .9s var(--ease),filter .9s var(--ease)}
+  .reveal.in{opacity:1;transform:none;filter:blur(0)}
+
+  /* ---------- Double-bezel panel — a nested "machined hardware" frame
+     used consistently for the offer, location, and testimonial panels
+     instead of a flat border+shadow card. ---------- */
+  .bezel{background:var(--shell);border:1px solid var(--line);border-radius:22px;padding:8px}
+  .bezel-core{background:var(--surface);border-radius:16px;box-shadow:inset 0 1px 0 rgba(246,240,226,.05)}
+
+  /* ---------- OFFER — a single ticket-style panel with a torn divider,
+     not two floating columns. ---------- */
+  .offer{background:linear-gradient(180deg,rgba(26,22,15,.4) 0%,rgba(11,10,8,0) 100%)}
+  .ticket{max-width:980px;margin:0 auto}
+  .ticket-inner{display:grid;grid-template-columns:1fr 1.4fr;padding:0}
   .ticket-price{padding:52px 40px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
-  .ticket-price::after{content:"";position:absolute;top:8%;bottom:8%;right:0;width:0;border-right:2px dashed rgba(201,162,39,.3)}
+  .ticket-price::after{content:"";position:absolute;top:8%;bottom:8%;right:0;width:0;border-right:2px dashed rgba(201,162,39,.28)}
   .ticket-price .size{font-size:13px;letter-spacing:3px;color:var(--gold-lt);text-transform:uppercase}
-  .ticket-price .amt{font-family:'Cormorant Garamond',serif;font-size:clamp(46px,6vw,68px);font-weight:600;line-height:1;margin:12px 0}
+  .ticket-price .amt{font-family:'Cormorant Garamond',serif;font-size:clamp(46px,6vw,68px);font-weight:600;line-height:1;margin:12px 0;color:var(--gold-lt);font-variant-numeric:tabular-nums}
   .ticket-price .per{font-size:12.5px;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
-  .ticket-price .flag{display:inline-block;margin-top:22px;border:1px solid var(--gold);color:var(--gold-lt);font-size:10.5px;letter-spacing:2px;padding:7px 16px;text-transform:uppercase}
-  .ticket-perks{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--line)}
-  .perk{background:var(--surface);padding:26px 24px;display:flex;gap:16px;align-items:flex-start;transition:background .25s}
+  .ticket-price .flag{display:inline-block;margin-top:22px;border:1px solid var(--gold);color:var(--gold-lt);font-size:11px;letter-spacing:1.5px;padding:7px 16px;border-radius:999px}
+  .ticket-perks{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line)}
+  .perk{background:var(--surface);padding:26px 24px;display:flex;gap:16px;align-items:flex-start;transition:background .3s var(--ease)}
+  .perk:first-child{border-top-right-radius:16px}
   .perk:hover{background:var(--surface-2)}
   .perk .n{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--gold);flex:none;width:26px}
   .perk b{display:block;font-size:15px;color:var(--ivory);font-weight:600;margin-bottom:4px}
-  .perk span{font-size:13px;color:var(--muted)}
-  @media(max-width:900px){.ticket{grid-template-columns:1fr}.ticket-price::after{display:none;bottom:0;left:8%;right:8%;top:auto;border-right:0;border-bottom:2px dashed rgba(201,162,39,.3);width:auto;height:0}.ticket-perks{grid-template-columns:1fr}}
+  .perk span{font-size:13.5px;color:var(--muted)}
+  @media(max-width:900px){.ticket-inner{grid-template-columns:1fr}.ticket-price::after{display:none}.ticket-perks{grid-template-columns:1fr}}
 
-  /* ---------- WHY — alternating rows with ghost numerals, not a 3-col grid ---------- */
+  /* ---------- WHY — alternating rows with ghost numerals ---------- */
   .why-row{display:grid;grid-template-columns:.4fr 1fr;gap:40px;align-items:center;max-width:900px;margin:0 auto 6px;padding:36px 0;border-bottom:1px solid var(--line)}
   .why-row:last-child{border-bottom:0}
   .why-row .ghost{font-family:'Cormorant Garamond',serif;font-size:96px;font-weight:600;color:transparent;-webkit-text-stroke:1px var(--line-gold);line-height:1;text-align:center}
@@ -195,60 +188,61 @@
   @media(max-width:640px){.why-row{grid-template-columns:1fr;text-align:left}.why-row .ghost{font-size:56px;text-align:left}}
 
   /* ---------- STATS ---------- */
-  .stats{display:flex;flex-wrap:wrap;max-width:960px;margin:0 auto;border:1px solid var(--line)}
+  .stats{display:flex;flex-wrap:wrap;max-width:960px;margin:0 auto;border:1px solid var(--line);border-radius:18px;overflow:hidden}
   .stat{flex:1;min-width:180px;text-align:center;padding:40px 20px;border-right:1px solid var(--line)}
   .stat:last-child{border-right:0}
-  .stat .big{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(34px,4.5vw,48px);color:var(--ivory);line-height:1}
-  .stat .lbl{font-size:11.5px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-top:8px}
+  .stat .big{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(34px,4.5vw,48px);color:var(--ivory);line-height:1;font-variant-numeric:tabular-nums}
+  .stat .lbl{font-size:11.5px;letter-spacing:1.4px;color:var(--faint);text-transform:uppercase;margin-top:8px}
 
   /* ---------- LOCATION ---------- */
   .loc-wrap{display:grid;grid-template-columns:1fr 1fr;gap:0;max-width:1100px;margin:0 auto;align-items:stretch}
   .loc-card{padding:48px;display:flex;flex-direction:column;justify-content:center}
   .loc-card h3{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:600;color:var(--gold-lt);margin-bottom:6px}
-  .loc-card .sub{font-size:12.5px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:24px}
+  .loc-card .sub{font-size:12.5px;letter-spacing:2px;color:var(--faint);text-transform:uppercase;margin-bottom:24px}
   .loc-dl{display:flex;flex-direction:column;gap:16px}
-  .loc-dl .row{display:grid;grid-template-columns:34px 1fr;gap:12px;font-size:14.5px;color:var(--ivory)}
-  .loc-dl .row span.b{color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:20px}
-  .map-frame{border:1px solid var(--line);border-left:0;background:var(--surface);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;min-height:340px}
-  .map-frame::before{content:"";position:absolute;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:36px 36px;opacity:.4}
-  .map-frame .pin{text-align:center;color:var(--gold-lt);position:relative}
-  .map-frame .pin .ring{width:64px;height:64px;border:1px solid var(--gold);border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;position:relative}
-  .map-frame .pin .ring::after{content:"";position:absolute;inset:-12px;border:1px solid rgba(201,162,39,.3);border-radius:50%;animation:pulse 2.6s ease-out infinite}
+  .loc-dl .row{display:grid;grid-template-columns:22px 1fr;gap:12px;font-size:14.5px;color:var(--ivory)}
+  .loc-dl .row span.b{color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:18px}
+  .loc-visual{border-left:1px solid var(--line);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;min-height:340px;padding:24px}
+  .loc-visual .pin{text-align:center;color:var(--gold-lt);position:relative}
+  .loc-visual .pin .ring{width:64px;height:64px;border:1px solid var(--gold);border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;position:relative}
+  .loc-visual .pin .ring::after{content:"";position:absolute;inset:-12px;border:1px solid rgba(201,162,39,.28);border-radius:50%;animation:pulse 2.6s ease-out infinite}
   @keyframes pulse{0%{transform:scale(.9);opacity:.8}100%{transform:scale(1.5);opacity:0}}
-  .map-frame .pin .dot{width:11px;height:11px;background:var(--gold);border-radius:50%}
-  .map-frame .pin p{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--ivory)}
-  .map-frame .pin span{font-size:11px;letter-spacing:2.5px;color:var(--muted);text-transform:uppercase}
-  @media(max-width:860px){.loc-wrap{grid-template-columns:1fr}.map-frame{border-left:1px solid var(--line);border-top:0;min-height:260px}}
+  .loc-visual .pin .dot{width:11px;height:11px;background:var(--gold);border-radius:50%}
+  .loc-visual .pin p{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--ivory)}
+  .loc-visual .pin span{font-size:11px;letter-spacing:2.5px;color:var(--faint);text-transform:uppercase}
+  @media(max-width:860px){.loc-wrap{grid-template-columns:1fr}.loc-visual{border-left:0;border-top:1px solid var(--line);min-height:260px}}
 
-  /* ---------- TESTIMONIAL PLAQUE ---------- */
+  /* ---------- TESTIMONIAL ---------- */
   .cmd-wrap{max-width:760px;margin:0 auto;padding:60px 50px;text-align:center}
-  .cmd-wrap .mark{font-family:'Cormorant Garamond',serif;font-size:64px;color:var(--line-gold);line-height:.4;margin-bottom:12px}
-  .cmd-wrap .quote{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(21px,3vw,29px);line-height:1.45;color:var(--ivory);font-weight:500}
+  .cmd-wrap .mark{font-family:'Cormorant Garamond',serif;font-size:60px;color:var(--line-gold);line-height:.4;margin-bottom:12px}
+  .cmd-wrap .quote{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(21px,3vw,29px);line-height:1.45;color:var(--ivory);font-weight:500;text-wrap:balance}
   .cmd-wrap .who{margin-top:28px}
   .cmd-wrap .who b{font-family:'Cormorant SC',serif;font-size:18px;letter-spacing:1.5px;color:var(--ivory);font-weight:600;display:block}
   .cmd-wrap .who span{font-size:12px;letter-spacing:2px;color:var(--gold);text-transform:uppercase}
 
-  /* ---------- ENQUIRE — two panels side by side ---------- */
+  /* ---------- ENQUIRE ---------- */
   .enquire{border-top:1px solid var(--line)}
   .enq-wrap{display:grid;grid-template-columns:.85fr 1.15fr;gap:0;max-width:1080px;margin:0 auto;align-items:stretch}
-  .enq-info{padding:50px;background:var(--surface);border:1px solid var(--line);border-right:0;display:flex;flex-direction:column;justify-content:center}
+  .enq-info{padding:50px;background:var(--surface);display:flex;flex-direction:column;justify-content:center;border-top-left-radius:16px;border-bottom-left-radius:16px}
   .enq-info h2{font-family:'Cormorant Garamond',serif;font-size:clamp(28px,3.6vw,38px);font-weight:600;margin-bottom:14px}
   .enq-info .script{font-style:italic;color:var(--gold-lt)}
   .enq-info p{color:var(--muted);margin-bottom:24px;font-size:15px}
   .enq-info ul{list-style:none;display:flex;flex-direction:column;gap:14px}
   .enq-info li{display:flex;gap:12px;font-size:14px;color:var(--ivory)}
   .enq-info li .b{color:var(--gold);font-family:'Cormorant Garamond',serif}
-  .enq-form-panel{padding:44px;position:relative}
+  .enq-form-panel{padding:44px;position:relative;border-top-right-radius:16px;border-bottom-right-radius:16px}
   .form{display:grid;gap:14px}
   .form .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .form label{display:block}
+  .form span.lbl{display:block;font-size:12px;color:var(--faint);margin-bottom:6px;letter-spacing:.3px}
   .form input{
-    width:100%;background:rgba(246,240,226,.04);border:1px solid var(--line);
-    color:var(--ivory);padding:14px 16px;font-family:'Manrope';font-size:14.5px;border-radius:2px;transition:border .2s,background .2s;
+    width:100%;background:rgba(246,240,226,.045);border:1px solid var(--line);
+    color:var(--ivory);padding:13px 15px;font-family:'Manrope';font-size:14.5px;border-radius:10px;transition:border .25s var(--ease),background .25s var(--ease);
   }
-  .form input::placeholder{color:rgba(246,240,226,.35)}
-  .form input:focus{outline:none;border-color:var(--gold);background:rgba(201,162,39,.05)}
-  .form button{margin-top:6px;width:100%}
-  .form-note{font-size:11.5px;color:var(--faint);margin-top:14px}
+  .form input::placeholder{color:rgba(246,240,226,.32)}
+  .form input:focus{outline:none;border-color:var(--gold);background:rgba(201,162,39,.06)}
+  .form button{margin-top:6px;width:100%;justify-content:center;padding:15px 0}
+  .form-note{font-size:12.5px;color:var(--faint);margin-top:14px}
   .form-error{display:none;font-size:13px;color:#E2685A;margin-top:10px}
   .form-error.show{display:block}
   .enq-success{display:none;text-align:center;padding:20px 10px}
@@ -257,101 +251,109 @@
   .enq-success h3{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--ivory);margin-bottom:8px}
   .enq-success p{color:var(--muted);font-size:13.5px}
   .enq-form-panel .form-wrap.hide{display:none}
-  @media(max-width:900px){.enq-wrap{grid-template-columns:1fr}.enq-info{border-right:1px solid var(--line);border-bottom:0}.form .row{grid-template-columns:1fr}}
+  @media(max-width:900px){.enq-wrap{grid-template-columns:1fr}.enq-info{border-radius:16px 16px 0 0}.enq-form-panel{border-radius:0 0 16px 16px}.form .row{grid-template-columns:1fr}}
 
   /* ---------- FOOTER ---------- */
-  footer{background:#080705;color:var(--muted);padding:56px 6vw 32px;text-align:center;border-top:1px solid var(--line)}
+  footer{background:#080705;color:var(--muted);padding:56px 6vw 34px;text-align:center;border-top:1px solid var(--line)}
   footer .fbrand{font-family:'Cormorant SC',serif;font-size:20px;letter-spacing:3px;color:var(--gold-lt);margin-bottom:6px}
-  footer .ftag{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--faint)}
+  footer .ftag{font-size:12px;color:var(--faint)}
   footer .fnav{display:flex;gap:26px;justify-content:center;margin:26px 0;flex-wrap:wrap}
-  footer .fnav a{color:var(--muted);text-decoration:none;font-size:13px;transition:color .2s}
+  footer .fnav a{color:var(--muted);text-decoration:none;font-size:13px;transition:color .25s var(--ease)}
   footer .fnav a:hover{color:var(--gold-lt)}
+  footer .flegal{display:flex;gap:20px;justify-content:center;margin-bottom:18px;flex-wrap:wrap}
+  footer .flegal a{color:var(--faint);text-decoration:underline;font-size:12px}
   footer .legal{font-size:11px;color:var(--faint);max-width:640px;margin:0 auto;line-height:1.7}
   footer .copy{margin-top:20px;font-size:12px;color:var(--faint)}
 
   @media(max-width:860px){
-    .nav-links{position:fixed;inset:0 0 0 auto;height:100dvh;width:min(78vw,320px);background:var(--ink-bg);border-left:1px solid var(--line-gold);flex-direction:column;justify-content:center;gap:8px;transform:translateX(100%);transition:transform .35s;padding:40px;overflow-y:auto}
+    .nav-shell{top:12px;width:calc(100vw - 24px)}
+    .nav-links{position:fixed;inset:0 0 0 auto;height:100dvh;width:min(78vw,320px);background:var(--ink-bg);border-left:1px solid var(--line-gold);flex-direction:column;justify-content:center;gap:6px;transform:translateX(100%);transition:transform .4s var(--ease);padding:40px;overflow-y:auto}
     .nav-links.open{transform:none}
     .nav-links a{font-size:16px}
-    .burger{display:block;z-index:60}
+    .burger{display:flex;align-items:center;justify-content:center;z-index:60}
     section{padding:80px 6vw}
   }
-  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}.hero *{opacity:1!important}}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none;filter:none}.hero *{opacity:1!important}}
 </style>
 </head>
 <body>
 
+<div class="grain" aria-hidden="true"></div>
 <div id="scrollbar"></div>
 
-<nav id="nav">
-  <div class="brand">
-    <span class="mark"><img src="/celebrity-logo.png" alt="Celebrity Infra Pvt Ltd" /></span>
-    <div class="name"><b>Celebrity</b><span>INFRA PVT LTD</span></div>
-  </div>
-  <div class="nav-links" id="navLinks">
-    <a href="#venture">Venture</a>
-    <a href="#offer">Offer</a>
-    <a href="#why">Why Park-1</a>
-    <a href="#location">Location</a>
-    <a class="nav-cta" href="/portal/" style="text-decoration:none;display:inline-block">Login</a>
-  </div>
-  <button class="burger" id="burger" aria-label="Menu">&#9776;</button>
-</nav>
+<div class="nav-shell">
+  <nav id="nav">
+    <div class="brand">
+      <span class="mark"><img src="/celebrity-logo.png" alt="Celebrity Infra Pvt Ltd" /></span>
+      <div class="name"><b>Celebrity</b><span>Infra Pvt Ltd</span></div>
+    </div>
+    <div class="nav-links" id="navLinks">
+      <a href="#venture">Venture</a>
+      <a href="#offer">Offer</a>
+      <a href="#why">Why Park-1</a>
+      <a href="#location">Location</a>
+      <a class="nav-cta" href="/portal/" style="text-decoration:none;display:inline-block">Login</a>
+    </div>
+    <button class="burger" id="burger" aria-label="Menu">&#9776;</button>
+  </nav>
+</div>
 
 <header class="hero" id="heroSection">
   <div class="brand-row rise d1">
     <span class="ring"><img src="/celebrity-logo.png" alt="Celebrity Infra Pvt Ltd" /></span>
     <span class="txt">Celebrity Infra Pvt Ltd<b>Presents</b></span>
   </div>
-  <div class="hero-badge rise d1"><span class="pip"></span>Grand Venture Opening &middot; 12 July 2026</div>
   <h1 class="rise d2"><span class="script">Celebrity's</span>PARK<span class="num">1</span></h1>
-  <div class="tagline rise d3">Building Prestige &middot; Creating Legacy</div>
-  <div class="loc rise d3">A grand plotted venture at Narayankhed, Telangana — gated, landscaped, and built for a legacy that appreciates with every season.</div>
+  <div class="tagline rise d3">Building prestige. Creating a legacy that lasts.</div>
+  <div class="venue-line rise d3">Grand venture opening · 12 July 2026</div>
+  <div class="loc rise d3">A gated, plotted venture at Narayankhed, Telangana, built for families who want land that holds its value.</div>
   <div class="hero-cta rise d4">
-    <button class="btn-gold" onclick="document.getElementById('enquire').scrollIntoView()">Book a Site Visit</button>
-    <button class="btn-ghost" onclick="document.getElementById('offer').scrollIntoView()">View the Offer</button>
+    <button class="btn btn-gold" onclick="document.getElementById('enquire').scrollIntoView()">
+      Book a site visit <span class="go">&rarr;</span>
+    </button>
+    <button class="btn btn-ghost" onclick="document.getElementById('offer').scrollIntoView()">View the offer</button>
   </div>
   <div class="hero-facts rise d5">
-    <div class="f"><b>9</b><span>Acres Planned</span></div>
-    <div class="f"><b>121</b><span>Sq. Yd / Plot</span></div>
-    <div class="f"><b>&#8377;2.5L</b><span>Starting Price</span></div>
+    <div class="f"><b>9</b><span>Acres planned</span></div>
+    <div class="f"><b>121</b><span>Sq. yd / plot</span></div>
+    <div class="f"><b>&#8377;2.5L</b><span>Starting price</span></div>
   </div>
   <div class="scroll-hint">SCROLL<span class="arrow"></span></div>
 </header>
 
-<div class="marquee" aria-hidden="true">
-  <div class="marquee-track">
-    <span>Clear &amp; Ready Titles</span><span>Gated Community</span><span>Easy EMI</span><span>Free Resort Membership</span><span>Appreciating Corridor</span><span>Narayankhed, Telangana</span>
-    <span>Clear &amp; Ready Titles</span><span>Gated Community</span><span>Easy EMI</span><span>Free Resort Membership</span><span>Appreciating Corridor</span><span>Narayankhed, Telangana</span>
+<div class="trust" aria-hidden="true">
+  <div class="trust-row">
+    <span>Clear titles</span><span>Gated community</span><span>Easy EMI</span><span>Resort membership</span><span>Narayankhed, Telangana</span>
   </div>
 </div>
 
 <section id="venture">
   <div class="sec-head reveal">
     <div class="kicker">The Venture</div>
-    <h2>Land that turns you golden in the future</h2>
-    <p>Celebrity's Park-1 is a meticulously planned plotted community — gated, landscaped, and built to a standard that appreciates with every season. Own a piece of the legacy, close to nature yet primed for growth.</p>
+    <h2>Land that appreciates while your family grows around it</h2>
+    <p>Celebrity's Park-1 is a planned plotted community: gated, landscaped, and built to a standard that holds up over time. It's a piece of the legacy, close to nature and positioned for growth.</p>
   </div>
 </section>
 
 <section id="offer" class="offer">
   <div class="sec-head center reveal">
-    <div class="kicker">A Golden Opportunity</div>
+    <div class="kicker">The Offer</div>
     <h2>One price. Every privilege.</h2>
   </div>
-  <div class="ticket plaque reveal">
-    <span class="cnr a"></span><span class="cnr b"></span><span class="cnr c"></span><span class="cnr d"></span>
-    <div class="ticket-price">
-      <div class="size">121 Sq. Yards</div>
-      <div class="amt gold-text">&#8377;2,50,000</div>
-      <div class="per">Only &middot; All Inclusive</div>
-      <div class="flag">Limited Period Offer</div>
-    </div>
-    <div class="ticket-perks">
-      <div class="perk"><span class="n serif">I</span><span><b>Easy EMI Facility</b><span>Own now, pay in comfortable monthly installments</span></span></div>
-      <div class="perk"><span class="n serif">II</span><span><b>Free Resort Membership</b><span>Complimentary access for every plot owner</span></span></div>
-      <div class="perk"><span class="n serif">III</span><span><b>Free Fruits Delivery</b><span>A taste of the estate, delivered to you</span></span></div>
-      <div class="perk"><span class="n serif">IV</span><span><b>Early Registration Priority</b><span>Book now and secure the best-placed plots first</span></span></div>
+  <div class="ticket bezel reveal">
+    <div class="ticket-inner bezel-core">
+      <div class="ticket-price">
+        <div class="size">121 sq. yards</div>
+        <div class="amt">&#8377;2,50,000</div>
+        <div class="per">Only, all inclusive</div>
+        <div class="flag">Limited period offer</div>
+      </div>
+      <div class="ticket-perks">
+        <div class="perk"><span class="n serif">I</span><span><b>Easy EMI facility</b><span>Own now, pay in comfortable monthly installments</span></span></div>
+        <div class="perk"><span class="n serif">II</span><span><b>Free resort membership</b><span>Complimentary access for every plot owner</span></span></div>
+        <div class="perk"><span class="n serif">III</span><span><b>Free fruits delivery</b><span>A taste of the estate, delivered to you</span></span></div>
+        <div class="perk"><span class="n serif">IV</span><span><b>Early registration priority</b><span>Book now and secure the best-placed plots first</span></span></div>
+      </div>
     </div>
   </div>
 </section>
@@ -363,24 +365,24 @@
   </div>
   <div class="why-row reveal">
     <div class="ghost">01</div>
-    <div><h3>Clear &amp; Ready Titles</h3><p>Transparent documentation and a registration process handled end to end, so ownership is never in question.</p></div>
+    <div><h3>Clear and ready titles</h3><p>Transparent documentation and a registration process handled end to end, so ownership is never in question.</p></div>
   </div>
   <div class="why-row reveal">
     <div class="ghost">02</div>
-    <div><h3>Planned &amp; Gated</h3><p>Wide internal roads, defined boundaries, and landscaping designed for a community that grows in value.</p></div>
+    <div><h3>Planned and gated</h3><p>Wide internal roads, defined boundaries, and landscaping designed for a community that grows in value.</p></div>
   </div>
   <div class="why-row reveal">
     <div class="ghost">03</div>
-    <div><h3>Appreciating Corridor</h3><p>Positioned in a growth belt at Narayankhed where connectivity and demand continue to rise.</p></div>
+    <div><h3>An appreciating corridor</h3><p>Positioned in a growth belt at Narayankhed, where connectivity and demand continue to rise.</p></div>
   </div>
 </section>
 
 <section style="padding-top:0">
   <div class="stats reveal">
-    <div class="stat"><div class="big serif" data-count="9">0</div><div class="lbl">Acres Planned</div></div>
-    <div class="stat"><div class="big serif" data-count="121">0</div><div class="lbl">Sq. Yards / Plot</div></div>
-    <div class="stat"><div class="big serif" data-count="100" data-suffix="%">0%</div><div class="lbl">Clear Titles</div></div>
-    <div class="stat"><div class="big serif">EMI</div><div class="lbl">Payment Ease</div></div>
+    <div class="stat"><div class="big serif" data-count="9">0</div><div class="lbl">Acres planned</div></div>
+    <div class="stat"><div class="big serif" data-count="121">0</div><div class="lbl">Sq. yards / plot</div></div>
+    <div class="stat"><div class="big serif" data-count="100" data-suffix="%">0%</div><div class="lbl">Clear titles</div></div>
+    <div class="stat"><div class="big serif">EMI</div><div class="lbl">Payment ease</div></div>
   </div>
 </section>
 
@@ -389,18 +391,18 @@
     <div class="kicker">Location</div>
     <h2>Rooted at Narayankhed</h2>
   </div>
-  <div class="loc-wrap reveal">
-    <div class="loc-card" style="border:1px solid var(--line)">
+  <div class="loc-wrap bezel reveal">
+    <div class="loc-card bezel-core">
       <h3>Narayankhed, Telangana</h3>
-      <div class="sub">Sangareddy District</div>
+      <div class="sub">Sangareddy district</div>
       <div class="loc-dl">
         <div class="row"><span class="b">&mdash;</span><span>A steadily developing town in a recognised growth corridor</span></div>
         <div class="row"><span class="b">&mdash;</span><span>Well connected by road to surrounding districts</span></div>
-        <div class="row"><span class="b">&mdash;</span><span>Surrounded by green, open landscape — ideal for a farm-plot lifestyle</span></div>
-        <div class="row"><span class="b">&mdash;</span><span>Grand Venture Opening Ceremony held 12 July 2026</span></div>
+        <div class="row"><span class="b">&mdash;</span><span>Surrounded by green, open landscape, ideal for a farm-plot lifestyle</span></div>
+        <div class="row"><span class="b">&mdash;</span><span>Grand venture opening ceremony held 12 July 2026</span></div>
       </div>
     </div>
-    <div class="map-frame">
+    <div class="loc-visual bezel-core">
       <div class="pin">
         <div class="ring"><div class="dot"></div></div>
         <p>Park-1</p>
@@ -411,21 +413,22 @@
 </section>
 
 <section>
-  <div class="cmd-wrap plaque reveal">
-    <span class="cnr a"></span><span class="cnr b"></span><span class="cnr c"></span><span class="cnr d"></span>
-    <div class="mark serif">&ldquo;</div>
-    <p class="quote">We don't just sell land. We hand over the foundation of a family's legacy — with the trust, transparency, and prestige every owner deserves.</p>
-    <div class="who">
-      <b>V. Vijay Kumar Babu</b>
-      <span>Chairman &amp; Managing Director</span>
+  <div class="cmd-wrap bezel reveal">
+    <div class="bezel-core" style="padding:40px 10px">
+      <div class="mark serif">&ldquo;</div>
+      <p class="quote">We don't just sell land. We hand over the foundation of a family's legacy, with the trust and transparency every owner deserves.</p>
+      <div class="who">
+        <b>V. Vijay Kumar Babu</b>
+        <span>Chairman &amp; Managing Director</span>
+      </div>
     </div>
   </div>
 </section>
 
 <section id="enquire" class="enquire">
-  <div class="enq-wrap reveal">
+  <div class="enq-wrap bezel reveal">
     <div class="enq-info">
-      <h2><span class="script">Secure</span> Your Plot</h2>
+      <h2><span class="script">Secure</span> your plot</h2>
       <p>Leave your details and our team will arrange a personal site visit at Park-1.</p>
       <ul>
         <li><span class="b">&mdash;</span>Personal walkthrough of the actual plot grid</li>
@@ -433,25 +436,24 @@
         <li><span class="b">&mdash;</span>No obligation, no pressure</li>
       </ul>
     </div>
-    <div class="enq-form-panel plaque">
-      <span class="cnr a"></span><span class="cnr b"></span><span class="cnr c"></span><span class="cnr d"></span>
+    <div class="enq-form-panel">
       <div class="form-wrap">
         <form class="form" id="enquireForm">
           <div class="row">
-            <input type="text" id="enqName" placeholder="Full Name" required />
-            <input type="tel" id="enqPhone" placeholder="Phone Number" required />
+            <label><span class="lbl">Full name</span><input type="text" id="enqName" placeholder="Your name" required /></label>
+            <label><span class="lbl">Phone number</span><input type="tel" id="enqPhone" placeholder="98480 00000" required /></label>
           </div>
-          <input type="email" id="enqEmail" placeholder="Email (optional)" />
-          <input type="text" id="enqDate" placeholder="Preferred visit date" />
-          <button class="btn-gold" type="submit">Request Site Visit</button>
-          <p class="form-error" id="enqError">Something went wrong sending your request — please call us directly or try again.</p>
+          <label><span class="lbl">Email (optional)</span><input type="email" id="enqEmail" placeholder="you@example.com" /></label>
+          <label><span class="lbl">Preferred visit date</span><input type="text" id="enqDate" placeholder="e.g. next Saturday" /></label>
+          <button class="btn btn-gold" type="submit" style="padding:15px 24px">Request site visit</button>
+          <p class="form-error" id="enqError">Something went wrong sending your request. Please call us directly or try again.</p>
         </form>
         <p class="form-note">By submitting, you agree to be contacted by Celebrity Infra Pvt Ltd regarding Park-1.</p>
       </div>
       <div class="enq-success" id="enqSuccess">
         <div class="ring">&#10003;</div>
         <h3>Request received</h3>
-        <p>Thank you — our team will reach out shortly to arrange your personal site visit at Park-1.</p>
+        <p>Our team will reach out shortly to arrange your personal site visit at Park-1.</p>
       </div>
     </div>
   </div>
@@ -467,7 +469,11 @@
     <a href="#location">Location</a>
     <a href="#enquire">Enquire</a>
   </div>
-  <p class="legal">Conceptual visuals. Indicative, not to scale. Subject to change without notice. T&amp;C apply. Celebrity Infra Pvt Ltd &mdash; Narayankhed, Telangana.</p>
+  <div class="flegal">
+    <a href="#">Privacy policy</a>
+    <a href="#">Terms of service</a>
+  </div>
+  <p class="legal">Conceptual visuals. Indicative, not to scale. Subject to change without notice. T&amp;C apply. Celebrity Infra Pvt Ltd, Narayankhed, Telangana.</p>
   <div class="copy">&copy; 2026 Celebrity Infra Pvt Ltd. All rights reserved.</div>
 </footer>
 
@@ -477,8 +483,8 @@
   addEventListener('scroll',()=>{
     nav.classList.toggle('scrolled',scrollY>40);
     const h=document.documentElement.scrollHeight-innerHeight;
-    scrollbar.style.width=(h>0?(scrollY/h)*100:0)+'%';
-  });
+    scrollbar.style.transform=`scaleX(${h>0?scrollY/h:0})`;
+  }, { passive: true });
 
   const burger=document.getElementById('burger'),links=document.getElementById('navLinks');
   const setMenuOpen=(open)=>{links.classList.toggle('open',open);document.body.classList.toggle('nav-open',open)};
@@ -527,7 +533,7 @@
       preferred_date: document.getElementById('enqDate').value || null,
     });
     submitBtn.disabled = false;
-    submitBtn.textContent = 'Request Site Visit';
+    submitBtn.textContent = 'Request site visit';
     if (error) {
       console.error(error);
       enqError.classList.add('show');
@@ -537,6 +543,5 @@
     enqSuccess.classList.add('show');
   });
 </script>
-
 </body>
 </html>
