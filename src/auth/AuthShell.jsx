@@ -14,7 +14,7 @@ export default function AuthShell({ eyebrow, title, subtitle, children }) {
       position: "relative", overflow: "hidden", flex: mobile ? "none" : "0 0 42%",
       display: "flex", flexDirection: "column", justifyContent: mobile ? "flex-start" : "center",
       padding: mobile ? "28px 24px 22px" : "60px 56px",
-      background: "radial-gradient(120% 90% at 20% 0%, rgba(16,185,129,.16), transparent 60%), radial-gradient(90% 70% at 100% 100%, rgba(217,164,65,.08), transparent 55%), #12211b",
+      background: "radial-gradient(120% 90% at 20% 0%, rgba(201,162,39,.16), transparent 60%), radial-gradient(90% 70% at 100% 100%, rgba(122,31,43,.08), transparent 55%), #171310",
       borderBottom: mobile ? `1px solid ${C.line}` : "none",
       borderRight: mobile ? "none" : `1px solid ${C.line}`,
     }}>
@@ -46,7 +46,7 @@ export default function AuthShell({ eyebrow, title, subtitle, children }) {
   return (
     <div style={{
       minHeight: "100dvh", display: "flex", flexDirection: mobile ? "column" : "row",
-      fontFamily: FONT, background: "#101314",
+      fontFamily: FONT, background: "#0B0A08",
     }}>
       {brandPanel}
 

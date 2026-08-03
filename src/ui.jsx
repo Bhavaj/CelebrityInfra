@@ -1,21 +1,22 @@
 import React, { useEffect, useState } from "react";
-import logoUrl from "./assets/logo.jpg";
+import logoUrl from "./assets/celebrity-logo.png";
 
-// "Editorial Charcoal" — architectural charcoal canvas, restrained ivory
-// type, emerald as the sole primary accent (warm amber + teal reserved for
-// secondary status semantics). Display type is Space Grotesk (headings,
-// numbers), body/UI copy runs in Inter, JetBrains Mono is reserved for
-// truly tabular/code-like content (member codes, ledger figures) instead
-// of being the default voice for every button and label. Token names
-// (gold/goldLt/emerald/…) are kept stable even though the hues moved, to
-// avoid a sweeping rename across every screen.
+// "Royal Gold" — every previous pass called its primary accent "gold" while
+// the actual hex values underneath were emerald green (#10B981), which is
+// why the site kept reading green no matter what else changed. This pass
+// fixes the tokens themselves: gold is now really gold (matching the actual
+// crest logo), a deep wine red is the secondary accent, and green is
+// demoted to what it should have been all along — a small functional status
+// color, not the brand's dominant hue. Panels stay flat/hairline-bordered
+// (no glass/tilt/glow) per the prior "not a template" pass.
 export const C = {
-  bg: "#0F1211", panel: "#161B19", panel2: "#1B211F", field: "#1E2624",
-  ink: "#F5F2EA", muted: "#A7B0AB", faint: "#6B7470",
-  navy: "#101A33", navy2: "#182848", steel: "#7C96A8",
-  gold: "#10B981", goldLt: "#34D399", goldDeep: "#047857", goldSoft: "rgba(16,185,129,.14)",
-  emerald: "#D9A441", emeraldLt: "#F0C368", emeraldDeep: "#8A6420", emeraldSoft: "rgba(217,164,65,.14)",
-  line: "#2E3835", lineGold: "rgba(16,185,129,.35)",
+  bg: "#0B0A08", panel: "#16130D", panel2: "#1C1811", field: "#191510",
+  ink: "#F6F0E2", muted: "#B4A78F", faint: "#786C56",
+  navy: "#101A33", navy2: "#182848", steel: "#8A97A8",
+  gold: "#C9A227", goldLt: "#E7C665", goldDeep: "#8A6D1B", goldSoft: "rgba(201,162,39,.16)",
+  wine: "#7A1F2B", wineLt: "#A5333F", wineDeep: "#4E1119", wineSoft: "rgba(122,31,43,.16)",
+  emerald: "#1F8A55", emeraldLt: "#34B378", emeraldDeep: "#0F5C37", emeraldSoft: "rgba(31,138,85,.14)",
+  line: "#2E2A20", lineGold: "rgba(201,162,39,.32)",
   green: "#2DD4BF", red: "#E2685A",
 };
 
@@ -23,14 +24,13 @@ export const DISPLAY = "'Space Grotesk',sans-serif";
 export const FONT = "'Inter',sans-serif";
 export const MONO = "'JetBrains Mono',monospace";
 
-// Shared corner radii — a soft, modern scale replacing the old sharp-edged look.
-export const R = { sm: 8, md: 12, lg: 16, xl: 20, pill: 999 };
-export const goldGradient = `linear-gradient(135deg, ${C.goldLt} 0%, ${C.gold} 55%, ${C.goldDeep} 100%)`;
+export const R = { sm: 6, md: 10, lg: 14, xl: 16, pill: 999 };
+export const goldGradient = `linear-gradient(135deg, ${C.goldLt} 0%, ${C.gold} 100%)`;
 
 export const fmt = (n) => "₹" + Number(n || 0).toLocaleString("en-IN");
+export const fmtDate = (d) => d ? new Date(d + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—";
+export const todayISO = () => new Date().toISOString().slice(0, 10);
 
-// Presentational-only viewport hook: true when the screen is phone-sized (≤640px).
-// Used to stack multi-column layouts and adjust padding — no behavior/data impact.
 export function useIsMobile(breakpoint = 640) {
   const query = `(max-width: ${breakpoint}px)`;
   const [isMobile, setIsMobile] = useState(
@@ -46,9 +46,9 @@ export function useIsMobile(breakpoint = 640) {
   return isMobile;
 }
 
-// Pointer-follow 3D tilt — spread the returned handlers onto any element
-// carrying the "cip-tilt" class (see main.jsx) for a magnetic, spring-back
-// perspective effect. Strength is in degrees of max rotation.
+// Kept for the auth screens (RoleChooser/AuthShell), which still use a subtle
+// pointer-tilt on their single hero card — not used by the admin/portal
+// surfaces below anymore (see file header note).
 export function useTilt(strength = 7) {
   return {
     onPointerMove: (e) => {
@@ -70,7 +70,6 @@ export function useTilt(strength = 7) {
   };
 }
 
-// Material Symbols glyph — used throughout nav/chrome to match the icon language.
 export function Icon({ name, size = 20, style }) {
   return (
     <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: size, lineHeight: 1, ...style }}>
@@ -79,7 +78,6 @@ export function Icon({ name, size = 20, style }) {
   );
 }
 
-// Horizontal-scroll wrapper so wide tables scroll inside their card instead of breaking layout.
 export function TableScroll({ children, minWidth = 560 }) {
   return (
     <div className="cip-scroll-x" style={{ margin: "0 -2px" }}>
@@ -88,7 +86,6 @@ export function TableScroll({ children, minWidth = 560 }) {
   );
 }
 
-// Consistent empty state — centered, muted, with breathing room.
 export function Empty({ children }) {
   return (
     <div style={{ textAlign: "center", color: C.muted, fontSize: 14, padding: "26px 16px", lineHeight: 1.6, fontFamily: FONT }}>
@@ -97,16 +94,12 @@ export function Empty({ children }) {
   );
 }
 
-// The real Celebrity Infra crest — a gold laurel medallion on ivory. Rendered
-// as a circular medallion (zoomed past the wordmark row) so it reads clearly
-// at nav/icon sizes and sits like a seal against the dark UI.
 export function Crest({ size = 34 }) {
   return (
     <div
       style={{
         width: size, height: size, flex: "none", borderRadius: "50%", overflow: "hidden",
         background: "#F3EFE2", border: `1.5px solid ${C.gold}`,
-        boxShadow: `0 0 ${Math.round(size * 0.4)}px rgba(16,185,129,.35)`,
         display: "flex", alignItems: "center", justifyContent: "center",
       }}
     >
@@ -118,16 +111,16 @@ export function Crest({ size = 34 }) {
   );
 }
 
-const glass = { background: "rgba(22,27,25,.7)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)" };
-
-export function Panel({ title, children, right }) {
+export function Panel({ title, children, right, subtitle }) {
   const mobile = useIsMobile();
-  const tilt = useTilt(2.5);
   return (
-    <div className="cip-card cip-in cip-tilt" {...tilt} style={{ ...glass, border: `1px solid ${C.line}`, borderRadius: R.xl, padding: mobile ? 16 : 24, marginBottom: mobile ? 16 : 20, boxShadow: "0 16px 40px -20px rgba(0,0,0,.6)" }}>
+    <div className="cip-card cip-in" style={{ background: C.panel, border: `1px solid ${C.line}`, borderRadius: R.xl, padding: mobile ? 16 : 22, marginBottom: mobile ? 14 : 18 }}>
       {title && (
-        <div style={{ display: "flex", alignItems: mobile ? "flex-start" : "center", flexDirection: mobile ? "column" : "row", gap: mobile ? 12 : 0, marginBottom: 18, paddingBottom: 16, borderBottom: `1px solid ${C.line}` }}>
-          <h3 style={{ margin: 0, fontFamily: DISPLAY, fontWeight: 600, fontSize: 19, letterSpacing: "-0.01em", color: C.ink }}>{title}</h3>
+        <div style={{ display: "flex", alignItems: mobile ? "flex-start" : "center", flexDirection: mobile ? "column" : "row", gap: mobile ? 12 : 0, marginBottom: 16, paddingBottom: 14, borderBottom: `1px solid ${C.line}` }}>
+          <div>
+            <h3 style={{ margin: 0, fontFamily: DISPLAY, fontWeight: 600, fontSize: 18, letterSpacing: "-0.01em", color: C.ink }}>{title}</h3>
+            {subtitle && <div style={{ fontSize: 12.5, color: C.muted, marginTop: 3 }}>{subtitle}</div>}
+          </div>
           {right && <div style={{ marginLeft: mobile ? 0 : "auto", width: mobile ? "100%" : "auto" }}>{right}</div>}
         </div>
       )}
@@ -136,27 +129,57 @@ export function Panel({ title, children, right }) {
   );
 }
 
-// Bento-style stat tile — icon chip, big Space Grotesk number, quiet label.
-// `icon` is optional so existing call sites keep working unchanged.
-export function Stat({ label, value, accent, icon }) {
+// Page-level header used at the top of every admin/portal screen — replaces
+// the ad-hoc breadcrumb markup that used to be rebuilt per-screen.
+export function PageHeader({ eyebrow, title, subtitle, right }) {
   const mobile = useIsMobile();
-  const barColor = accent || C.gold;
-  const tilt = useTilt(9);
   return (
-    <div className="cip-card cip-card-h cip-in-fast cip-tilt" {...tilt} style={{ ...glass, position: "relative", overflow: "hidden", border: `1px solid ${C.line}`, borderRadius: R.lg, padding: "18px 20px", flex: mobile ? "1 1 100%" : "1 1 170px" }}>
-      <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 3, background: barColor, opacity: .8 }} />
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-        <div style={{ width: 30, height: 30, borderRadius: R.sm, background: `${barColor}1f`, border: `1px solid ${barColor}55`, display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
-          <Icon name={icon || "monitoring"} size={16} style={{ color: barColor }} />
-        </div>
-        <div style={{ fontSize: 12, color: C.muted, fontFamily: FONT, fontWeight: 500 }}>{label}</div>
+    <div style={{ display: "flex", alignItems: mobile ? "flex-start" : "flex-end", flexDirection: mobile ? "column" : "row", gap: mobile ? 14 : 0, marginBottom: 22 }}>
+      <div>
+        {eyebrow && <div style={{ fontSize: 11.5, fontWeight: 600, color: C.gold, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>{eyebrow}</div>}
+        <h1 style={{ margin: 0, fontFamily: DISPLAY, fontWeight: 600, fontSize: mobile ? 24 : 28, color: C.ink, letterSpacing: "-0.02em" }}>{title}</h1>
+        {subtitle && <div style={{ fontSize: 13.5, color: C.muted, marginTop: 4 }}>{subtitle}</div>}
       </div>
-      <div style={{ fontFamily: DISPLAY, fontSize: 30, fontWeight: 700, lineHeight: 1.1, letterSpacing: "-0.02em", color: accent || C.ink }}>{value}</div>
+      {right && <div style={{ marginLeft: mobile ? 0 : "auto", width: mobile ? "100%" : "auto" }}>{right}</div>}
     </div>
   );
 }
 
-// Soft pill chip — tinted fill plus a matching border, reads livelier than a flat outline.
+// Segmented control — replaces the bespoke ViewToggle button pairs that
+// were being hand-rolled per screen (Agents tree/ledger/rates, etc).
+export function Tabs({ value, onChange, options }) {
+  return (
+    <div style={{ display: "inline-flex", gap: 2, padding: 3, background: C.field, border: `1px solid ${C.line}`, borderRadius: R.md }}>
+      {options.map((o) => (
+        <button key={o.v} onClick={() => onChange(o.v)} className="cip-tap" type="button"
+          style={{ padding: "7px 15px", borderRadius: R.sm, border: "none",
+            background: value === o.v ? C.goldSoft : "transparent",
+            color: value === o.v ? C.goldLt : C.muted,
+            fontWeight: value === o.v ? 600 : 500, cursor: "pointer", fontSize: 13, fontFamily: FONT }}>
+          {o.l}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function Stat({ label, value, accent, icon }) {
+  const mobile = useIsMobile();
+  const barColor = accent || C.gold;
+  return (
+    <div className="cip-card cip-in-fast" style={{ position: "relative", overflow: "hidden", background: C.panel, border: `1px solid ${C.line}`, borderRadius: R.lg, padding: "17px 19px", flex: mobile ? "1 1 100%" : "1 1 170px" }}>
+      <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 3, background: barColor }} />
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+        <div style={{ width: 28, height: 28, borderRadius: R.sm, background: `${barColor}1f`, border: `1px solid ${barColor}55`, display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
+          <Icon name={icon || "monitoring"} size={15} style={{ color: barColor }} />
+        </div>
+        <div style={{ fontSize: 12, color: C.muted, fontFamily: FONT, fontWeight: 500 }}>{label}</div>
+      </div>
+      <div style={{ fontFamily: DISPLAY, fontSize: 28, fontWeight: 700, lineHeight: 1.1, letterSpacing: "-0.02em", color: accent || C.ink }}>{value}</div>
+    </div>
+  );
+}
+
 export function Badge({ text, color }) {
   return (
     <span style={{
@@ -168,6 +191,22 @@ export function Badge({ text, color }) {
   );
 }
 
+// Payment-status pill derived from a due/paid comparison — used across
+// Inventory/Customers/Portals so "overdue" always reads the same way.
+export function DueBadge({ overdue, dueDate }) {
+  if (overdue > 0) return <Badge text={`Overdue ${fmt(overdue)}`} color={C.red} />;
+  if (dueDate) return <Badge text={`Next due ${fmtDate(dueDate)}`} color={C.gold} />;
+  return <Badge text="Fully scheduled" color={C.green} />;
+}
+
+export function ProgressBar({ pct, color }) {
+  return (
+    <div style={{ height: 10, background: C.field, borderRadius: R.pill, overflow: "hidden" }}>
+      <div style={{ width: `${Math.min(100, Math.max(0, pct))}%`, height: "100%", background: color || `linear-gradient(90deg,${C.goldDeep},${C.gold})`, transition: "width .4s ease" }} />
+    </div>
+  );
+}
+
 export function Th({ children, right }) {
   return <th style={{ textAlign: right ? "right" : "left", fontSize: 12, fontWeight: 600, color: C.muted, padding: "10px 12px", borderBottom: `1px solid ${C.line}`, whiteSpace: "nowrap", fontFamily: FONT }}>{children}</th>;
 }
@@ -175,13 +214,9 @@ export function Td({ children, right, bold }) {
   return <td style={{ textAlign: right ? "right" : "left", padding: "11px 12px", borderBottom: `1px solid ${C.line}`, fontSize: 14, fontWeight: bold ? 600 : 400, color: C.ink, whiteSpace: "nowrap", fontFamily: FONT }}>{children}</td>;
 }
 
-// size="md" (default) is the primary CTA treatment — reserve it for the one
-// or two primary actions on a screen (Sign in, Create project, Confirm sale).
-// size="sm" is a quiet control for row/inline actions in tables and modals.
-// Normal-case, medium-weight Inter — not the old all-caps mono chip look.
 export function Button({ children, onClick, disabled, kind = "gold", size = "md", type = "button" }) {
   const styles = kind === "gold"
-    ? { background: goldGradient, color: "#062B1E", border: "none", fontWeight: 600, boxShadow: "0 6px 20px -4px rgba(16,185,129,.4)" }
+    ? { background: goldGradient, color: "#241A08", border: "none", fontWeight: 600 }
     : kind === "ghostLight"
     ? { background: "transparent", color: C.ink, border: `1px solid ${C.line}`, fontWeight: 500 }
     : kind === "danger"
@@ -192,15 +227,12 @@ export function Button({ children, onClick, disabled, kind = "gold", size = "md"
     : { padding: "11px 22px", fontSize: 14, borderRadius: R.md };
   return (
     <button type={type} onClick={onClick} disabled={disabled}
-      className={kind === "gold" && !disabled ? "cip-glow" : undefined}
-      style={{ ...styles, ...sizing, fontFamily: FONT, letterSpacing: "0", cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.5 : 1, transition: "all .15s ease" }}>
+      style={{ ...styles, ...sizing, fontFamily: FONT, letterSpacing: "0", cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.5 : 1, transition: "opacity .15s ease, background .15s ease" }}>
       {children}
     </button>
   );
 }
 
-// Destructive action gated behind an on-brand confirm dialog (replaces the
-// native window.confirm(), which broke out of the theme).
 export function ConfirmButton({ children, confirmText, onConfirm, kind = "danger", size = "sm", ...props }) {
   const [open, setOpen] = useState(false);
   return (
@@ -231,7 +263,6 @@ export function Field({ label, ...props }) {
   );
 }
 
-// compact=true drops the block label/margin for inline use (filter bars, table cells)
 export function Select({ label, value, onChange, options, placeholder, compact }) {
   return (
     <label style={{ display: "block", marginBottom: compact ? 0 : 14 }}>
@@ -245,17 +276,15 @@ export function Select({ label, value, onChange, options, placeholder, compact }
   );
 }
 
-// Drill-down panel that opens in place over the content.
 export function Modal({ title, onClose, children, maxWidth = 620 }) {
   const mobile = useIsMobile();
   return (
     <div onClick={onClose} className="cip-in-fade"
-      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.8)", backdropFilter: "blur(3px)", display: "flex", alignItems: mobile ? "flex-end" : "flex-start", justifyContent: "center", padding: mobile ? 0 : "48px 16px", zIndex: 100, overflowY: mobile ? "hidden" : "auto" }}>
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.8)", display: "flex", alignItems: mobile ? "flex-end" : "flex-start", justifyContent: "center", padding: mobile ? 0 : "48px 16px", zIndex: 100, overflowY: mobile ? "hidden" : "auto" }}>
       <div onClick={(e) => e.stopPropagation()} className={mobile ? "cip-in-sheet" : "cip-in-scale"}
-        style={{ ...glass, border: `1px solid ${C.line}`, borderTop: `3px solid ${C.goldLt}`,
+        style={{ background: C.panel, border: `1px solid ${C.line}`, borderTop: `3px solid ${C.goldLt}`,
           borderRadius: mobile ? `${R.lg}px ${R.lg}px 0 0` : R.lg, width: "100%", maxWidth: mobile ? "none" : maxWidth,
           maxHeight: mobile ? "88dvh" : "none", overflowY: mobile ? "auto" : "visible",
-          boxShadow: "0 24px 60px -20px rgba(0,0,0,.6)",
           padding: mobile ? "18px 18px calc(18px + env(safe-area-inset-bottom))" : 26 }}>
         <div style={{ display: "flex", alignItems: "center", marginBottom: 18, gap: 12 }}>
           <h3 style={{ margin: 0, fontFamily: DISPLAY, fontWeight: 600, fontSize: mobile ? 19 : 22, color: C.ink }}>{title}</h3>
@@ -281,20 +310,15 @@ export function SearchBar({ value, onChange, placeholder }) {
   );
 }
 
-// Mobile stand-in for a table row — a tappable bordered card used when a
-// data table's columns would otherwise force horizontal scrolling on phones.
 export function RowCard({ children, onClick }) {
-  const tilt = useTilt(4);
   return (
-    <div onClick={onClick} className="cip-card cip-card-h cip-tap cip-in-fast cip-tilt" {...tilt}
-      style={{ background: C.panel, border: `1px solid ${C.line}`, borderRadius: R.md, padding: "13px 14px", marginBottom: 8, cursor: onClick ? "pointer" : "default" }}>
+    <div onClick={onClick} className="cip-card cip-tap cip-in-fast"
+      style={{ background: C.panel2, border: `1px solid ${C.line}`, borderRadius: R.md, padding: "13px 14px", marginBottom: 8, cursor: onClick ? "pointer" : "default" }}>
       {children}
     </div>
   );
 }
 
-// Label/value pair for the compact card body inside RowCard — mirrors <Td>
-// typography at a smaller scale so mobile cards read like a slimmed table row.
 export function RowLine({ label, value, bold }) {
   return (
     <div style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "3px 0", fontSize: 13.5 }}>

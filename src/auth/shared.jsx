@@ -28,7 +28,7 @@ export function TabToggle({ value, onChange, options }) {
             flex: 1, padding: "10px 10px", borderRadius: 7, border: "none", cursor: "pointer",
             fontFamily: FONT, fontSize: 13.5, fontWeight: 600,
             background: value === o.value ? C.goldLt : "transparent",
-            color: value === o.value ? "#062B1E" : C.muted,
+            color: value === o.value ? "#241A08" : C.muted,
             transition: "background .18s ease, color .18s ease",
           }}>
           {o.label}

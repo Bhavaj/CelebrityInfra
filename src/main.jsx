@@ -13,13 +13,13 @@ style.textContent = `
     -moz-osx-font-smoothing:grayscale;
     text-rendering:optimizeLegibility;
     background:
-      radial-gradient(60% 40% at 12% 0%, rgba(16,185,129,.08), transparent 60%),
-      radial-gradient(50% 36% at 100% 12%, rgba(217,164,65,.05), transparent 55%),
-      #101314;
+      radial-gradient(60% 40% at 12% 0%, rgba(201,162,39,.08), transparent 60%),
+      radial-gradient(50% 36% at 100% 12%, rgba(122,31,43,.05), transparent 55%),
+      #0B0A08;
     background-attachment:fixed;
     -webkit-text-size-adjust:100%;
   }
-  ::selection{background:#34D399;color:#062B1E}
+  ::selection{background:#E7C665;color:#241A08}
 
   .material-symbols-outlined{
     font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24;
@@ -28,10 +28,10 @@ style.textContent = `
   /* Card hover lift — soft rounded edges, emerald-glow border and a gentle rise */
   .cip-card{transition:transform .2s cubic-bezier(.16,1,.3,1), box-shadow .2s ease, border-color .2s ease}
   @media (hover:hover){
-    .cip-card-h:hover{border-color:#34D399;box-shadow:0 12px 28px -10px rgba(16,185,129,.25);transform:translateY(-2px)}
+    .cip-card-h:hover{border-color:#E7C665;box-shadow:0 12px 28px -10px rgba(201,162,39,.25);transform:translateY(-2px)}
   }
-  .cip-glow{box-shadow:0 0 0 rgba(16,185,129,0)}
-  @media (hover:hover){ .cip-glow:hover{box-shadow:0 0 15px rgba(16,185,129,.35)} }
+  .cip-glow{box-shadow:0 0 0 rgba(201,162,39,0)}
+  @media (hover:hover){ .cip-glow:hover{box-shadow:0 0 15px rgba(201,162,39,.35)} }
 
   /* Buttons & interactive elements ease their states */
   button{transition:transform .12s ease, box-shadow .18s ease, opacity .18s ease, background .18s ease, border-color .18s ease}
@@ -40,14 +40,14 @@ style.textContent = `
   /* Thin branded scrollbar */
   .cip-scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch}
   .cip-scroll-x::-webkit-scrollbar{height:6px;width:6px}
-  .cip-scroll-x::-webkit-scrollbar-track{background:#0d100f}
-  .cip-scroll-x::-webkit-scrollbar-thumb{background:#262B29;border-radius:0}
-  .cip-scroll-x::-webkit-scrollbar-thumb:hover{background:#34D399}
-  .cip-scroll-x{scrollbar-width:thin;scrollbar-color:#262B29 #0d100f}
+  .cip-scroll-x::-webkit-scrollbar-track{background:#0F0C08}
+  .cip-scroll-x::-webkit-scrollbar-thumb{background:#2E2A20;border-radius:0}
+  .cip-scroll-x::-webkit-scrollbar-thumb:hover{background:#E7C665}
+  .cip-scroll-x{scrollbar-width:thin;scrollbar-color:#2E2A20 #0F0C08}
   ::-webkit-scrollbar{width:6px;height:6px}
-  ::-webkit-scrollbar-track{background:#0d100f}
-  ::-webkit-scrollbar-thumb{background:#262B29;border-radius:0}
-  ::-webkit-scrollbar-thumb:hover{background:#34D399}
+  ::-webkit-scrollbar-track{background:#0F0C08}
+  ::-webkit-scrollbar-thumb{background:#2E2A20;border-radius:0}
+  ::-webkit-scrollbar-thumb:hover{background:#E7C665}
 
   /* Tab strip: single scrollable row on mobile, hidden scrollbar for a clean bar */
   .cip-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
@@ -55,13 +55,13 @@ style.textContent = `
 
   /* Focus rings for the inline-styled inputs/selects — emerald, sharp */
   input:focus, select:focus, textarea:focus{
-    outline:none;border-color:#34D399 !important;box-shadow:0 0 0 1px rgba(16,185,129,.35)
+    outline:none;border-color:#E7C665 !important;box-shadow:0 0 0 1px rgba(201,162,39,.35)
   }
-  select option{background:#171b1a;color:#F4F1EA}
+  select option{background:#191510;color:#F6F0E2}
 
   /* Keyboard focus ring for buttons/links — emerald, only shown for keyboard nav */
   button:focus-visible, a:focus-visible{
-    outline:2px solid #34D399;outline-offset:2px;border-radius:4px;
+    outline:2px solid #E7C665;outline-offset:2px;border-radius:4px;
   }
   button:focus:not(:focus-visible), a:focus:not(:focus-visible){outline:none}
 
@@ -126,9 +126,9 @@ style.textContent = `
   /* Rotating 3D wireframe rings — decorative backdrop behind the auth card.
      Three nested rings tumbling on independent axes, pure CSS 3D transforms. */
   .cip-orbit{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;perspective:900px;pointer-events:none;z-index:0}
-  .cip-ring{position:absolute;border-radius:50%;transform-style:preserve-3d;border:1px solid rgba(16,185,129,.28)}
+  .cip-ring{position:absolute;border-radius:50%;transform-style:preserve-3d;border:1px solid rgba(201,162,39,.28)}
   .cip-ring.r1{width:340px;height:340px;animation:cipOrbit1 26s linear infinite}
-  .cip-ring.r2{width:260px;height:260px;border-color:rgba(217,164,65,.22);animation:cipOrbit2 20s linear infinite}
+  .cip-ring.r2{width:260px;height:260px;border-color:rgba(122,31,43,.22);animation:cipOrbit2 20s linear infinite}
   .cip-ring.r3{width:420px;height:420px;border-color:rgba(45,212,191,.16);animation:cipOrbit3 34s linear infinite}
   @keyframes cipOrbit1{from{transform:rotateX(62deg) rotateY(0deg) rotateZ(0deg)}to{transform:rotateX(62deg) rotateY(360deg) rotateZ(0deg)}}
   @keyframes cipOrbit2{from{transform:rotateX(70deg) rotateZ(0deg) rotateY(0deg)}to{transform:rotateX(70deg) rotateZ(360deg) rotateY(0deg)}}

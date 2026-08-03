@@ -1,24 +1,34 @@
 import React, { useState } from "react";
 import { supabase } from "../supabase";
-import { C, MONO, fmt, Panel, Th, Td, Button, ConfirmButton, Field, Select, Modal, SearchBar, KV, Badge, TableScroll, Empty, useIsMobile, RowCard, RowLine } from "../ui";
+import { C, MONO, fmt, Panel, Tabs, Th, Td, Button, ConfirmButton, Field, Select, Modal, SearchBar, KV, Badge, TableScroll, Empty, useIsMobile, RowCard, RowLine } from "../ui";
 import AccessCode from "./AccessCode";
 
-export default function Agents({ agents, customers, commissions, plots, users, agentName, view, setView, onDone }) {
+export default function Agents({ agents, customers, commissions, plots, users, agentName, projects, activeProject, rates, view, setView, onDone }) {
   const [adding, setAdding] = useState(false);
   const [openAgent, setOpenAgent] = useState(null);
+  const activeProjectObj = projects.find((p) => p.id === activeProject);
 
   return (
     <>
-      <div style={{ display: "flex", gap: 6, marginBottom: 18 }}>
-        <ViewToggle active={view === "tree"} onClick={() => setView("tree")}>Agent tree</ViewToggle>
-        <ViewToggle active={view === "commissions"} onClick={() => setView("commissions")}>Commission ledger</ViewToggle>
+      <div style={{ marginBottom: 18 }}>
+        <Tabs value={view} onChange={setView} options={[
+          { v: "tree", l: "Agent tree" },
+          { v: "rates", l: "Commission rates" },
+          { v: "commissions", l: "Payout ledger" },
+        ]} />
       </div>
 
-      {view === "tree" ? (
+      {view === "tree" && (
         <Panel title="Agent network" right={<Button onClick={() => setAdding((v) => !v)}>{adding ? "Close" : "＋ Add Agent"}</Button>}>
           <AgentTree agents={agents} agentName={agentName} onOpen={setOpenAgent} />
         </Panel>
-      ) : (
+      )}
+
+      {view === "rates" && (
+        <RatesView agents={agents} projectId={activeProject} projectName={activeProjectObj?.name} rates={rates} onDone={onDone} />
+      )}
+
+      {view === "commissions" && (
         <CommissionsLedger commissions={commissions} plots={plots} agentName={agentName} />
       )}
 
@@ -32,20 +42,8 @@ export default function Agents({ agents, customers, commissions, plots, users, a
   );
 }
 
-function ViewToggle({ active, onClick, children }) {
-  return (
-    <button onClick={onClick} className="cip-tap"
-      style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${active ? C.gold : C.line}`,
-        background: active ? C.goldSoft : "transparent", color: active ? C.goldLt : C.muted,
-        fontWeight: active ? 600 : 400, cursor: "pointer", fontSize: 13, fontFamily: "'Inter',sans-serif" }}>
-      {children}
-    </button>
-  );
-}
-
 // Org-chart-style tree — each node with reports gets a +/− toggle so deep
-// downlines can be collapsed instead of forcing a horizontal scroll. Indent
-// per level is fixed and small so it holds up down to phone widths.
+// downlines can be collapsed instead of forcing a horizontal scroll.
 function AgentTree({ agents, agentName, onOpen }) {
   const roots = agents.filter((a) => !a.sponsor_id);
   const parentIds = new Set(agents.filter((a) => a.sponsor_id).map((a) => a.sponsor_id));
@@ -80,9 +78,6 @@ function TreeNode({ agent, agents, agentName, onOpen, depth, collapsed, toggle }
   const children = agents.filter((a) => a.sponsor_id === agent.id);
   const hasChildren = children.length > 0;
   const isOpen = !collapsed[agent.id];
-  const split = agent.split || {};
-  const ownTake = split.self ?? agent.quota_percent;
-  const upline = Object.entries(split).filter(([k]) => k !== "self");
 
   return (
     <div style={{ marginLeft: depth ? 10 : 0, paddingLeft: depth ? 14 : 0, borderLeft: depth ? `1px solid ${C.line}` : "none" }}>
@@ -97,7 +92,7 @@ function TreeNode({ agent, agents, agentName, onOpen, depth, collapsed, toggle }
           {hasChildren ? (isOpen ? "−" : "+") : "·"}
         </button>
 
-        <div onClick={() => onOpen(agent)} className="cip-card cip-card-h cip-tap cip-in-fast"
+        <div onClick={() => onOpen(agent)} className="cip-card cip-tap cip-in-fast"
           style={{ flex: 1, minWidth: 0, background: depth === 0 ? C.goldSoft : C.panel2,
             border: `1px solid ${C.line}`, borderRadius: 8, padding: "10px 12px", cursor: "pointer", opacity: agent.archived ? 0.55 : 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
@@ -108,17 +103,83 @@ function TreeNode({ agent, agents, agentName, onOpen, depth, collapsed, toggle }
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 5, fontSize: 11.5, color: C.muted, fontFamily: MONO }}>
             <span>{agent.member_code}</span>
             <span>{agent.phone}</span>
-            <span style={{ color: C.goldLt }}>quota {agent.quota_percent}%</span>
-            <span>own {ownTake}%</span>
+            <span style={{ color: C.goldLt }}>default rate {agent.quota_percent}%</span>
           </div>
-          {upline.length > 0 && (
-            <div style={{ fontSize: 11, color: C.gold, marginTop: 4 }}>upline: {upline.map(([id, p]) => `${agentName(id)} ${p}%`).join(", ")}</div>
-          )}
         </div>
       </div>
 
       {hasChildren && isOpen && children.map((c) => (
         <TreeNode key={c.id} agent={c} agents={agents} agentName={agentName} onOpen={onOpen} depth={depth + 1} collapsed={collapsed} toggle={toggle} />
+      ))}
+    </div>
+  );
+}
+
+// Per-project negotiated commission rate, plus a live cascade preview so the
+// admin can see exactly what override each upline earns before any sale
+// happens. Mirrors the record_sale() gap-fill logic 1:1: an agent's rate for
+// this project falls back to their default quota_percent when unset, and
+// each parent's override on a given child = parent_rate - child_rate
+// (clamped at 0).
+function RatesView({ agents, projectId, projectName, rates, onDone }) {
+  if (!projectId) return <Panel title="Commission rates"><Empty>Select a project to manage its commission rates.</Empty></Panel>;
+
+  const activeAgents = agents.filter((a) => !a.archived);
+  const roots = activeAgents.filter((a) => !a.sponsor_id);
+  const effectiveRate = (agentId) => {
+    const override = rates.find((r) => r.project_id === projectId && r.agent_id === agentId);
+    if (override) return Number(override.commission_pct);
+    return Number(agents.find((a) => a.id === agentId)?.quota_percent ?? 0);
+  };
+
+  async function setRate(agentId, pct) {
+    if (pct === "" || isNaN(Number(pct))) return;
+    await supabase.rpc("set_agent_project_rate", { p_project_id: projectId, p_agent_id: agentId, p_pct: Number(pct) });
+    onDone();
+  }
+
+  return (
+    <Panel title="Commission rates" subtitle={`Negotiated % for ${projectName || "this project"} — leave blank to use each agent's default rate.`}>
+      {roots.length === 0 ? <Empty>No agents yet.</Empty> : roots.map((r) => (
+        <RateNode key={r.id} agent={r} agents={activeAgents} depth={0} effectiveRate={effectiveRate} rates={rates} projectId={projectId} setRate={setRate} />
+      ))}
+    </Panel>
+  );
+}
+
+function RateNode({ agent, agents, depth, effectiveRate, rates, projectId, setRate }) {
+  const [draft, setDraft] = useState(null);
+  const children = agents.filter((a) => a.sponsor_id === agent.id);
+  const own = effectiveRate(agent.id);
+  const hasOverride = rates.some((r) => r.project_id === projectId && r.agent_id === agent.id);
+
+  return (
+    <div style={{ marginLeft: depth ? 10 : 0, paddingLeft: depth ? 14 : 0, borderLeft: depth ? `1px solid ${C.line}` : "none", marginTop: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", background: depth === 0 ? C.goldSoft : C.panel2, border: `1px solid ${C.line}`, borderRadius: 8, padding: "10px 12px" }}>
+        <span style={{ fontWeight: 700, color: C.ink, fontSize: 14, minWidth: 120 }}>{agent.name}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <input type="number" value={draft ?? own} onChange={(e) => setDraft(e.target.value)}
+            onBlur={() => { if (draft !== null && Number(draft) !== own) setRate(agent.id, draft); setDraft(null); }}
+            style={{ width: 70, padding: "6px 8px", border: `1px solid ${C.line}`, borderRadius: 6, background: C.field, color: C.ink, textAlign: "right", fontSize: 13.5, fontFamily: "'Inter',sans-serif" }} />
+          <span style={{ color: C.muted, fontSize: 13 }}>%</span>
+          {!hasOverride && <span style={{ fontSize: 11, color: C.faint }}>(default)</span>}
+        </div>
+        {children.length > 0 && (
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
+            {children.map((c) => {
+              const childRate = effectiveRate(c.id);
+              const override = Math.max(0, own - childRate);
+              return (
+                <span key={c.id} style={{ fontSize: 11.5, color: override > 0 ? C.gold : C.faint, fontFamily: MONO }}>
+                  ↳ {c.name} sells → earns {override}%
+                </span>
+              );
+            })}
+          </div>
+        )}
+      </div>
+      {children.map((c) => (
+        <RateNode key={c.id} agent={c} agents={agents} depth={depth + 1} effectiveRate={effectiveRate} rates={rates} projectId={projectId} setRate={setRate} />
       ))}
     </div>
   );
@@ -154,7 +215,7 @@ function AgentCard({ agent, agents, customers, commissions, users, onClose, onOp
       <KV k="Member ID" v={agent.member_code} />
       <KV k="Phone" v={agent.phone || "—"} />
       <KV k="Login" v={email || "not linked yet"} />
-      <KV k="Quota" v={`${agent.quota_percent}%`} />
+      <KV k="Default rate" v={`${agent.quota_percent}% (used when no per-project rate is set)`} />
       <KV k="Referred by" v={sponsor ? sponsor.name : "Direct agent"} />
       <KV k="Direct commission" v={fmt(direct)} />
       <KV k="Referral bonus" v={fmt(bonus)} />
@@ -196,26 +257,13 @@ function CreateAgent({ agents, onDone }) {
   const [phone, setPhone] = useState("");
   const [quota, setQuota] = useState("6");
   const [sponsorId, setSponsorId] = useState("");
-  const [splits, setSplits] = useState({});
-  const [selfTake, setSelfTake] = useState("6");
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const chain = [];
-  let cur = activeAgents.find((a) => a.id === sponsorId);
-  while (cur) { chain.push(cur); cur = agents.find((a) => a.id === cur.sponsor_id); }
-
-  const uplineSum = chain.reduce((s, a) => s + Number(splits[a.id] || 0), 0);
-  const total = Number(selfTake || 0) + uplineSum;
-  const q = Number(quota || 0);
-  const valid = name && Math.abs(total - q) < 0.001;
-
   async function save() {
     setBusy(true); setMsg("");
-    const split = { self: Number(selfTake) };
-    chain.forEach((a) => { if (Number(splits[a.id]) > 0) split[a.id] = Number(splits[a.id]); });
     const { error } = await supabase.from("agents").insert({
-      name, phone, quota_percent: q, sponsor_id: sponsorId || null, split,
+      name, phone, quota_percent: Number(quota), sponsor_id: sponsorId || null,
     });
     setBusy(false);
     if (error) { setMsg(error.message); return; }
@@ -227,39 +275,14 @@ function CreateAgent({ agents, onDone }) {
       <div style={{ maxWidth: 520 }}>
         <Field label="Agent name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Ravi Kumar" />
         <Field label="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98480 00000" />
-        <Field label="Total commission quota (%)" type="number" value={quota}
-          onChange={(e) => { setQuota(e.target.value); if (!sponsorId) setSelfTake(e.target.value); }} />
+        <Field label="Default commission rate (%)" type="number" value={quota} onChange={(e) => setQuota(e.target.value)} />
+        <p style={{ fontSize: 12.5, color: C.muted, marginTop: -8, marginBottom: 14 }}>Used whenever no per-project rate is set for this agent — set project-specific rates from Agents → Commission rates.</p>
         <Select label="Referred by (sponsor)" value={sponsorId} placeholder="— Direct agent (no referrer) —"
-          onChange={(v) => { setSponsorId(v); setSplits({}); }}
-          options={activeAgents.map((a) => ({ v: a.id, l: a.name }))} />
-        {!sponsorId && <p style={{ fontSize: 13, color: C.muted }}>Direct agent keeps the full {quota}% quota.</p>}
-        {sponsorId && (
-          <div style={{ background: C.bg, border: `1px solid ${C.line}`, borderRadius: 8, padding: 14, marginBottom: 14 }}>
-            <div style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10, fontFamily: MONO }}>Split the {quota}% quota</div>
-            <SplitRow label={`${name || "This agent"} (own take)`} value={selfTake} onChange={setSelfTake} />
-            {chain.map((a) => (
-              <SplitRow key={a.id} label={`${a.name} (upline)`} value={splits[a.id] || ""} onChange={(v) => setSplits({ ...splits, [a.id]: v })} />
-            ))}
-            <div style={{ marginTop: 10, fontSize: 14, fontWeight: 600, color: valid ? C.green : C.red }}>
-              Total: {total}% {valid ? "✓ matches quota" : `✗ must equal ${quota}%`}
-            </div>
-          </div>
-        )}
+          onChange={setSponsorId} options={activeAgents.map((a) => ({ v: a.id, l: a.name }))} />
         {msg && <p style={{ color: C.red, fontSize: 13 }}>{msg}</p>}
-        <Button onClick={save} disabled={!valid || busy}>{busy ? "Saving…" : "Create agent"}</Button>
+        <Button onClick={save} disabled={!name || busy}>{busy ? "Saving…" : "Create agent"}</Button>
       </div>
     </Panel>
-  );
-}
-
-function SplitRow({ label, value, onChange }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-      <span style={{ flex: 1, fontSize: 14, color: C.ink }}>{label}</span>
-      <input type="number" value={value} onChange={(e) => onChange(e.target.value)} placeholder="0"
-        style={{ width: 80, padding: "8px 10px", border: `1px solid ${C.line}`, borderRadius: 8, fontFamily: "'Inter',sans-serif", fontSize: 15, textAlign: "right", background: C.field, color: C.ink }} />
-      <span style={{ color: C.muted }}>%</span>
-    </div>
   );
 }
 
