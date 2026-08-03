@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { supabase } from "../supabase";
-import { C, MONO, fmt, fmtDate, todayISO, Panel, Th, Td, Button, ConfirmButton, SearchBar, Modal, KV, DueBadge, ProgressBar, TableScroll, Empty, useIsMobile, RowCard, RowLine, Field, Select } from "../ui";
+import { C, MONO, fmt, fmtDate, todayISO, Panel, Th, Td, Button, DangerDeleteButton, SearchBar, Modal, KV, DueBadge, ProgressBar, TableScroll, Empty, useIsMobile, RowCard, RowLine, Field, Select } from "../ui";
 import AccessCode from "./AccessCode";
 import RecordPayment from "./RecordPayment";
 import { scheduleStatus } from "./Inventory";
@@ -180,7 +180,7 @@ function CustomerCard({ customer, plots, transactions, installments, allPlots, p
 
       {deletable && (
         <div style={{ marginTop: 18 }}>
-          <ConfirmButton confirmText={`Delete ${customer.name}? This can't be undone.`} onConfirm={remove}>Delete</ConfirmButton>
+          <DangerDeleteButton label={customer.name} onConfirm={remove} />
         </div>
       )}
 

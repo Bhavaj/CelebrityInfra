@@ -23,13 +23,13 @@ export default function AuthShell({ eyebrow, title, subtitle, children }) {
           <div className="cip-ring r3" /><div className="cip-ring r1" /><div className="cip-ring r2" />
         </div>
       )}
-      <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 12 }} className="cip-in-fast">
+      <a href="/" aria-label="Back to celebrityinfra.in" style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 12 }} className="cip-in-fast">
         <Crest size={mobile ? 48 : 60} />
         <div>
           <div style={{ fontFamily: DISPLAY, fontSize: mobile ? 17 : 20, fontWeight: 600, color: C.ink }}>Celebrity Infra</div>
           <div style={{ fontSize: 10, letterSpacing: "0.2em", color: C.faint, fontFamily: MONO, textTransform: "uppercase" }}>Pvt Ltd</div>
         </div>
-      </div>
+      </a>
       {!mobile && (
         <div className="cip-in-fast" style={{ position: "relative", zIndex: 1, marginTop: 40, maxWidth: 320 }}>
           <div style={{ fontFamily: DISPLAY, fontSize: 28, fontWeight: 600, lineHeight: 1.25, color: C.ink }}>

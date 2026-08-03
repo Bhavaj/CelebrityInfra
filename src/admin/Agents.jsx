@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { supabase } from "../supabase";
-import { C, MONO, fmt, Panel, Tabs, Th, Td, Button, ConfirmButton, Field, Select, Modal, SearchBar, KV, Badge, TableScroll, Empty, useIsMobile, RowCard, RowLine } from "../ui";
+import { C, MONO, fmt, Panel, Tabs, Th, Td, Button, DangerDeleteButton, Field, Select, Modal, SearchBar, KV, Badge, TableScroll, Empty, useIsMobile, RowCard, RowLine } from "../ui";
 import AccessCode from "./AccessCode";
 
 export default function Agents({ agents, customers, commissions, plots, users, agentName, projects, activeProject, rates, view, setView, onDone }) {
@@ -240,7 +240,7 @@ function AgentCard({ agent, agents, customers, commissions, users, onClose, onOp
 
       <div style={{ display: "flex", gap: 8, marginTop: 18 }}>
         {leaf ? (
-          <ConfirmButton confirmText={`Delete ${agent.name}? This can't be undone.`} onConfirm={remove}>Delete</ConfirmButton>
+          <DangerDeleteButton label={agent.name} onConfirm={remove} />
         ) : (
           <Button kind="ghost" size="sm" onClick={toggleArchive}>{agent.archived ? "Unarchive" : "Archive"}</Button>
         )}

@@ -584,26 +584,34 @@
   if (gwCanvas && !reduceMotion) {
     try {
       const THREE = await import('https://esm.sh/three@0.160.0');
+      const { RoomEnvironment } = await import('https://esm.sh/three@0.160.0/examples/jsm/environments/RoomEnvironment.js');
       gwFallback.style.display = 'none';
 
       const scene = new THREE.Scene();
       scene.background = new THREE.Color(0x100D08);
-      scene.fog = new THREE.Fog(0x100D08, 9, 16);
-      const camera = new THREE.PerspectiveCamera(38, 16 / 9, 0.1, 100);
+      scene.fog = new THREE.Fog(0x100D08, 10, 17);
+      const camera = new THREE.PerspectiveCamera(36, 16 / 9, 0.1, 100);
       const renderer = new THREE.WebGLRenderer({ canvas: gwCanvas, antialias: true });
       renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.15;
+      renderer.toneMappingExposure = 1.25;
+
+      // A real reflection environment is what separates "PBR material" from
+      // "flat plastic toy" — MeshPhysicalMaterial's metalness/clearcoat has
+      // nothing to reflect without one, which is why gold/marble read dull
+      // and matte without this even with correct roughness values.
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
       const root = new THREE.Group();
       scene.add(root);
 
       // ---- materials -----------------------------------------------------
-      const marble = new THREE.MeshPhysicalMaterial({ color: 0xEDE6D6, roughness: 0.42, metalness: 0.04, clearcoat: 0.25, clearcoatRoughness: 0.35 });
-      const gold = new THREE.MeshPhysicalMaterial({ color: 0xC9A227, roughness: 0.28, metalness: 0.88, clearcoat: 0.3, clearcoatRoughness: 0.2 });
-      const goldLt = new THREE.MeshPhysicalMaterial({ color: 0xE7C665, roughness: 0.22, metalness: 0.9, clearcoat: 0.35 });
-      const iron = new THREE.MeshStandardMaterial({ color: 0x1C1712, roughness: 0.5, metalness: 0.6 });
+      const marble = new THREE.MeshPhysicalMaterial({ color: 0xEDE6D6, roughness: 0.32, metalness: 0.05, clearcoat: 0.5, clearcoatRoughness: 0.25, envMapIntensity: 1.1 });
+      const gold = new THREE.MeshPhysicalMaterial({ color: 0xC9A227, roughness: 0.22, metalness: 0.95, clearcoat: 0.5, clearcoatRoughness: 0.15, envMapIntensity: 1.6, emissive: 0x3a2c05, emissiveIntensity: 0.25 });
+      const goldLt = new THREE.MeshPhysicalMaterial({ color: 0xE7C665, roughness: 0.16, metalness: 0.97, clearcoat: 0.6, envMapIntensity: 1.8, emissive: 0x4a3a0c, emissiveIntensity: 0.3 });
+      const iron = new THREE.MeshStandardMaterial({ color: 0x1C1712, roughness: 0.4, metalness: 0.75, envMapIntensity: 1 });
       const hedge = new THREE.MeshStandardMaterial({ color: 0x2F4A34, roughness: 0.85 });
       const potMat = new THREE.MeshStandardMaterial({ color: 0x342A1E, roughness: 0.7 });
 
@@ -666,64 +674,65 @@
         plinth.position.y = 0.175;
         g.add(plinth);
 
-        const shaftH = 3.2;
+        const shaftH = 3.4;
         const shaftY = 0.35 + shaftH / 2;
-        const core = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.46, shaftH, 24), marble);
+        const core = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.44, shaftH, 32), marble);
         core.position.y = shaftY;
         g.add(core);
 
-        const fluteGeo = new THREE.CylinderGeometry(0.085, 0.085, shaftH * 0.92, 8);
-        const flutes = new THREE.InstancedMesh(fluteGeo, marble, 20);
+        const fluteGeo = new THREE.CylinderGeometry(0.08, 0.08, shaftH * 0.93, 12);
+        const flutes = new THREE.InstancedMesh(fluteGeo, marble, 22);
         const dummy = new THREE.Object3D();
-        for (let i = 0; i < 20; i++) {
-          const a = (i / 20) * Math.PI * 2;
-          dummy.position.set(Math.cos(a) * 0.47, shaftY, Math.sin(a) * 0.47);
+        for (let i = 0; i < 22; i++) {
+          const a = (i / 22) * Math.PI * 2;
+          dummy.position.set(Math.cos(a) * 0.45, shaftY, Math.sin(a) * 0.45);
           dummy.rotation.set(0, 0, 0);
           dummy.updateMatrix();
           flutes.setMatrixAt(i, dummy.matrix);
         }
         g.add(flutes);
 
-        const neckRing = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.05, 10, 24), gold);
+        const neckRing = new THREE.Mesh(new THREE.TorusGeometry(0.44, 0.045, 12, 32), gold);
         neckRing.rotation.x = Math.PI / 2;
         neckRing.position.y = 0.35 + shaftH;
         g.add(neckRing);
 
-        const capital = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.42, 0.35, 24), marble);
-        capital.position.y = 0.35 + shaftH + 0.175;
+        const capital = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.4, 0.32, 32), marble);
+        capital.position.y = 0.35 + shaftH + 0.16;
         g.add(capital);
 
-        const abacusY = 0.35 + shaftH + 0.35 + 0.09;
-        const abacus = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.18, 1.3), marble);
+        const abacusY = 0.35 + shaftH + 0.32 + 0.09;
+        const abacus = new THREE.Mesh(new THREE.BoxGeometry(1.26, 0.16, 1.26), marble);
         abacus.position.y = abacusY;
         g.add(abacus);
 
-        // crown finial — orb + band + radiating prongs, echoing the crest
-        const finialBase = abacusY + 0.09;
-        const band = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.035, 8, 20), gold);
+        // crown finial — orb + band + five slender radiating prongs, echoing
+        // the crest's crown motif rather than a spiky toy star.
+        const finialBase = abacusY + 0.08;
+        const band = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.032, 12, 28), gold);
         band.rotation.x = Math.PI / 2;
         band.position.y = finialBase + 0.05;
         g.add(band);
 
-        const orb = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 16), goldLt);
+        const orb = new THREE.Mesh(new THREE.SphereGeometry(0.19, 28, 22), goldLt);
         orb.position.y = finialBase + 0.24;
         g.add(orb);
 
-        const prongGeo = new THREE.ConeGeometry(0.06, 0.3, 8);
-        const prongs = new THREE.InstancedMesh(prongGeo, gold, 6);
-        for (let i = 0; i < 6; i++) {
-          const a = (i / 6) * Math.PI * 2;
-          dummy.position.set(Math.cos(a) * 0.16, finialBase + 0.34, Math.sin(a) * 0.16);
+        const prongGeo = new THREE.ConeGeometry(0.045, 0.34, 12);
+        const prongs = new THREE.InstancedMesh(prongGeo, gold, 5);
+        for (let i = 0; i < 5; i++) {
+          const a = (i / 5) * Math.PI * 2;
+          dummy.position.set(Math.cos(a) * 0.13, finialBase + 0.32, Math.sin(a) * 0.13);
           dummy.rotation.set(0, 0, 0);
-          dummy.lookAt(new THREE.Vector3(Math.cos(a) * 0.5, finialBase + 0.7, Math.sin(a) * 0.5));
+          dummy.lookAt(new THREE.Vector3(Math.cos(a) * 0.32, finialBase + 0.75, Math.sin(a) * 0.32));
           dummy.rotateX(Math.PI / 2);
           dummy.updateMatrix();
           prongs.setMatrixAt(i, dummy.matrix);
         }
         g.add(prongs);
 
-        const topOrb = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 14), goldLt);
-        topOrb.position.y = finialBase + 0.52;
+        const topOrb = new THREE.Mesh(new THREE.SphereGeometry(0.1, 22, 18), goldLt);
+        topOrb.position.y = finialBase + 0.58;
         g.add(topOrb);
 
         g.position.x = side * 2.1;
@@ -760,26 +769,30 @@
         gateGroup.add(band);
       });
 
-      const medallion = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.04, 24), gold);
+      const medallion = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.04, 32), gold);
       medallion.rotation.x = Math.PI / 2;
       medallion.position.set(0, barBottom + barH / 2, 0.03);
       gateGroup.add(medallion);
-      const medallionRing = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.025, 8, 24), goldLt);
+      const medallionRing = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.022, 12, 32), goldLt);
       medallionRing.rotation.x = Math.PI / 2;
       medallionRing.position.copy(medallion.position);
       gateGroup.add(medallionRing);
-      const medallionCore = new THREE.Mesh(new THREE.SphereGeometry(0.09, 14, 12), goldLt);
+      const medallionCore = new THREE.Mesh(new THREE.SphereGeometry(0.08, 20, 16), goldLt);
       medallionCore.position.set(0, barBottom + barH / 2, 0.08);
       gateGroup.add(medallionCore);
 
-      // ornamental scroll arch above the gate's center
-      for (let i = 0; i < 5; i++) {
-        const r = 0.5 - i * 0.06;
-        const arc = new THREE.Mesh(new THREE.TorusGeometry(r, 0.03, 8, 24, Math.PI), i % 2 ? gold : goldLt);
-        arc.position.set((i - 2) * 0.34, barTop + 0.05, 0);
+      // ornamental arch above the gate's center — three smooth nested arcs
+      // (not five faceted hoops) fanning up to a small crest finial, reading
+      // as ironwork rather than a stack of toy rings.
+      [0.46, 0.34, 0.22].forEach((r, i) => {
+        const arc = new THREE.Mesh(new THREE.TorusGeometry(r, 0.022, 12, 40, Math.PI), i === 1 ? goldLt : gold);
+        arc.position.set(0, barTop + 0.02, 0);
         arc.rotation.z = Math.PI;
         gateGroup.add(arc);
-      }
+      });
+      const archFinial = new THREE.Mesh(new THREE.SphereGeometry(0.07, 18, 14), goldLt);
+      archFinial.position.set(0, barTop + 0.02 + 0.46, 0);
+      gateGroup.add(archFinial);
 
       root.add(gateGroup);
 
@@ -793,21 +806,24 @@
         root.add(ball);
       });
 
-      // ---- lighting (three-point: warm key, cool rim, soft fill) ---------
+      // ---- lighting (three-point: warm key, soft rim, fill) --------------
       scene.add(new THREE.HemisphereLight(0xFFF2D0, 0x1A1510, 0.85));
       scene.add(new THREE.AmbientLight(0x221C12, 0.25));
       const key = new THREE.DirectionalLight(0xFFE4A8, 1.7);
       key.position.set(4, 6, 4);
       scene.add(key);
-      const rim = new THREE.PointLight(0x7A1F2B, 1.1, 20);
-      rim.position.set(-4, 3, -3);
+      const rim = new THREE.PointLight(0x8A5A4A, 0.45, 22);
+      rim.position.set(-5, 4, -6);
       scene.add(rim);
       const fill = new THREE.PointLight(0xE7C665, 0.5, 20);
       fill.position.set(-2, 2, 5);
       scene.add(fill);
 
-      camera.position.set(0, 2.15, 7.6);
-      camera.lookAt(0, 1.9, 0);
+      // Frame the whole structure (ground through the crown finials, ~y=4.9)
+      // -- these were clipped out of view when the pillar height increased
+      // without re-checking the camera's vertical coverage.
+      camera.position.set(0, 2.5, 8.1);
+      camera.lookAt(0, 2.35, 0);
 
       function resize() {
         const w = gwCanvas.clientWidth || 1, h = gwCanvas.clientHeight || 1;

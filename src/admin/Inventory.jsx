@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { supabase } from "../supabase";
-import { C, MONO, fmt, fmtDate, todayISO, Panel, Stat, Badge, DueBadge, ProgressBar, Th, Td, Button, ConfirmButton, Field, Select, Modal, KV, useIsMobile, TableScroll, Empty } from "../ui";
+import { C, MONO, fmt, fmtDate, todayISO, Panel, Stat, Badge, DueBadge, ProgressBar, Th, Td, Button, DangerDeleteButton, Field, Select, Modal, KV, useIsMobile, TableScroll, Empty } from "../ui";
 import RecordPayment from "./RecordPayment";
 
 const statusColor = { available: C.green, blocked: C.gold, sold: C.muted };
@@ -140,7 +140,7 @@ function PlotCard({ plot, customers, agents, transactions, installments, onClose
           {plot.status !== "available" && <Button kind="ghost" size="sm" onClick={() => setStatus("available")}>Mark available</Button>}
           {plot.status !== "blocked" && <Button kind="ghost" size="sm" onClick={() => setStatus("blocked")}>Mark blocked</Button>}
           <Button onClick={() => setSelling(true)}>Sell this plot</Button>
-          {deletable && <ConfirmButton confirmText={`Delete plot ${plot.plot_no}? This can't be undone.`} onConfirm={remove}>Delete</ConfirmButton>}
+          {deletable && <DangerDeleteButton label={`plot ${plot.plot_no}`} onConfirm={remove} />}
         </div>
       )}
 
@@ -381,7 +381,7 @@ function ManageProjects({ projects, plots, onClose, onDone }) {
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     <Button kind="ghost" size="sm" onClick={() => toggleArchive(p)}>{p.archived ? "Unarchive" : "Archive"}</Button>
                     {plotCount(p.id) === 0 && (
-                      <ConfirmButton confirmText={`Delete project "${p.name}"? This can't be undone.`} onConfirm={() => remove(p)}>Delete</ConfirmButton>
+                      <DangerDeleteButton label={`project "${p.name}"`} onConfirm={() => remove(p)} />
                     )}
                   </div>
                 </Td>

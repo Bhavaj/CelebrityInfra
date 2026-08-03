@@ -250,6 +250,56 @@ export function ConfirmButton({ children, confirmText, onConfirm, kind = "danger
   );
 }
 
+// Permanent-delete gate: the button only arms after the admin types the
+// literal word DELETE, matching the "type to confirm" pattern used for any
+// truly irreversible action — a plain Confirm/Cancel dialog is too easy to
+// click through by habit for something that removes a row from the database
+// for good. `label` names what's being destroyed (e.g. "plot A-04").
+export function DangerDeleteButton({ label, onConfirm, size = "sm", ...props }) {
+  const [open, setOpen] = useState(false);
+  const [typed, setTyped] = useState("");
+  const [busy, setBusy] = useState(false);
+  const armed = typed.trim().toUpperCase() === "DELETE";
+
+  function close() { setOpen(false); setTyped(""); setBusy(false); }
+
+  async function confirm() {
+    if (!armed || busy) return;
+    setBusy(true);
+    await onConfirm();
+    close();
+  }
+
+  return (
+    <>
+      <Button {...props} kind="danger" size={size} onClick={() => setOpen(true)}>
+        Delete permanently
+      </Button>
+      {open && (
+        <Modal title="Delete permanently" onClose={close} maxWidth={440}>
+          <div style={{ background: "rgba(226,104,90,.1)", border: `1px solid ${C.red}55`, borderRadius: R.md, padding: 14, marginBottom: 18 }}>
+            <p style={{ margin: 0, fontFamily: FONT, fontSize: 14, color: C.ink, lineHeight: 1.6 }}>
+              This will permanently delete <b>{label}</b> from the database. This cannot be undone —
+              there is no trash, archive, or recovery for this action.
+            </p>
+          </div>
+          <label style={{ display: "block", marginBottom: 18 }}>
+            <span style={{ display: "block", fontSize: 13, color: C.muted, marginBottom: 6, fontFamily: FONT, fontWeight: 500 }}>
+              Type <b style={{ color: C.red, fontFamily: MONO }}>DELETE</b> to confirm
+            </span>
+            <input value={typed} onChange={(e) => setTyped(e.target.value)} autoFocus placeholder="DELETE"
+              style={{ width: "100%", padding: "11px 13px", border: `1px solid ${armed ? C.red : C.line}`, borderRadius: R.sm, fontFamily: MONO, fontSize: 15, letterSpacing: "0.08em", color: C.ink, background: C.field }} />
+          </label>
+          <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+            <Button kind="ghostLight" onClick={close}>Cancel</Button>
+            <Button kind="danger" onClick={confirm} disabled={!armed || busy}>{busy ? "Deleting…" : "Delete permanently"}</Button>
+          </div>
+        </Modal>
+      )}
+    </>
+  );
+}
+
 export function Field({ label, ...props }) {
   return (
     <label style={{ display: "block", marginBottom: 14 }}>
