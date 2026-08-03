@@ -22,7 +22,7 @@ export const C = {
 };
 
 export const DISPLAY = "'Space Grotesk',sans-serif";
-export const FONT = "'Inter',sans-serif";
+export const FONT = "'Outfit',sans-serif";
 export const MONO = "'JetBrains Mono',monospace";
 
 export const R = { sm: 6, md: 10, lg: 14, xl: 16, pill: 999 };

@@ -197,7 +197,7 @@ function InstallmentSchedule({ plotId, installments, onDone }) {
               <span style={{ flex: 1, fontSize: 13.5, color: C.ink, minWidth: 100 }}>{i.label}</span>
               <span style={{ fontSize: 13.5, color: C.muted }}>{fmt(i.amount)}</span>
               <input type="date" value={i.due_date} onChange={(e) => updateDate(i.id, e.target.value)}
-                style={{ padding: "5px 8px", border: `1px solid ${C.line}`, borderRadius: 6, background: C.field, color: C.ink, fontSize: 12.5, fontFamily: "'Inter',sans-serif" }} />
+                style={{ padding: "5px 8px", border: `1px solid ${C.line}`, borderRadius: 6, background: C.field, color: C.ink, fontSize: 12.5, fontFamily: "'Outfit',sans-serif" }} />
               <button onClick={() => remove(i.id)} type="button" aria-label="Remove installment"
                 style={{ background: "none", border: "none", color: C.red, cursor: "pointer", fontSize: 16, padding: "0 4px" }}>×</button>
             </div>
@@ -270,7 +270,7 @@ function SellPlotForm({ plot, customers, agents, onCancel, onSold }) {
           <Select label="Customer" value={customerId} placeholder="— Select customer —" onChange={setCustomerId}
             options={custList.map((c) => ({ v: c.id, l: c.name }))} />
           <button onClick={() => setNewCust(true)} type="button" className="cip-tap"
-            style={{ background: "none", border: "none", color: C.gold, textDecoration: "underline", cursor: "pointer", fontSize: 13, padding: "2px 0", marginBottom: 14, fontFamily: "'Inter',sans-serif", borderRadius: 4 }}>
+            style={{ background: "none", border: "none", color: C.gold, textDecoration: "underline", cursor: "pointer", fontSize: 13, padding: "2px 0", marginBottom: 14, fontFamily: "'Outfit',sans-serif", borderRadius: 4 }}>
             + New customer
           </button>
         </>

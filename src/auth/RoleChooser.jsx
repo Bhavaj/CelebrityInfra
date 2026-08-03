@@ -37,5 +37,5 @@ function RoleTile({ role, onClick }) {
 const tile = {
   display: "flex", alignItems: "center", gap: 12,
   textAlign: "left", padding: "12px 14px", borderRadius: R.md, cursor: "pointer",
-  background: C.field, border: `1px solid ${C.line}`, fontFamily: "'Inter',sans-serif", width: "100%",
+  background: C.field, border: `1px solid ${C.line}`, fontFamily: "'Outfit',sans-serif", width: "100%",
 };

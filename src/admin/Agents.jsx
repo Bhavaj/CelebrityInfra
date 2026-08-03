@@ -160,7 +160,7 @@ function RateNode({ agent, agents, depth, effectiveRate, rates, projectId, setRa
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <input type="number" value={draft ?? own} onChange={(e) => setDraft(e.target.value)}
             onBlur={() => { if (draft !== null && Number(draft) !== own) setRate(agent.id, draft); setDraft(null); }}
-            style={{ width: 70, padding: "6px 8px", border: `1px solid ${C.line}`, borderRadius: 6, background: C.field, color: C.ink, textAlign: "right", fontSize: 13.5, fontFamily: "'Inter',sans-serif" }} />
+            style={{ width: 70, padding: "6px 8px", border: `1px solid ${C.line}`, borderRadius: 6, background: C.field, color: C.ink, textAlign: "right", fontSize: 13.5, fontFamily: "'Outfit',sans-serif" }} />
           <span style={{ color: C.muted, fontSize: 13 }}>%</span>
           {!hasOverride && <span style={{ fontSize: 11, color: C.faint }}>(default)</span>}
         </div>
@@ -232,7 +232,7 @@ function AgentCard({ agent, agents, customers, commissions, users, onClose, onOp
         {downline.length === 0 ? <p style={{ fontSize: 14, color: C.muted }}>None yet.</p> :
           downline.map((d) => (
             <button key={d.id} onClick={() => onOpenOther(d)} className="cip-tap"
-              style={{ display: "block", background: "none", border: "none", color: C.gold, textDecoration: "underline", cursor: "pointer", fontSize: 14, padding: "4px 0", fontFamily: "'Inter',sans-serif", borderRadius: 4 }}>
+              style={{ display: "block", background: "none", border: "none", color: C.gold, textDecoration: "underline", cursor: "pointer", fontSize: 14, padding: "4px 0", fontFamily: "'Outfit',sans-serif", borderRadius: 4 }}>
               {d.name} →
             </button>
           ))}

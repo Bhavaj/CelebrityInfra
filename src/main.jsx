@@ -7,7 +7,7 @@ style.textContent = `
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth}
   body{
-    font-family:'Inter',sans-serif;
+    font-family:'Outfit',sans-serif;
     line-height:1.5;
     -webkit-font-smoothing:antialiased;
     -moz-osx-font-smoothing:grayscale;
