@@ -91,19 +91,18 @@
   .nav-cta:hover{background:var(--gold);color:#241A08}
   .burger{display:none;background:none;border:none;color:var(--gold-lt);font-size:22px;cursor:pointer}
 
-  /* ---------- HERO (split layout, not centered-stack) ---------- */
-  .hero{position:relative;min-height:100vh;display:grid;grid-template-columns:1.15fr 1fr;align-items:stretch;overflow:hidden}
-  .hero-copy{position:relative;z-index:2;display:flex;flex-direction:column;justify-content:center;padding:150px 4vw 60px 6vw}
+  /* ---------- HERO (centered stack) ---------- */
+  .hero{position:relative;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:150px 6vw 90px;overflow:hidden}
   .hero::before{content:"";position:absolute;inset:0;background:
-      radial-gradient(60% 60% at 0% 20%,rgba(201,162,39,.10),transparent 70%),
-      radial-gradient(50% 50% at 100% 0%,rgba(122,31,43,.14),transparent 65%);
+      radial-gradient(70% 60% at 50% 0%,rgba(201,162,39,.10),transparent 65%),
+      radial-gradient(50% 50% at 100% 100%,rgba(122,31,43,.10),transparent 60%);
     pointer-events:none;z-index:0}
 
-  .brand-row{display:flex;align-items:center;gap:12px;margin-bottom:30px;opacity:0}
+  .brand-row{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:26px;opacity:0}
   .brand-row .ring{width:44px;height:44px;border-radius:50%;overflow:hidden;background:#F3EFE2;border:1.5px solid var(--gold);flex:none;display:flex;align-items:center;justify-content:center}
   .brand-row .ring img{width:82%;height:82%;object-fit:contain}
-  .brand-row .txt{font-size:11.5px;letter-spacing:3.5px;color:var(--muted);text-transform:uppercase}
-  .brand-row .txt b{display:block;font-size:13px;letter-spacing:2px;color:var(--gold-lt);font-family:'Cormorant SC',serif}
+  .brand-row .txt{font-size:11.5px;letter-spacing:3.5px;color:var(--muted);text-transform:uppercase;text-align:center}
+  .brand-row .txt b{display:block;font-size:13px;letter-spacing:2px;color:var(--gold-lt);font-family:'Cormorant SC',serif;margin-top:2px}
 
   .hero-badge{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line-gold);border-radius:20px;padding:6px 16px;font-size:11px;letter-spacing:2px;color:var(--gold-lt);text-transform:uppercase;margin-bottom:24px;opacity:0;width:fit-content}
   .hero-badge .pip{width:6px;height:6px;border-radius:50%;background:var(--emerald);box-shadow:0 0 8px var(--emerald)}
@@ -112,8 +111,8 @@
   .hero h1 .num{font-style:normal;display:inline-block}
   .hero h1 .sep{font-style:normal;display:inline-block;color:var(--gold);font-size:.5em;vertical-align:.3em;margin:0 .1em}
   .hero .tagline{margin-top:20px;font-size:14px;letter-spacing:3.5px;color:var(--ivory);opacity:0;text-transform:uppercase;font-weight:500}
-  .hero .loc{margin-top:10px;font-size:14.5px;color:var(--muted);opacity:0;max-width:440px}
-  .hero-cta{margin-top:38px;display:flex;gap:16px;flex-wrap:wrap;opacity:0}
+  .hero .loc{margin:10px auto 0;font-size:14.5px;color:var(--muted);opacity:0;max-width:460px}
+  .hero-cta{margin-top:38px;display:flex;gap:16px;flex-wrap:wrap;justify-content:center;opacity:0}
   .btn-gold{
     position:relative;overflow:hidden;
     background:linear-gradient(180deg,var(--gold-lt),var(--gold));
@@ -135,26 +134,13 @@
   }
   .btn-ghost:hover{border-color:var(--gold-lt);color:var(--gold-lt)}
 
-  .hero-facts{display:flex;gap:0;margin-top:52px;border-top:1px solid var(--line);padding-top:20px;opacity:0;max-width:460px}
-  .hero-facts .f{flex:1;padding-right:18px}
+  .hero-facts{display:flex;gap:0;margin:52px auto 0;border-top:1px solid var(--line);padding-top:20px;opacity:0;max-width:460px;justify-content:center}
+  .hero-facts .f{flex:1;padding:0 18px;border-right:1px solid var(--line)}
+  .hero-facts .f:last-child{border-right:0}
   .hero-facts .f b{display:block;font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--ivory);font-weight:600}
   .hero-facts .f span{font-size:11px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase}
 
-  /* Right half: the 3D viewport panel, framed like an "estate window" rather
-     than a decorative floating shape in a corner. */
-  .hero-view{position:relative;display:flex;align-items:center;justify-content:center;padding:120px 4vw 60px 2vw;z-index:1}
-  .hero-view-panel{position:relative;width:100%;aspect-ratio:1/1.05;max-width:560px}
-  .hero-view-panel canvas{width:100%;height:100%;display:block;position:relative;z-index:1}
-  .hero-view-panel::before{content:"";position:absolute;inset:-6%;border-radius:50%;background:radial-gradient(circle,rgba(201,162,39,.16),transparent 70%);filter:blur(4px);z-index:0}
-  .hero-view-caption{position:absolute;left:0;right:0;bottom:-38px;display:flex;justify-content:space-between;align-items:center;font-size:11px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase}
-  .hero-view-caption b{color:var(--gold-lt);font-weight:600}
-  @media(max-width:1000px){
-    .hero{grid-template-columns:1fr}
-    .hero-view{display:none}
-    .hero-copy{padding:140px 6vw 70px}
-  }
-
-  .scroll-hint{position:absolute;bottom:26px;left:6vw;color:var(--muted);font-size:11px;letter-spacing:3px;opacity:0;animation:fadeUp 1s ease 1.8s forwards;z-index:2}
+  .scroll-hint{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);color:var(--muted);font-size:11px;letter-spacing:3px;opacity:0;animation:fadeUp 1s ease 1.8s forwards;z-index:2}
   .scroll-hint .arrow{display:block;margin-top:8px;width:1px;height:26px;background:linear-gradient(var(--gold),transparent);animation:bob 2s ease-in-out infinite}
 
   /* ---------- MARQUEE ---------- */
@@ -177,19 +163,6 @@
   .sec-head p{color:var(--muted);font-size:16px;margin-top:14px}
   .reveal{opacity:0;transform:translateY(28px);transition:opacity .8s ease,transform .8s ease}
   .reveal.in{opacity:1;transform:none}
-
-  /* ---------- MASTER PLAN (dedicated, larger 3D section) ---------- */
-  .masterplan{background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-  .mp-wrap{display:grid;grid-template-columns:.85fr 1.15fr;gap:60px;max-width:1180px;margin:0 auto;align-items:center}
-  .mp-copy .kicker{font-size:11.5px;letter-spacing:4px;color:var(--gold);text-transform:uppercase;margin-bottom:16px;font-weight:600}
-  .mp-copy h2{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(28px,4vw,40px);margin-bottom:16px}
-  .mp-copy p{color:var(--muted);font-size:15.5px;margin-bottom:24px}
-  .mp-legend{display:flex;flex-direction:column;gap:12px}
-  .mp-legend .row{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--ivory)}
-  .mp-legend .swatch{width:14px;height:14px;border-radius:3px;flex:none}
-  .mp-panel{aspect-ratio:1/1;position:relative;padding:20px}
-  .mp-panel canvas{width:100%;height:100%;display:block;position:relative;z-index:1}
-  @media(max-width:900px){.mp-wrap{grid-template-columns:1fr}.mp-panel{max-width:460px;margin:0 auto}}
 
   /* ---------- OFFER — single "ticket" card, not two floating columns ---------- */
   .offer{background:linear-gradient(180deg,rgba(26,22,15,.5) 0%,rgba(11,10,8,0) 100%)}
@@ -312,7 +285,6 @@
   </div>
   <div class="nav-links" id="navLinks">
     <a href="#venture">Venture</a>
-    <a href="#masterplan">Master Plan</a>
     <a href="#offer">Offer</a>
     <a href="#why">Why Park-1</a>
     <a href="#location">Location</a>
@@ -322,30 +294,22 @@
 </nav>
 
 <header class="hero" id="heroSection">
-  <div class="hero-copy">
-    <div class="brand-row rise d1">
-      <span class="ring"><img src="/celebrity-logo.png" alt="Celebrity Infra Pvt Ltd" /></span>
-      <span class="txt">Celebrity Infra Pvt Ltd<b>Presents</b></span>
-    </div>
-    <div class="hero-badge rise d1"><span class="pip"></span>Grand Venture Opening &middot; 12 July 2026</div>
-    <h1 class="rise d2"><span class="script">Celebrity's</span>PARK<span class="sep">&#9670;</span><span class="num">1</span></h1>
-    <div class="tagline rise d3">Building Prestige &middot; Creating Legacy</div>
-    <div class="loc rise d3">A grand plotted venture at Narayankhed, Telangana — gated, landscaped, and built for a legacy that appreciates with every season.</div>
-    <div class="hero-cta rise d4">
-      <button class="btn-gold" onclick="document.getElementById('enquire').scrollIntoView()">Book a Site Visit</button>
-      <button class="btn-ghost" onclick="document.getElementById('masterplan').scrollIntoView()">Explore the Master Plan</button>
-    </div>
-    <div class="hero-facts rise d5">
-      <div class="f"><b>9</b><span>Acres Planned</span></div>
-      <div class="f"><b>121</b><span>Sq. Yd / Plot</span></div>
-      <div class="f"><b>&#8377;2.5L</b><span>Starting Price</span></div>
-    </div>
+  <div class="brand-row rise d1">
+    <span class="ring"><img src="/celebrity-logo.png" alt="Celebrity Infra Pvt Ltd" /></span>
+    <span class="txt">Celebrity Infra Pvt Ltd<b>Presents</b></span>
   </div>
-  <div class="hero-view">
-    <div class="hero-view-panel">
-      <canvas id="heroCanvas"></canvas>
-      <div class="hero-view-caption"><span><b>Live</b> 3D Preview</span><span>Master Plan &rarr;</span></div>
-    </div>
+  <div class="hero-badge rise d1"><span class="pip"></span>Grand Venture Opening &middot; 12 July 2026</div>
+  <h1 class="rise d2"><span class="script">Celebrity's</span>PARK<span class="sep">&#9670;</span><span class="num">1</span></h1>
+  <div class="tagline rise d3">Building Prestige &middot; Creating Legacy</div>
+  <div class="loc rise d3">A grand plotted venture at Narayankhed, Telangana — gated, landscaped, and built for a legacy that appreciates with every season.</div>
+  <div class="hero-cta rise d4">
+    <button class="btn-gold" onclick="document.getElementById('enquire').scrollIntoView()">Book a Site Visit</button>
+    <button class="btn-ghost" onclick="document.getElementById('offer').scrollIntoView()">View the Offer</button>
+  </div>
+  <div class="hero-facts rise d5">
+    <div class="f"><b>9</b><span>Acres Planned</span></div>
+    <div class="f"><b>121</b><span>Sq. Yd / Plot</span></div>
+    <div class="f"><b>&#8377;2.5L</b><span>Starting Price</span></div>
   </div>
   <div class="scroll-hint">SCROLL<span class="arrow"></span></div>
 </header>
@@ -362,24 +326,6 @@
     <div class="kicker">The Venture</div>
     <h2>Land that turns you golden in the future</h2>
     <p>Celebrity's Park-1 is a meticulously planned plotted community — gated, landscaped, and built to a standard that appreciates with every season. Own a piece of the legacy, close to nature yet primed for growth.</p>
-  </div>
-</section>
-
-<section id="masterplan" class="masterplan">
-  <div class="mp-wrap">
-    <div class="mp-copy reveal">
-      <div class="kicker">The Master Plan</div>
-      <h2>Walk the layout before you visit</h2>
-      <p>A live 3D preview of the gated plot grid and community entrance — rotate it, or scroll down to book an in-person site visit and see it for real at Narayankhed.</p>
-      <div class="mp-legend">
-        <div class="row"><span class="swatch" style="background:var(--gold)"></span>Individual plots — 121 sq. yd. each</div>
-        <div class="row"><span class="swatch" style="background:var(--wine)"></span>Community gate &amp; entrance tower</div>
-      </div>
-    </div>
-    <div class="mp-panel plaque reveal">
-      <span class="cnr a"></span><span class="cnr b"></span><span class="cnr c"></span><span class="cnr d"></span>
-      <canvas id="mpCanvas"></canvas>
-    </div>
   </div>
 </section>
 
@@ -511,7 +457,6 @@
   <div class="ftag">Building Prestige &middot; Creating Legacy</div>
   <div class="fnav">
     <a href="#venture">The Venture</a>
-    <a href="#masterplan">Master Plan</a>
     <a href="#offer">The Offer</a>
     <a href="#why">Why Park-1</a>
     <a href="#location">Location</a>
@@ -588,97 +533,5 @@
   });
 </script>
 
-<script type="module">
-  // Two real WebGL scenes sharing one builder: a compact preview in the hero
-  // viewport, and a larger, closer-camera version in the dedicated Master
-  // Plan section. Both pause off-screen and respect reduced-motion.
-  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const heroCanvas = document.getElementById('heroCanvas');
-  const mpCanvas = document.getElementById('mpCanvas');
-
-  if ((heroCanvas || mpCanvas) && !reduceMotion) {
-    const THREE = await import('https://esm.sh/three@0.160.0');
-
-    function buildScene(canvas, { camDist, camHeight, gridRadius }) {
-      const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
-      const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-      renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
-
-      const group = new THREE.Group();
-      scene.add(group);
-
-      const plotMat = new THREE.MeshStandardMaterial({ color: 0xC9A227, roughness: 0.35, metalness: 0.5, transparent: true, opacity: 0.82 });
-      const towerMat = new THREE.MeshStandardMaterial({ color: 0x7A1F2B, roughness: 0.3, metalness: 0.4 });
-      const goldMat = new THREE.MeshStandardMaterial({ color: 0xE7C665, roughness: 0.25, metalness: 0.6 });
-      const wire = new THREE.LineBasicMaterial({ color: 0xF6E29B, transparent: true, opacity: 0.5 });
-
-      for (let x = -gridRadius; x <= gridRadius; x++) {
-        for (let z = -gridRadius; z <= gridRadius; z++) {
-          const h = 0.14 + ((x * 7 + z * 13 + 20) % 5) * 0.02;
-          const geo = new THREE.BoxGeometry(0.72, h, 0.72);
-          const mesh = new THREE.Mesh(geo, plotMat);
-          mesh.position.set(x * 0.96, h / 2, z * 0.96);
-          group.add(mesh);
-          const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo), wire);
-          edges.position.copy(mesh.position);
-          group.add(edges);
-        }
-      }
-
-      const tower = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.22, 1.7, 6), towerMat);
-      tower.position.set(0, 0.85, 0);
-      group.add(tower);
-      const finial = new THREE.Mesh(new THREE.OctahedronGeometry(0.16), goldMat);
-      finial.position.set(0, 1.75, 0);
-      group.add(finial);
-
-      scene.add(new THREE.AmbientLight(0x261f14, 1.3));
-      const key = new THREE.PointLight(0xE7C665, 3, 16);
-      key.position.set(3, 4, 3);
-      scene.add(key);
-      const rim = new THREE.PointLight(0x7A1F2B, 1.8, 16);
-      rim.position.set(-3, 2, -2.5);
-      scene.add(rim);
-
-      camera.position.set(camDist, camHeight, camDist);
-
-      function resize() {
-        const w = canvas.clientWidth || 1, h = canvas.clientHeight || 1;
-        renderer.setSize(w, h, false);
-        camera.aspect = w / h;
-        camera.updateProjectionMatrix();
-      }
-      addEventListener('resize', resize);
-      resize();
-
-      let visible = true;
-      new IntersectionObserver((es) => { visible = es[0].isIntersecting; }, { threshold: 0 }).observe(canvas);
-
-      let targetTilt = 0, curTilt = 0;
-      if (matchMedia('(pointer:fine)').matches) {
-        addEventListener('pointermove', (e) => { targetTilt = (e.clientX / innerWidth - 0.5) * 1.4; });
-      }
-
-      function animate() {
-        requestAnimationFrame(animate);
-        if (!visible) return;
-        group.rotation.y += 0.0015;
-        curTilt += (targetTilt - curTilt) * 0.04;
-        camera.position.x = camDist + curTilt;
-        camera.lookAt(0, 0.4, 0);
-        renderer.render(scene, camera);
-      }
-      animate();
-    }
-
-    if (heroCanvas && matchMedia('(min-width:1001px)').matches) {
-      buildScene(heroCanvas, { camDist: 4.6, camHeight: 3.8, gridRadius: 2 });
-    }
-    if (mpCanvas) {
-      buildScene(mpCanvas, { camDist: 3.4, camHeight: 2.8, gridRadius: 2 });
-    }
-  }
-</script>
 </body>
 </html>

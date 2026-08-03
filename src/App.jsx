@@ -90,7 +90,7 @@ export default function App() {
   return (
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: FONT }}>
       <div style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(23,27,26,.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderBottom: `1px solid ${C.line}`, boxShadow: "0 1px 0 rgba(201,162,39,.15)", paddingTop: "env(safe-area-inset-top)" }} className="cip-in-fade">
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+        <div style={{ padding: "14px clamp(16px, 3vw, 32px)", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
           <Crest size={32} />
           {!mobile && <div style={{ fontFamily: MONO, fontSize: 15, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: C.ink }}>Celebrity's Park-1</div>}
           <Badge text={hasAccount ? `${role} portal` : "no account"} color={hasAccount ? C.goldLt : C.red} />
@@ -105,7 +105,7 @@ export default function App() {
         </div>
       </div>
 
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "clamp(20px, 4vw, 32px) clamp(14px, 4vw, 20px) 60px" }}>
+      <div style={{ maxWidth: role === "admin" ? "none" : 1200, margin: "0 auto", padding: `clamp(20px, 3vw, 32px) clamp(16px, 3vw, 32px) 60px` }}>
         {!hasAccount && <NoAccount error={claimError} />}
         {hasAccount && role === "admin" && <Admin />}
         {hasAccount && role === "agent" && (profile.agent_id

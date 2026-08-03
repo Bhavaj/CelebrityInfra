@@ -280,7 +280,7 @@ export function Modal({ title, onClose, children, maxWidth = 620 }) {
   const mobile = useIsMobile();
   return (
     <div onClick={onClose} className="cip-in-fade"
-      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.8)", display: "flex", alignItems: mobile ? "flex-end" : "flex-start", justifyContent: "center", padding: mobile ? 0 : "48px 16px", zIndex: 100, overflowY: mobile ? "hidden" : "auto" }}>
+      style={{ position: "fixed", inset: 0, background: "rgba(6,5,3,.72)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", display: "flex", alignItems: mobile ? "flex-end" : "flex-start", justifyContent: "center", padding: mobile ? 0 : "48px 16px", zIndex: 100, overflowY: mobile ? "hidden" : "auto" }}>
       <div onClick={(e) => e.stopPropagation()} className={mobile ? "cip-in-sheet" : "cip-in-scale"}
         style={{ background: C.panel, border: `1px solid ${C.line}`, borderTop: `3px solid ${C.goldLt}`,
           borderRadius: mobile ? `${R.lg}px ${R.lg}px 0 0` : R.lg, width: "100%", maxWidth: mobile ? "none" : maxWidth,
