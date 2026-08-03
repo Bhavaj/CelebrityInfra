@@ -274,6 +274,17 @@
     section{padding:80px 6vw}
   }
   @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none;filter:none}.hero *{opacity:1!important}}
+
+  /* ---------- GATEWAY — a real modelled 3D scene (marble pillars, iron
+     gate, gold crown finials), not a decorative shape. ---------- */
+  .gateway{background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .gateway .sec-head{max-width:640px}
+  .gw-panel{position:relative;max-width:1180px;margin:0 auto;aspect-ratio:16/9;padding:10px}
+  .gw-panel canvas{width:100%;height:100%;display:block;border-radius:14px}
+  .gw-fallback{position:absolute;inset:10px;border-radius:14px;background:
+      radial-gradient(60% 60% at 50% 40%,rgba(201,162,39,.14),transparent 70%),var(--shell);
+    display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:13px;letter-spacing:1px}
+  @media(max-width:700px){.gw-panel{aspect-ratio:4/5}}
 </style>
 </head>
 <body>
@@ -326,6 +337,19 @@
     <span>Clear titles</span><span>Gated community</span><span>Easy EMI</span><span>Resort membership</span><span>Narayankhed, Telangana</span>
   </div>
 </div>
+
+<section id="gateway" class="gateway">
+  <div class="sec-head center reveal">
+    <div class="kicker">The Gateway</div>
+    <h2>Every legacy has an entrance</h2>
+    <p>A modelled preview of the gated entrance at Park-1, built as a real 3D scene, not a photo.</p>
+  </div>
+  <div class="gw-panel bezel reveal">
+    <span class="cnr a"></span><span class="cnr b"></span><span class="cnr c"></span><span class="cnr d"></span>
+    <div class="gw-fallback" id="gwFallback">3D preview unavailable on this device</div>
+    <canvas id="gwCanvas" style="position:relative;z-index:1"></canvas>
+  </div>
+</section>
 
 <section id="venture">
   <div class="sec-head reveal">
@@ -542,6 +566,284 @@
     enquireForm.closest('.form-wrap').classList.add('hide');
     enqSuccess.classList.add('show');
   });
+</script>
+
+<script type="module">
+  // The Gateway — a real modelled 3D scene: marble pillars with genuine
+  // fluted columns (instanced rods, not a texture), wrought-iron gate bars,
+  // and gold crown finials echoing the crest logo. Every repeated detail
+  // (flutes, bars, crown prongs) is real instanced geometry, not a flat
+  // extrusion standing in for a solid — a flat "2.5D" panel reads as fake
+  // from any angle other than straight-on, so the whole point of using
+  // cylinders/tori/cones here instead of planes is that it holds up as the
+  // camera drifts.
+  const gwCanvas = document.getElementById('gwCanvas');
+  const gwFallback = document.getElementById('gwFallback');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (gwCanvas && !reduceMotion) {
+    try {
+      const THREE = await import('https://esm.sh/three@0.160.0');
+      gwFallback.style.display = 'none';
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x100D08);
+      scene.fog = new THREE.Fog(0x100D08, 9, 16);
+      const camera = new THREE.PerspectiveCamera(38, 16 / 9, 0.1, 100);
+      const renderer = new THREE.WebGLRenderer({ canvas: gwCanvas, antialias: true });
+      renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.15;
+
+      const root = new THREE.Group();
+      scene.add(root);
+
+      // ---- materials -----------------------------------------------------
+      const marble = new THREE.MeshPhysicalMaterial({ color: 0xEDE6D6, roughness: 0.42, metalness: 0.04, clearcoat: 0.25, clearcoatRoughness: 0.35 });
+      const gold = new THREE.MeshPhysicalMaterial({ color: 0xC9A227, roughness: 0.28, metalness: 0.88, clearcoat: 0.3, clearcoatRoughness: 0.2 });
+      const goldLt = new THREE.MeshPhysicalMaterial({ color: 0xE7C665, roughness: 0.22, metalness: 0.9, clearcoat: 0.35 });
+      const iron = new THREE.MeshStandardMaterial({ color: 0x1C1712, roughness: 0.5, metalness: 0.6 });
+      const hedge = new THREE.MeshStandardMaterial({ color: 0x2F4A34, roughness: 0.85 });
+      const potMat = new THREE.MeshStandardMaterial({ color: 0x342A1E, roughness: 0.7 });
+
+      // ---- ground: a real marble plaza (canvas-generated radial veining,
+      // not a flat solid colour) ------------------------------------------
+      function marbleCanvas() {
+        const c = document.createElement('canvas');
+        c.width = c.height = 512;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#EDE6D6';
+        ctx.fillRect(0, 0, 512, 512);
+        ctx.strokeStyle = 'rgba(180,168,140,.35)';
+        for (let i = 0; i < 26; i++) {
+          ctx.beginPath();
+          const a = Math.random() * Math.PI * 2, r0 = Math.random() * 240;
+          const x0 = 256 + Math.cos(a) * r0, y0 = 256 + Math.sin(a) * r0;
+          ctx.moveTo(x0, y0);
+          ctx.lineWidth = 0.6 + Math.random() * 1.4;
+          ctx.quadraticCurveTo(x0 + (Math.random() - 0.5) * 160, y0 + (Math.random() - 0.5) * 160, x0 + (Math.random() - 0.5) * 260, y0 + (Math.random() - 0.5) * 260);
+          ctx.stroke();
+        }
+        for (let r = 60; r < 250; r += 44) {
+          ctx.strokeStyle = 'rgba(160,146,112,.18)';
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.arc(256, 256, r, 0, Math.PI * 2); ctx.stroke();
+        }
+        return c;
+      }
+      const groundTex = new THREE.CanvasTexture(marbleCanvas());
+      groundTex.colorSpace = THREE.SRGBColorSpace;
+      const ground = new THREE.Mesh(
+        new THREE.CircleGeometry(7, 64),
+        new THREE.MeshStandardMaterial({ map: groundTex, roughness: 0.5, metalness: 0.05 })
+      );
+      ground.rotation.x = -Math.PI / 2;
+      root.add(ground);
+
+      // soft contact shadow under the gate
+      function shadowCanvas() {
+        const c = document.createElement('canvas'); c.width = c.height = 256;
+        const ctx = c.getContext('2d');
+        const g = ctx.createRadialGradient(128, 128, 10, 128, 128, 128);
+        g.addColorStop(0, 'rgba(0,0,0,.45)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g; ctx.fillRect(0, 0, 256, 256);
+        return c;
+      }
+      const shadowTex = new THREE.CanvasTexture(shadowCanvas());
+      const shadowBlob = new THREE.Mesh(
+        new THREE.PlaneGeometry(7, 3.4),
+        new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false })
+      );
+      shadowBlob.rotation.x = -Math.PI / 2;
+      shadowBlob.position.y = 0.012;
+      root.add(shadowBlob);
+
+      // ---- one pillar (fluted shaft, capital, crown finial) --------------
+      function buildPillar(side) {
+        const g = new THREE.Group();
+        const plinth = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.35, 1.1), marble);
+        plinth.position.y = 0.175;
+        g.add(plinth);
+
+        const shaftH = 3.2;
+        const shaftY = 0.35 + shaftH / 2;
+        const core = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.46, shaftH, 24), marble);
+        core.position.y = shaftY;
+        g.add(core);
+
+        const fluteGeo = new THREE.CylinderGeometry(0.085, 0.085, shaftH * 0.92, 8);
+        const flutes = new THREE.InstancedMesh(fluteGeo, marble, 20);
+        const dummy = new THREE.Object3D();
+        for (let i = 0; i < 20; i++) {
+          const a = (i / 20) * Math.PI * 2;
+          dummy.position.set(Math.cos(a) * 0.47, shaftY, Math.sin(a) * 0.47);
+          dummy.rotation.set(0, 0, 0);
+          dummy.updateMatrix();
+          flutes.setMatrixAt(i, dummy.matrix);
+        }
+        g.add(flutes);
+
+        const neckRing = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.05, 10, 24), gold);
+        neckRing.rotation.x = Math.PI / 2;
+        neckRing.position.y = 0.35 + shaftH;
+        g.add(neckRing);
+
+        const capital = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.42, 0.35, 24), marble);
+        capital.position.y = 0.35 + shaftH + 0.175;
+        g.add(capital);
+
+        const abacusY = 0.35 + shaftH + 0.35 + 0.09;
+        const abacus = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.18, 1.3), marble);
+        abacus.position.y = abacusY;
+        g.add(abacus);
+
+        // crown finial — orb + band + radiating prongs, echoing the crest
+        const finialBase = abacusY + 0.09;
+        const band = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.035, 8, 20), gold);
+        band.rotation.x = Math.PI / 2;
+        band.position.y = finialBase + 0.05;
+        g.add(band);
+
+        const orb = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 16), goldLt);
+        orb.position.y = finialBase + 0.24;
+        g.add(orb);
+
+        const prongGeo = new THREE.ConeGeometry(0.06, 0.3, 8);
+        const prongs = new THREE.InstancedMesh(prongGeo, gold, 6);
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2;
+          dummy.position.set(Math.cos(a) * 0.16, finialBase + 0.34, Math.sin(a) * 0.16);
+          dummy.rotation.set(0, 0, 0);
+          dummy.lookAt(new THREE.Vector3(Math.cos(a) * 0.5, finialBase + 0.7, Math.sin(a) * 0.5));
+          dummy.rotateX(Math.PI / 2);
+          dummy.updateMatrix();
+          prongs.setMatrixAt(i, dummy.matrix);
+        }
+        g.add(prongs);
+
+        const topOrb = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 14), goldLt);
+        topOrb.position.y = finialBase + 0.52;
+        g.add(topOrb);
+
+        g.position.x = side * 2.1;
+        return g;
+      }
+      root.add(buildPillar(-1));
+      root.add(buildPillar(1));
+
+      // ---- wrought-iron gate infill between the pillars ------------------
+      const gateGroup = new THREE.Group();
+      const innerX = 1.64, gateW = innerX * 2, barBottom = 0.15, barTop = 2.65, barH = barTop - barBottom;
+
+      [-innerX, innerX].forEach((x) => {
+        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, barH, 12), iron);
+        post.position.set(x, barBottom + barH / 2, 0);
+        gateGroup.add(post);
+      });
+
+      const barGeo = new THREE.CylinderGeometry(0.032, 0.032, barH - 0.1, 8);
+      const barCount = 15;
+      const bars = new THREE.InstancedMesh(barGeo, iron, barCount);
+      const dummy2 = new THREE.Object3D();
+      for (let i = 0; i < barCount; i++) {
+        const t = (i + 1) / (barCount + 1);
+        dummy2.position.set(-innerX + gateW * t, barBottom + barH / 2, 0);
+        dummy2.updateMatrix();
+        bars.setMatrixAt(i, dummy2.matrix);
+      }
+      gateGroup.add(bars);
+
+      [barBottom + 0.05, barBottom + barH / 2, barTop - 0.05].forEach((y) => {
+        const band = new THREE.Mesh(new THREE.BoxGeometry(gateW + 0.1, 0.05, 0.07), iron);
+        band.position.y = y;
+        gateGroup.add(band);
+      });
+
+      const medallion = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.04, 24), gold);
+      medallion.rotation.x = Math.PI / 2;
+      medallion.position.set(0, barBottom + barH / 2, 0.03);
+      gateGroup.add(medallion);
+      const medallionRing = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.025, 8, 24), goldLt);
+      medallionRing.rotation.x = Math.PI / 2;
+      medallionRing.position.copy(medallion.position);
+      gateGroup.add(medallionRing);
+      const medallionCore = new THREE.Mesh(new THREE.SphereGeometry(0.09, 14, 12), goldLt);
+      medallionCore.position.set(0, barBottom + barH / 2, 0.08);
+      gateGroup.add(medallionCore);
+
+      // ornamental scroll arch above the gate's center
+      for (let i = 0; i < 5; i++) {
+        const r = 0.5 - i * 0.06;
+        const arc = new THREE.Mesh(new THREE.TorusGeometry(r, 0.03, 8, 24, Math.PI), i % 2 ? gold : goldLt);
+        arc.position.set((i - 2) * 0.34, barTop + 0.05, 0);
+        arc.rotation.z = Math.PI;
+        gateGroup.add(arc);
+      }
+
+      root.add(gateGroup);
+
+      // ---- flanking topiary for scale + life ------------------------------
+      [-3.05, 3.05].forEach((x) => {
+        const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.32, 0.42, 16), potMat);
+        pot.position.set(x, 0.21, 0.6);
+        root.add(pot);
+        const ball = new THREE.Mesh(new THREE.SphereGeometry(0.32, 16, 14), hedge);
+        ball.position.set(x, 0.42 + 0.32, 0.6);
+        root.add(ball);
+      });
+
+      // ---- lighting (three-point: warm key, cool rim, soft fill) ---------
+      scene.add(new THREE.HemisphereLight(0xFFF2D0, 0x1A1510, 0.85));
+      scene.add(new THREE.AmbientLight(0x221C12, 0.25));
+      const key = new THREE.DirectionalLight(0xFFE4A8, 1.7);
+      key.position.set(4, 6, 4);
+      scene.add(key);
+      const rim = new THREE.PointLight(0x7A1F2B, 1.1, 20);
+      rim.position.set(-4, 3, -3);
+      scene.add(rim);
+      const fill = new THREE.PointLight(0xE7C665, 0.5, 20);
+      fill.position.set(-2, 2, 5);
+      scene.add(fill);
+
+      camera.position.set(0, 2.15, 7.6);
+      camera.lookAt(0, 1.9, 0);
+
+      function resize() {
+        const w = gwCanvas.clientWidth || 1, h = gwCanvas.clientHeight || 1;
+        renderer.setSize(w, h, false);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+      }
+      addEventListener('resize', resize);
+      resize();
+
+      let visible = true;
+      new IntersectionObserver((es) => { visible = es[0].isIntersecting; }, { threshold: 0 }).observe(gwCanvas);
+
+      let targetYaw = 0, curYaw = 0;
+      if (matchMedia('(pointer:fine)').matches) {
+        gwCanvas.addEventListener('pointermove', (e) => {
+          const r = gwCanvas.getBoundingClientRect();
+          targetYaw = ((e.clientX - r.left) / r.width - 0.5) * 0.35;
+        });
+      }
+
+      let t = 0;
+      function animate() {
+        requestAnimationFrame(animate);
+        if (!visible) return;
+        t += 0.006;
+        curYaw += (targetYaw - curYaw) * 0.04;
+        root.rotation.y = Math.sin(t) * 0.12 + curYaw;
+        renderer.render(scene, camera);
+      }
+      animate();
+    } catch (err) {
+      console.error('Gateway 3D scene failed to load', err);
+      gwFallback.style.display = 'flex';
+    }
+  }
 </script>
 </body>
 </html>

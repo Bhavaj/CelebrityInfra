@@ -26,13 +26,13 @@ export default function Sidebar({ active, onSelect, onOpenSettings }) {
   const activeIndex = Math.max(0, NAV.findIndex(([k]) => k === active));
 
   const header = (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 6px 14px" }}>
+    <a href="/" aria-label="Back to celebrityinfra.in" style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 6px 14px" }}>
       <Crest size={38} />
       <div style={{ overflow: "hidden" }}>
         <div style={{ fontFamily: DISPLAY, fontSize: 13.5, fontWeight: 600, color: C.ink, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Celebrity Infra</div>
         <div style={{ fontFamily: FONT, fontSize: 11.5, color: C.gold, fontWeight: 500 }}>Admin workspace</div>
       </div>
-    </div>
+    </a>
   );
 
   const navList = (
