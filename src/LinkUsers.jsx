@@ -80,18 +80,18 @@ function UserRow({ u, agents, customers, onSaved, setMsg, mobile }) {
   const options = role === "agent" ? agents : role === "customer" ? customers : [];
 
   const controls = (
-    <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
-      <div style={{ minWidth: 140 }}>
-        <Select value={role} onChange={(v) => { setRole(v); setRecordId(""); }}
+    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+      <div style={{ minWidth: mobile ? "100%" : 140, flex: mobile ? "1 1 100%" : "0 0 auto" }}>
+        <Select compact={!mobile} value={role} onChange={(v) => { setRole(v); setRecordId(""); }}
           options={[{ v: "admin", l: "Admin" }, { v: "agent", l: "Agent" }, { v: "customer", l: "Customer" }]} />
       </div>
       {(role === "agent" || role === "customer") && (
-        <div style={{ minWidth: 160 }}>
-          <Select value={recordId} onChange={setRecordId} placeholder={`— pick ${role} —`}
+        <div style={{ minWidth: mobile ? "100%" : 160, flex: mobile ? "1 1 100%" : "0 0 auto" }}>
+          <Select compact={!mobile} value={recordId} onChange={setRecordId} placeholder={`— pick ${role} —`}
             options={options.map((o) => ({ v: o.id, l: o.name }))} />
         </div>
       )}
-      <Button onClick={save} disabled={busy || ((role !== "admin") && !recordId)}>
+      <Button size="sm" onClick={save} disabled={busy || ((role !== "admin") && !recordId)}>
         {busy ? "…" : "Link"}
       </Button>
       {confirmOpen && (

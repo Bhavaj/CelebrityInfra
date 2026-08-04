@@ -26,7 +26,7 @@ export default function Customers({ customers, plots, transactions, installments
       <Panel title="Customers" subtitle="Every customer across every project — open one to see all their plots." right={
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <SearchBar value={q} onChange={setQ} placeholder="Search name, phone…" />
-          <Button onClick={() => setAdding((v) => !v)}>{adding ? "Close" : "＋ Add Customer"}</Button>
+          <Button onClick={() => setAdding(true)}>＋ Add Customer</Button>
         </div>
       }>
         <div style={{ fontSize: 13, color: C.muted, marginBottom: 12 }}>
@@ -76,7 +76,7 @@ export default function Customers({ customers, plots, transactions, installments
         )}
       </Panel>
 
-      {adding && <CreateCustomer agents={agents} onDone={() => { setAdding(false); onDone(); }} />}
+      {adding && <CreateCustomer agents={agents} onClose={() => setAdding(false)} onDone={() => { setAdding(false); onDone(); }} />}
 
       {openCust && (
         <CustomerCard customer={openCust} plots={plotsFor(openCust.id)} transactions={transactions}
@@ -89,7 +89,7 @@ export default function Customers({ customers, plots, transactions, installments
   );
 }
 
-function CreateCustomer({ agents, onDone }) {
+function CreateCustomer({ agents, onClose, onDone }) {
   const activeAgents = agents.filter((a) => !a.archived);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -108,30 +108,59 @@ function CreateCustomer({ agents, onDone }) {
   }
 
   return (
-    <Panel title="Add a new customer">
-      <div style={{ maxWidth: 460 }}>
-        <Field label="Customer name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Priya Sharma" />
-        <Field label="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98480 00000" />
-        <Select label="Referred by (optional)" value={agentId} placeholder="— No agent —"
-          onChange={setAgentId} options={activeAgents.map((a) => ({ v: a.id, l: a.name }))} />
-        {msg && <p style={{ color: C.red, fontSize: 13 }}>{msg}</p>}
-        <Button onClick={save} disabled={!name || busy}>{busy ? "Saving…" : "Create customer"}</Button>
-      </div>
-    </Panel>
+    <Modal title="Add a new customer" onClose={onClose} maxWidth={460}>
+      <Field label="Customer name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Priya Sharma" />
+      <Field label="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98480 00000" />
+      <Select label="Referred by (optional)" value={agentId} placeholder="— No agent —"
+        onChange={setAgentId} options={activeAgents.map((a) => ({ v: a.id, l: a.name }))} />
+      {msg && <p style={{ color: C.red, fontSize: 13 }}>{msg}</p>}
+      <Button onClick={save} disabled={!name || busy}>{busy ? "Saving…" : "Create customer"}</Button>
+    </Modal>
   );
 }
 
 function CustomerCard({ customer, plots, transactions, installments, allPlots, projects, agents, linked, agentName, onClose, onChanged, onPaymentAdded }) {
   const [msg, setMsg] = useState("");
   const [assigning, setAssigning] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(customer.name);
+  const [phone, setPhone] = useState(customer.phone || "");
+  const [agentId, setAgentId] = useState(customer.agent_id || "");
+  const [busy, setBusy] = useState(false);
   const projectName = (id) => projects.find((p) => p.id === id)?.name ?? "—";
   const totalPaid = plots.reduce((s, p) => s + transactions.filter((t) => t.plot_id === p.id).reduce((a, t) => a + Number(t.amount), 0), 0);
   const deletable = plots.length === 0 && transactions.filter((t) => t.customer_id === customer.id).length === 0;
+  const activeAgents = agents.filter((a) => !a.archived);
+
+  async function saveEdit() {
+    setBusy(true); setMsg("");
+    const { error } = await supabase.from("customers")
+      .update({ name, phone, agent_id: agentId || null }).eq("id", customer.id);
+    setBusy(false);
+    if (error) { setMsg(error.message); return; }
+    onChanged();
+  }
 
   async function remove() {
     const { data, error } = await supabase.from("customers").delete().eq("id", customer.id).select();
     if (error || !data || data.length === 0) { setMsg(error?.message || "Delete didn't go through — this customer has history."); return; }
     onChanged();
+  }
+
+  if (editing) {
+    return (
+      <Modal title={`Edit ${customer.name}`} onClose={() => setEditing(false)} maxWidth={460}>
+        <Field label="Customer name" value={name} onChange={(e) => setName(e.target.value)} />
+        <Field label="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+        <Select label="Referred by (primary)" value={agentId} placeholder="— No agent —"
+          onChange={setAgentId} options={activeAgents.map((a) => ({ v: a.id, l: a.name }))} />
+        {msg && <p style={{ color: C.red, fontSize: 13 }}>{msg}</p>}
+        <div style={{ display: "flex", gap: 8 }}>
+          <Button onClick={saveEdit} disabled={!name || busy}>{busy ? "Saving…" : "Save changes"}</Button>
+          <Button kind="ghostLight" onClick={() => setEditing(false)}>Cancel</Button>
+        </div>
+      </Modal>
+    );
   }
 
   return (
@@ -178,11 +207,10 @@ function CustomerCard({ customer, plots, transactions, installments, allPlots, p
           onCancel={() => setAssigning(false)} onDone={() => { setAssigning(false); onChanged(); }} />
       )}
 
-      {deletable && (
-        <div style={{ marginTop: 18 }}>
-          <DangerDeleteButton label={customer.name} onConfirm={remove} />
-        </div>
-      )}
+      <div style={{ display: "flex", gap: 8, marginTop: 18, flexWrap: "wrap" }}>
+        <Button kind="ghost" size="sm" onClick={() => { setName(customer.name); setPhone(customer.phone || ""); setAgentId(customer.agent_id || ""); setEditing(true); }}>Edit</Button>
+        {deletable && <DangerDeleteButton label={customer.name} onConfirm={remove} />}
+      </div>
 
       <AccessCode role="customer" targetId={customer.id} linked={linked} />
     </Modal>

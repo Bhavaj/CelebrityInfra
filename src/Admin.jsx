@@ -93,7 +93,7 @@ export default function Admin() {
         </div>
       )}
       <Button kind="ghost" size="sm" onClick={() => setManageProjectsOpen(true)}>
-        {pickableProjects.length > 0 ? "Projects" : "+ New project"}
+        {pickableProjects.length > 0 ? "Manage Projects" : "+ New project"}
       </Button>
     </div>
   );

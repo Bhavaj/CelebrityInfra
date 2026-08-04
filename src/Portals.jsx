@@ -6,12 +6,12 @@ import { scheduleStatus } from "./admin/Inventory";
 // ---------- AGENT ----------
 export function AgentPortal({ agentId }) {
   const mobile = useIsMobile();
-  const [d, setD] = useState({ agent: null, customers: [], commissions: [], downline: [], plots: [], transactions: [], projects: [], rates: [] });
+  const [d, setD] = useState({ agent: null, customers: [], commissions: [], downline: [], plots: [], transactions: [], projects: [] });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
-      const [agent, customers, commissions, downline, plots, transactions, projects, rates] = await Promise.all([
+      const [agent, customers, commissions, downline, plots, transactions, projects] = await Promise.all([
         supabase.from("agents").select("*").eq("id", agentId).single(),
         supabase.from("customers").select("*").eq("agent_id", agentId),
         supabase.from("commissions").select("*").eq("beneficiary_id", agentId),
@@ -19,12 +19,11 @@ export function AgentPortal({ agentId }) {
         supabase.from("plots").select("*"),
         supabase.from("transactions").select("*"),
         supabase.from("projects").select("*"),
-        supabase.from("agent_project_rates").select("*").eq("agent_id", agentId),
       ]);
       setD({
         agent: agent.data, customers: customers.data || [], commissions: commissions.data || [],
         downline: downline.data || [], plots: plots.data || [],
-        transactions: transactions.data || [], projects: projects.data || [], rates: rates.data || [],
+        transactions: transactions.data || [], projects: projects.data || [],
       });
       setLoading(false);
     })();
@@ -42,22 +41,11 @@ export function AgentPortal({ agentId }) {
   const projectName = (id) => d.projects.find((p) => p.id === id)?.name ?? "—";
   const openPlots = d.plots.filter((p) => p.status !== "sold" && !d.projects.find((pr) => pr.id === p.project_id)?.archived);
 
-  const activeProjects = d.projects.filter((p) => !p.archived);
-  const effectiveRate = (projectId) => {
-    const override = d.rates.find((r) => r.project_id === projectId);
-    return override ? Number(override.commission_pct) : Number(d.agent.quota_percent);
-  };
-  const commissionsByProject = activeProjects.map((p) => {
-    const plotIdsInProject = new Set(d.plots.filter((pl) => pl.project_id === p.id).map((pl) => pl.id));
-    const rows = d.commissions.filter((c) => plotIdsInProject.has(c.plot_id));
-    return { project: p, rate: effectiveRate(p.id), total: rows.reduce((s, c) => s + Number(c.amount), 0), count: rows.length };
-  }).filter((r) => r.count > 0 || r.rate !== Number(d.agent.quota_percent));
-
   return (
     <>
       <div style={{ marginBottom: 20 }}>
         <h2 style={{ fontFamily: "'Space Grotesk',serif", fontWeight: 600, fontSize: 28, margin: "0 0 2px", color: C.ink }}>{d.agent.name}</h2>
-        <div style={{ fontSize: 13, color: C.muted }}>Default rate {d.agent.quota_percent}% · {d.agent.sponsor_id ? "Referred agent" : "Direct agent"}</div>
+        <div style={{ fontSize: 13, color: C.muted }}>{d.agent.sponsor_id ? "Referred agent" : "Direct agent"}</div>
       </div>
       <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 18 }}>
         <Stat label="Direct commission" value={fmt(direct)} accent={C.steel} />
@@ -66,17 +54,6 @@ export function AgentPortal({ agentId }) {
         <Stat label="My customers" value={d.customers.length} />
         <Stat label="Agents I invited" value={d.downline.length} />
       </div>
-
-      {commissionsByProject.length > 0 && (
-        <Panel title="My rate by project">
-          {commissionsByProject.map((r) => (
-            <div key={r.project.id} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${C.line}`, fontSize: 14 }}>
-              <span style={{ color: C.ink }}>{r.project.name}</span>
-              <span style={{ color: C.muted }}>{r.rate}% rate · {fmt(r.total)} earned</span>
-            </div>
-          ))}
-        </Panel>
-      )}
 
       <Panel title="My customers">
         {d.customers.length === 0 ? <Empty>No customers yet.</Empty> : (

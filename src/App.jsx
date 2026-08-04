@@ -35,6 +35,13 @@ export default function App() {
     if (session && peekPasswordSetupFlag()) setNeedsPassword(true);
   }, [session]);
 
+  // Keyed on the user id, not the whole `session` object: Supabase fires
+  // onAuthStateChange (and replaces the session object) on every silent
+  // token refresh, including the one that happens whenever the browser tab
+  // regains focus. Depending on the full session object made this effect
+  // re-run — and every admin/portal tab reset with it — just from switching
+  // back to the tab, with the same user still signed in the whole time.
+  const userId = session?.user?.id;
   useEffect(() => {
     if (!session) { setProfile(null); setReady(true); return; }
     (async () => {
@@ -58,7 +65,7 @@ export default function App() {
       setProfile(data);
       setReady(true);
     })();
-  }, [session]);
+  }, [userId]);
 
   function signOut() {
     supabase.auth.signOut();

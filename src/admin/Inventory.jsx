@@ -27,7 +27,7 @@ export default function Inventory({ plots, projectId, customers, agents, transac
   return (
     <>
       <Panel title="Plots" right={
-        projectId && <Button onClick={() => setAdding((v) => !v)}>{adding ? "Close" : "＋ Add Plot"}</Button>
+        projectId && <Button onClick={() => setAdding(true)}>＋ Add Plot</Button>
       }>
         {!projectId ? <Empty>No project selected yet — use the "Projects" button next to the selector above to create your first one.</Empty> :
         projectPlots.length === 0 ? <Empty>No plots in this project yet. Use ＋ Add Plot to create one.</Empty> : (
@@ -55,7 +55,7 @@ export default function Inventory({ plots, projectId, customers, agents, transac
         )}
       </Panel>
 
-      {adding && <AddPlot projectId={projectId} onDone={() => { setAdding(false); onDone(); }} />}
+      {adding && <AddPlot projectId={projectId} onClose={() => setAdding(false)} onDone={() => { setAdding(false); onDone(); }} />}
 
       {openPlot && (
         <PlotCard plot={openPlot} customers={customers} agents={agents} transactions={transactions}
@@ -72,7 +72,12 @@ export default function Inventory({ plots, projectId, customers, agents, transac
 
 function PlotCard({ plot, customers, agents, transactions, installments, onClose, onChanged, onPaymentAdded, onSold }) {
   const [selling, setSelling] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [msg, setMsg] = useState("");
+  const [plotNo, setPlotNo] = useState(plot.plot_no);
+  const [size, setSize] = useState(String(plot.size_sqyd));
+  const [price, setPrice] = useState(String(plot.price));
+  const [busy, setBusy] = useState(false);
   const cust = customers.find((c) => c.id === plot.customer_id);
   const closer = agents.find((a) => a.id === plot.closed_by_agent_id);
   const tx = transactions.filter((t) => t.plot_id === plot.id).sort((a, b) => (a.date < b.date ? 1 : -1));
@@ -86,10 +91,37 @@ function PlotCard({ plot, customers, agents, transactions, installments, onClose
     onChanged();
   }
 
+  async function saveEdit() {
+    setBusy(true); setMsg("");
+    const { error } = await supabase.from("plots")
+      .update({ plot_no: plotNo, size_sqyd: Number(size), price: Number(price) }).eq("id", plot.id);
+    setBusy(false);
+    if (error) { setMsg(error.message); return; }
+    onChanged();
+  }
+
   async function remove() {
     const { data, error } = await supabase.from("plots").delete().eq("id", plot.id).select();
     if (error || !data || data.length === 0) { setMsg(error?.message || "Delete didn't go through — this plot may have history."); return; }
     onChanged();
+  }
+
+  if (editing) {
+    return (
+      <Modal title={`Edit plot ${plot.plot_no}`} onClose={() => setEditing(false)} maxWidth={460}>
+        <Field label="Plot number" value={plotNo} onChange={(e) => setPlotNo(e.target.value)} />
+        <Field label="Size (sq. yd)" type="number" value={size} onChange={(e) => setSize(e.target.value)} />
+        <Field label="Price (₹)" type="number" value={price} onChange={(e) => setPrice(e.target.value)} />
+        {plot.status === "sold" && (
+          <p style={{ fontSize: 12.5, color: C.muted, marginTop: -8, marginBottom: 14 }}>This plot is already sold — changing the price here won't recompute commissions already recorded at sale time.</p>
+        )}
+        {msg && <p style={{ color: C.red, fontSize: 13 }}>{msg}</p>}
+        <div style={{ display: "flex", gap: 8 }}>
+          <Button onClick={saveEdit} disabled={!plotNo || busy}>{busy ? "Saving…" : "Save changes"}</Button>
+          <Button kind="ghostLight" onClick={() => setEditing(false)}>Cancel</Button>
+        </div>
+      </Modal>
+    );
   }
 
   return (
@@ -130,10 +162,16 @@ function PlotCard({ plot, customers, agents, transactions, installments, onClose
 
       {plot.status !== "sold" && !selling && (
         <div style={{ display: "flex", gap: 8, marginTop: 18, flexWrap: "wrap" }}>
+          <Button kind="ghost" size="sm" onClick={() => { setPlotNo(plot.plot_no); setSize(String(plot.size_sqyd)); setPrice(String(plot.price)); setEditing(true); }}>Edit</Button>
           {plot.status !== "available" && <Button kind="ghost" size="sm" onClick={() => setStatus("available")}>Mark available</Button>}
           {plot.status !== "blocked" && <Button kind="ghost" size="sm" onClick={() => setStatus("blocked")}>Mark blocked</Button>}
           <Button onClick={() => setSelling(true)}>Sell this plot</Button>
           {deletable && <DangerDeleteButton label={`plot ${plot.plot_no}`} onConfirm={remove} />}
+        </div>
+      )}
+      {plot.status === "sold" && (
+        <div style={{ marginTop: 18 }}>
+          <Button kind="ghost" size="sm" onClick={() => { setPlotNo(plot.plot_no); setSize(String(plot.size_sqyd)); setPrice(String(plot.price)); setEditing(true); }}>Edit</Button>
         </div>
       )}
 
@@ -295,7 +333,7 @@ function SellPlotForm({ plot, customers, agents, onCancel, onSold }) {
   );
 }
 
-function AddPlot({ projectId, onDone }) {
+function AddPlot({ projectId, onClose, onDone }) {
   const [plotNo, setPlotNo] = useState("");
   const [size, setSize] = useState("121");
   const [price, setPrice] = useState("250000");
@@ -315,17 +353,15 @@ function AddPlot({ projectId, onDone }) {
   }
 
   return (
-    <Panel title="Add a plot">
-      <div style={{ maxWidth: 480 }}>
-        <Field label="Plot number" value={plotNo} onChange={(e) => setPlotNo(e.target.value)} placeholder="e.g. A-01" />
-        <Field label="Size (sq. yd)" type="number" value={size} onChange={(e) => setSize(e.target.value)} />
-        <Field label="Price (₹)" type="number" value={price} onChange={(e) => setPrice(e.target.value)} />
-        <Select label="Status" value={status} onChange={setStatus}
-          options={[{ v: "available", l: "Available" }, { v: "blocked", l: "Blocked" }]} />
-        {msg && <p style={{ color: C.red, fontSize: 13 }}>{msg}</p>}
-        <Button onClick={add} disabled={busy || !plotNo}>{busy ? "Saving…" : "Create plot"}</Button>
-      </div>
-    </Panel>
+    <Modal title="Add a plot" onClose={onClose} maxWidth={480}>
+      <Field label="Plot number" value={plotNo} onChange={(e) => setPlotNo(e.target.value)} placeholder="e.g. A-01" />
+      <Field label="Size (sq. yd)" type="number" value={size} onChange={(e) => setSize(e.target.value)} />
+      <Field label="Price (₹)" type="number" value={price} onChange={(e) => setPrice(e.target.value)} />
+      <Select label="Status" value={status} onChange={setStatus}
+        options={[{ v: "available", l: "Available" }, { v: "blocked", l: "Blocked" }]} />
+      {msg && <p style={{ color: C.red, fontSize: 13 }}>{msg}</p>}
+      <Button onClick={add} disabled={busy || !plotNo}>{busy ? "Saving…" : "Create plot"}</Button>
+    </Modal>
   );
 }
 
@@ -334,6 +370,11 @@ export function ManageProjects({ projects, plots, onClose, onDone }) {
   const [location, setLocation] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
+  const [editingProject, setEditingProject] = useState(null);
+  const [editName, setEditName] = useState("");
+  const [editLocation, setEditLocation] = useState("");
+  const [editBusy, setEditBusy] = useState(false);
+  const [editMsg, setEditMsg] = useState("");
 
   const plotCount = (id) => plots.filter((p) => p.project_id === id).length;
 
@@ -358,6 +399,19 @@ export function ManageProjects({ projects, plots, onClose, onDone }) {
     onDone();
   }
 
+  function startEdit(p) {
+    setEditingProject(p); setEditName(p.name); setEditLocation(p.location || ""); setEditMsg("");
+  }
+
+  async function saveEdit() {
+    if (!editName) return;
+    setEditBusy(true); setEditMsg("");
+    const { error } = await supabase.from("projects").update({ name: editName, location: editLocation }).eq("id", editingProject.id);
+    setEditBusy(false);
+    if (error) { setEditMsg(error.message); return; }
+    setEditingProject(null); onDone();
+  }
+
   return (
     <Modal title="Manage Projects" onClose={onClose}>
       {msg && <p style={{ color: C.red, fontSize: 13, marginBottom: 10 }}>{msg}</p>}
@@ -372,6 +426,7 @@ export function ManageProjects({ projects, plots, onClose, onDone }) {
                 <Td right>{plotCount(p.id)}</Td>
                 <Td>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <Button kind="ghost" size="sm" onClick={() => startEdit(p)}>Edit</Button>
                     <Button kind="ghost" size="sm" onClick={() => toggleArchive(p)}>{p.archived ? "Unarchive" : "Archive"}</Button>
                     {plotCount(p.id) === 0 && (
                       <DangerDeleteButton label={`project "${p.name}"`} onConfirm={() => remove(p)} />
@@ -391,6 +446,18 @@ export function ManageProjects({ projects, plots, onClose, onDone }) {
         <Field label="Location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Narayankhed, Telangana" />
         <Button onClick={add} disabled={busy || !name}>{busy ? "Saving…" : "Create project"}</Button>
       </div>
+
+      {editingProject && (
+        <Modal title={`Edit ${editingProject.name}`} onClose={() => setEditingProject(null)} maxWidth={460}>
+          <Field label="Project name" value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="e.g. Celebrity's Park-1" />
+          <Field label="Location" value={editLocation} onChange={(e) => setEditLocation(e.target.value)} placeholder="Narayankhed, Telangana" />
+          {editMsg && <p style={{ color: C.red, fontSize: 13 }}>{editMsg}</p>}
+          <div style={{ display: "flex", gap: 8 }}>
+            <Button onClick={saveEdit} disabled={!editName || editBusy}>{editBusy ? "Saving…" : "Save changes"}</Button>
+            <Button kind="ghostLight" onClick={() => setEditingProject(null)}>Cancel</Button>
+          </div>
+        </Modal>
+      )}
     </Modal>
   );
 }

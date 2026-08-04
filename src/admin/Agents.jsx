@@ -4,6 +4,7 @@ import { C, MONO, fmt, Panel, Tabs, Th, Td, Button, DangerDeleteButton, Field, S
 import AccessCode from "./AccessCode";
 
 export default function Agents({ agents, customers, commissions, plots, users, agentName, projects, activeProject, rates, view, setView, onDone }) {
+  const activeProjectName = projects.find((p) => p.id === activeProject)?.name;
   const [adding, setAdding] = useState(false);
   const [openAgent, setOpenAgent] = useState(null);
   const activeProjectObj = projects.find((p) => p.id === activeProject);
@@ -19,7 +20,7 @@ export default function Agents({ agents, customers, commissions, plots, users, a
       </div>
 
       {view === "tree" && (
-        <Panel title="Agent network" right={<Button onClick={() => setAdding((v) => !v)}>{adding ? "Close" : "＋ Add Agent"}</Button>}>
+        <Panel title="Agent network" right={<Button onClick={() => setAdding(true)}>＋ Add Agent</Button>}>
           <AgentTree agents={agents} agentName={agentName} onOpen={setOpenAgent} />
         </Panel>
       )}
@@ -32,10 +33,11 @@ export default function Agents({ agents, customers, commissions, plots, users, a
         <CommissionsLedger commissions={commissions} plots={plots} agentName={agentName} />
       )}
 
-      {adding && <CreateAgent agents={agents} onDone={() => { setAdding(false); onDone(); }} />}
+      {adding && <CreateAgent agents={agents} onClose={() => setAdding(false)} onDone={() => { setAdding(false); onDone(); }} />}
       {openAgent && (
         <AgentCard agent={openAgent} agents={agents} customers={customers} commissions={commissions}
-          users={users} onClose={() => setOpenAgent(null)} onOpenOther={setOpenAgent}
+          users={users} activeProject={activeProject} activeProjectName={activeProjectName} rates={rates}
+          onClose={() => setOpenAgent(null)} onOpenOther={setOpenAgent}
           onChanged={() => { setOpenAgent(null); onDone(); }} />
       )}
     </>
@@ -185,8 +187,13 @@ function RateNode({ agent, agents, depth, effectiveRate, rates, projectId, setRa
   );
 }
 
-function AgentCard({ agent, agents, customers, commissions, users, onClose, onOpenOther, onChanged }) {
+function AgentCard({ agent, agents, customers, commissions, users, activeProject, activeProjectName, rates, onClose, onOpenOther, onChanged }) {
   const [msg, setMsg] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(agent.name);
+  const [phone, setPhone] = useState(agent.phone || "");
+  const [quota, setQuota] = useState(String(agent.quota_percent));
+  const [busy, setBusy] = useState(false);
   const email = users.find((u) => u.agent_id === agent.id)?.email;
   const myCustomers = customers.filter((c) => c.agent_id === agent.id);
   const downline = agents.filter((a) => a.sponsor_id === agent.id);
@@ -195,6 +202,18 @@ function AgentCard({ agent, agents, customers, commissions, users, onClose, onOp
   const direct = myComm.filter((c) => c.kind === "Direct").reduce((s, c) => s + Number(c.amount), 0);
   const bonus = myComm.filter((c) => c.kind !== "Direct").reduce((s, c) => s + Number(c.amount), 0);
   const leaf = downline.length === 0 && myCustomers.length === 0 && myComm.length === 0;
+
+  const projectOverride = activeProject && rates?.find((r) => r.project_id === activeProject && r.agent_id === agent.id);
+  const projectRate = activeProject ? (projectOverride ? Number(projectOverride.commission_pct) : Number(agent.quota_percent)) : null;
+
+  async function saveEdit() {
+    setBusy(true); setMsg("");
+    const { error } = await supabase.from("agents")
+      .update({ name, phone, quota_percent: Number(quota) }).eq("id", agent.id);
+    setBusy(false);
+    if (error) { setMsg(error.message); return; }
+    onChanged();
+  }
 
   async function toggleArchive() {
     const { error } = await supabase.from("agents").update({ archived: !agent.archived }).eq("id", agent.id);
@@ -208,6 +227,21 @@ function AgentCard({ agent, agents, customers, commissions, users, onClose, onOp
     onChanged();
   }
 
+  if (editing) {
+    return (
+      <Modal title={`Edit ${agent.name}`} onClose={() => setEditing(false)} maxWidth={480}>
+        <Field label="Agent name" value={name} onChange={(e) => setName(e.target.value)} />
+        <Field label="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+        <Field label="Default commission rate (%)" type="number" value={quota} onChange={(e) => setQuota(e.target.value)} />
+        {msg && <p style={{ color: C.red, fontSize: 13 }}>{msg}</p>}
+        <div style={{ display: "flex", gap: 8 }}>
+          <Button onClick={saveEdit} disabled={!name || busy}>{busy ? "Saving…" : "Save changes"}</Button>
+          <Button kind="ghostLight" onClick={() => setEditing(false)}>Cancel</Button>
+        </div>
+      </Modal>
+    );
+  }
+
   return (
     <Modal title={agent.name} onClose={onClose}>
       {msg && <p style={{ color: C.red, fontSize: 13, marginBottom: 10 }}>{msg}</p>}
@@ -216,6 +250,9 @@ function AgentCard({ agent, agents, customers, commissions, users, onClose, onOp
       <KV k="Phone" v={agent.phone || "—"} />
       <KV k="Login" v={email || "not linked yet"} />
       <KV k="Default rate" v={`${agent.quota_percent}% (used when no per-project rate is set)`} />
+      {activeProject && (
+        <KV k={`Rate for ${activeProjectName}`} v={`${projectRate}%${projectOverride ? "" : " (default — no override set)"}`} />
+      )}
       <KV k="Referred by" v={sponsor ? sponsor.name : "Direct agent"} />
       <KV k="Direct commission" v={fmt(direct)} />
       <KV k="Referral bonus" v={fmt(bonus)} />
@@ -238,7 +275,8 @@ function AgentCard({ agent, agents, customers, commissions, users, onClose, onOp
           ))}
       </div>
 
-      <div style={{ display: "flex", gap: 8, marginTop: 18 }}>
+      <div style={{ display: "flex", gap: 8, marginTop: 18, flexWrap: "wrap" }}>
+        <Button kind="ghost" size="sm" onClick={() => { setName(agent.name); setPhone(agent.phone || ""); setQuota(String(agent.quota_percent)); setEditing(true); }}>Edit</Button>
         {leaf ? (
           <DangerDeleteButton label={agent.name} onConfirm={remove} />
         ) : (
@@ -251,7 +289,7 @@ function AgentCard({ agent, agents, customers, commissions, users, onClose, onOp
   );
 }
 
-function CreateAgent({ agents, onDone }) {
+function CreateAgent({ agents, onDone, onClose }) {
   const activeAgents = agents.filter((a) => !a.archived);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -271,18 +309,16 @@ function CreateAgent({ agents, onDone }) {
   }
 
   return (
-    <Panel title="Add a new agent">
-      <div style={{ maxWidth: 520 }}>
-        <Field label="Agent name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Ravi Kumar" />
-        <Field label="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98480 00000" />
-        <Field label="Default commission rate (%)" type="number" value={quota} onChange={(e) => setQuota(e.target.value)} />
-        <p style={{ fontSize: 12.5, color: C.muted, marginTop: -8, marginBottom: 14 }}>Used whenever no per-project rate is set for this agent — set project-specific rates from Agents → Commission rates.</p>
-        <Select label="Referred by (sponsor)" value={sponsorId} placeholder="— Direct agent (no referrer) —"
-          onChange={setSponsorId} options={activeAgents.map((a) => ({ v: a.id, l: a.name }))} />
-        {msg && <p style={{ color: C.red, fontSize: 13 }}>{msg}</p>}
-        <Button onClick={save} disabled={!name || busy}>{busy ? "Saving…" : "Create agent"}</Button>
-      </div>
-    </Panel>
+    <Modal title="Add a new agent" onClose={onClose} maxWidth={520}>
+      <Field label="Agent name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Ravi Kumar" />
+      <Field label="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98480 00000" />
+      <Field label="Default commission rate (%)" type="number" value={quota} onChange={(e) => setQuota(e.target.value)} />
+      <p style={{ fontSize: 12.5, color: C.muted, marginTop: -8, marginBottom: 14 }}>Used whenever no per-project rate is set for this agent — set project-specific rates from Agents → Commission rates.</p>
+      <Select label="Referred by (sponsor)" value={sponsorId} placeholder="— Direct agent (no referrer) —"
+        onChange={setSponsorId} options={activeAgents.map((a) => ({ v: a.id, l: a.name }))} />
+      {msg && <p style={{ color: C.red, fontSize: 13 }}>{msg}</p>}
+      <Button onClick={save} disabled={!name || busy}>{busy ? "Saving…" : "Create agent"}</Button>
+    </Modal>
   );
 }
 
