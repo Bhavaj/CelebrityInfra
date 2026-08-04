@@ -2,12 +2,15 @@ import React, { useState } from "react";
 import { supabase } from "../supabase";
 import { C, MONO, fmt, Button, Field } from "../ui";
 
-// Logs one installment/partial payment against a sold plot. Every "paid so
-// far" / "balance due" figure shown across Inventory, Customers, and the
-// agent/customer portals is derived live from the transactions table by
-// summing rows for that plot or customer — so this insert is the one place
-// that keeps all of those views in sync, with nothing else to update.
-export default function RecordPayment({ plotId, customerId, price, paid, onDone }) {
+// Logs one installment/partial payment against a booked or sold plot. Every
+// "paid so far" / "balance due" figure shown across Inventory, Customers, and
+// the agent/customer portals is derived live from the transactions table by
+// summing rows for that plot or customer. The record_payment RPC does the
+// insert AND accrues commission on that payment increment (rate + sponsor
+// gap-fill cascade, scaled to the amount received rather than the full
+// price) — so this is the one place that keeps payments, balances, and
+// commission payouts all in sync.
+export default function RecordPayment({ plotId, price, paid, onDone }) {
   const remaining = Number(price) - Number(paid);
   const [amount, setAmount] = useState(remaining > 0 ? String(remaining) : "");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
@@ -19,8 +22,8 @@ export default function RecordPayment({ plotId, customerId, price, paid, onDone 
     const amt = Number(amount);
     if (!amt || amt <= 0) { setMsg("Enter an amount greater than 0."); return; }
     setBusy(true); setMsg("");
-    const { error } = await supabase.from("transactions").insert({
-      plot_id: plotId, customer_id: customerId, amount: amt, date, type,
+    const { error } = await supabase.rpc("record_payment", {
+      p_plot_id: plotId, p_amount: amt, p_date: date, p_type: type,
     });
     setBusy(false);
     if (error) { setMsg(error.message); return; }

@@ -3,7 +3,7 @@ import { supabase } from "../supabase";
 import { C, MONO, fmt, fmtDate, todayISO, Panel, Stat, Badge, DueBadge, ProgressBar, Th, Td, Button, DangerDeleteButton, Field, Select, Modal, KV, useIsMobile, TableScroll, Empty } from "../ui";
 import RecordPayment from "./RecordPayment";
 
-const statusColor = { available: C.green, blocked: C.gold, sold: C.muted };
+const statusColor = { available: C.green, blocked: C.gold, booked: C.steel, sold: C.muted };
 
 // Shared due/overdue math for a plot's installment schedule against what's
 // actually been paid — reused by the plot card here and by the customer/agent
@@ -17,7 +17,7 @@ export function scheduleStatus(installments, paid) {
   return { overdue, nextDueDate: next?.due_date || null, dueSoFar };
 }
 
-export default function Inventory({ plots, projectId, customers, agents, transactions, installments, customerName, onDone, onSold }) {
+export default function Inventory({ plots, projectId, customers, agents, transactions, installments, customerProjectAgents, customerName, onDone, onSold }) {
   const mobile = useIsMobile();
   const [adding, setAdding] = useState(false);
   const [openPlot, setOpenPlot] = useState(null);
@@ -36,7 +36,7 @@ export default function Inventory({ plots, projectId, customers, agents, transac
               const tx = transactions.filter((t) => t.plot_id === p.id);
               const paid = tx.reduce((s, t) => s + Number(t.amount), 0);
               const plotInstallments = installments.filter((i) => i.plot_id === p.id);
-              const { overdue } = p.status === "sold" ? scheduleStatus(plotInstallments, paid) : { overdue: 0 };
+              const { overdue } = (p.status === "sold" || p.status === "booked") ? scheduleStatus(plotInstallments, paid) : { overdue: 0 };
               return (
                 <div key={p.id} onClick={() => setOpenPlot(p)} className="cip-card cip-tap cip-in-fast"
                   style={{ background: C.panel2, border: `1px solid ${overdue > 0 ? C.red : C.line}`, borderLeft: `4px solid ${statusColor[p.status]}`, borderRadius: 10, padding: 14, cursor: "pointer" }}>
@@ -47,7 +47,7 @@ export default function Inventory({ plots, projectId, customers, agents, transac
                   <div style={{ fontSize: 12, color: C.muted, marginTop: 8 }}>{p.size_sqyd} sq.yd</div>
                   <div style={{ fontSize: 15, fontWeight: 600, color: C.ink, marginTop: 2 }}>{fmt(p.price)}</div>
                   {p.customer_id && <div style={{ fontSize: 11, color: C.emeraldLt, marginTop: 6 }}>→ {customerName(p.customer_id)}</div>}
-                  {p.status === "sold" && overdue > 0 && <div style={{ marginTop: 8 }}><Badge text={`Overdue ${fmt(overdue)}`} color={C.red} /></div>}
+                  {(p.status === "sold" || p.status === "booked") && overdue > 0 && <div style={{ marginTop: 8 }}><Badge text={`Overdue ${fmt(overdue)}`} color={C.red} /></div>}
                 </div>
               );
             })}
@@ -60,6 +60,7 @@ export default function Inventory({ plots, projectId, customers, agents, transac
       {openPlot && (
         <PlotCard plot={openPlot} customers={customers} agents={agents} transactions={transactions}
           installments={installments.filter((i) => i.plot_id === openPlot.id)}
+          customerProjectAgents={customerProjectAgents}
           onClose={() => setOpenPlot(null)}
           onChanged={() => { setOpenPlot(null); onDone(); }}
           onPaymentAdded={onDone}
@@ -70,7 +71,7 @@ export default function Inventory({ plots, projectId, customers, agents, transac
   );
 }
 
-function PlotCard({ plot, customers, agents, transactions, installments, onClose, onChanged, onPaymentAdded, onSold }) {
+function PlotCard({ plot, customers, agents, transactions, installments, customerProjectAgents, onClose, onChanged, onPaymentAdded, onSold }) {
   const [selling, setSelling] = useState(false);
   const [editing, setEditing] = useState(false);
   const [msg, setMsg] = useState("");
@@ -82,7 +83,7 @@ function PlotCard({ plot, customers, agents, transactions, installments, onClose
   const closer = agents.find((a) => a.id === plot.closed_by_agent_id);
   const tx = transactions.filter((t) => t.plot_id === plot.id).sort((a, b) => (a.date < b.date ? 1 : -1));
   const paid = tx.reduce((s, t) => s + Number(t.amount), 0);
-  const deletable = plot.status !== "sold" && tx.length === 0;
+  const deletable = plot.status === "available" || plot.status === "blocked";
   const { overdue, nextDueDate } = scheduleStatus(installments, paid);
   const pct = plot.price ? Math.round((paid / Number(plot.price)) * 100) : 0;
 
@@ -112,8 +113,8 @@ function PlotCard({ plot, customers, agents, transactions, installments, onClose
         <Field label="Plot number" value={plotNo} onChange={(e) => setPlotNo(e.target.value)} />
         <Field label="Size (sq. yd)" type="number" value={size} onChange={(e) => setSize(e.target.value)} />
         <Field label="Price (₹)" type="number" value={price} onChange={(e) => setPrice(e.target.value)} />
-        {plot.status === "sold" && (
-          <p style={{ fontSize: 12.5, color: C.muted, marginTop: -8, marginBottom: 14 }}>This plot is already sold — changing the price here won't recompute commissions already recorded at sale time.</p>
+        {paid > 0 && (
+          <p style={{ fontSize: 12.5, color: C.muted, marginTop: -8, marginBottom: 14 }}>Payments have already been recorded against this plot — changing the price here won't recompute commission already accrued on those payments.</p>
         )}
         {msg && <p style={{ color: C.red, fontSize: 13 }}>{msg}</p>}
         <div style={{ display: "flex", gap: 8 }}>
@@ -131,10 +132,10 @@ function PlotCard({ plot, customers, agents, transactions, installments, onClose
       <KV k="Size" v={`${plot.size_sqyd} sq.yd`} />
       <KV k="Price" v={fmt(plot.price)} />
       <KV k="Buyer" v={cust ? cust.name : "—"} />
-      <KV k="Closed by" v={closer ? closer.name : "—"} />
-      {plot.sale_date && <KV k="Sale date" v={plot.sale_date} />}
+      <KV k="Agent" v={closer ? closer.name : "—"} />
+      {plot.sale_date && <KV k="Booking date" v={plot.sale_date} />}
 
-      {plot.status === "sold" && (
+      {(plot.status === "sold" || plot.status === "booked") && (
         <div style={{ marginTop: 16 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
             <span style={{ fontSize: 13, color: C.muted }}>{fmt(paid)} of {fmt(plot.price)} collected</span>
@@ -156,17 +157,23 @@ function PlotCard({ plot, customers, agents, transactions, installments, onClose
         </div>
       )}
 
-      {plot.status === "sold" && (
+      {(plot.status === "sold" || plot.status === "booked") && (
         <InstallmentSchedule plotId={plot.id} installments={installments} onDone={onPaymentAdded} />
       )}
 
-      {plot.status !== "sold" && !selling && (
+      {(plot.status === "available" || plot.status === "blocked") && !selling && (
         <div style={{ display: "flex", gap: 8, marginTop: 18, flexWrap: "wrap" }}>
           <Button kind="ghost" size="sm" onClick={() => { setPlotNo(plot.plot_no); setSize(String(plot.size_sqyd)); setPrice(String(plot.price)); setEditing(true); }}>Edit</Button>
           {plot.status !== "available" && <Button kind="ghost" size="sm" onClick={() => setStatus("available")}>Mark available</Button>}
           {plot.status !== "blocked" && <Button kind="ghost" size="sm" onClick={() => setStatus("blocked")}>Mark blocked</Button>}
-          <Button onClick={() => setSelling(true)}>Sell this plot</Button>
+          <Button onClick={() => setSelling(true)}>Book this plot</Button>
           {deletable && <DangerDeleteButton label={`plot ${plot.plot_no}`} onConfirm={remove} />}
+        </div>
+      )}
+      {plot.status === "booked" && (
+        <div style={{ display: "flex", gap: 8, marginTop: 18, flexWrap: "wrap" }}>
+          <Button kind="ghost" size="sm" onClick={() => { setPlotNo(plot.plot_no); setSize(String(plot.size_sqyd)); setPrice(String(plot.price)); setEditing(true); }}>Edit</Button>
+          <Button kind="ghost" size="sm" onClick={() => setStatus("sold")}>Mark sold</Button>
         </div>
       )}
       {plot.status === "sold" && (
@@ -175,12 +182,12 @@ function PlotCard({ plot, customers, agents, transactions, installments, onClose
         </div>
       )}
 
-      {plot.status !== "sold" && selling && (
-        <SellPlotForm plot={plot} customers={customers} agents={agents} onCancel={() => setSelling(false)} onSold={onSold} />
+      {plot.status === "available" && selling && (
+        <BookPlotForm plot={plot} customers={customers} agents={agents} customerProjectAgents={customerProjectAgents} onCancel={() => setSelling(false)} onSold={onSold} />
       )}
 
-      {plot.status === "sold" && plot.customer_id && (
-        <RecordPayment plotId={plot.id} customerId={plot.customer_id} price={plot.price} paid={paid} onDone={onPaymentAdded} />
+      {(plot.status === "sold" || plot.status === "booked") && plot.customer_id && (
+        <RecordPayment plotId={plot.id} price={plot.price} paid={paid} onDone={onPaymentAdded} />
       )}
     </Modal>
   );
@@ -254,10 +261,11 @@ function InstallmentSchedule({ plotId, installments, onDone }) {
   );
 }
 
-function SellPlotForm({ plot, customers, agents, onCancel, onSold }) {
+function BookPlotForm({ plot, customers, agents, customerProjectAgents, onCancel, onSold }) {
   const activeAgents = agents.filter((a) => !a.archived);
   const [customerId, setCustomerId] = useState("");
   const [agentId, setAgentId] = useState("");
+  const [agentTouched, setAgentTouched] = useState(false);
   const [date, setDate] = useState(todayISO());
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
@@ -268,6 +276,14 @@ function SellPlotForm({ plot, customers, agents, onCancel, onSold }) {
 
   const agent = activeAgents.find((a) => a.id === agentId);
 
+  function pickCustomer(id) {
+    setCustomerId(id);
+    if (!agentTouched) {
+      const assigned = customerProjectAgents?.find((a) => a.customer_id === id && a.project_id === plot.project_id);
+      setAgentId(assigned?.agent_id || "");
+    }
+  }
+
   async function addCustomer() {
     if (!newName || !newPhone) return;
     setBusy(true); setMsg("");
@@ -275,15 +291,15 @@ function SellPlotForm({ plot, customers, agents, onCancel, onSold }) {
     setBusy(false);
     if (error) { setMsg(error.message); return; }
     setCustList((l) => [...l, data]);
-    setCustomerId(data.id);
+    pickCustomer(data.id);
     setNewCust(false);
     setNewName(""); setNewPhone("");
   }
 
   async function save() {
     setBusy(true); setMsg("");
-    const { error } = await supabase.rpc("record_sale", {
-      p_plot_id: plot.id, p_customer_id: customerId, p_closer_id: agentId, p_sale_date: date,
+    const { error } = await supabase.rpc("book_plot", {
+      p_plot_id: plot.id, p_customer_id: customerId, p_agent_id: agentId, p_booking_date: date,
     });
     setBusy(false);
     if (error) { setMsg(error.message); return; }
@@ -294,11 +310,11 @@ function SellPlotForm({ plot, customers, agents, onCancel, onSold }) {
 
   return (
     <div style={{ marginTop: 18, borderTop: `1px solid ${C.line}`, paddingTop: 16 }}>
-      <div style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10, fontFamily: MONO }}>Sell this plot</div>
+      <div style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10, fontFamily: MONO }}>Book this plot</div>
 
       {!newCust ? (
         <>
-          <Select label="Customer" value={customerId} placeholder="— Select customer —" onChange={setCustomerId}
+          <Select label="Customer" value={customerId} placeholder="— Select customer —" onChange={pickCustomer}
             options={custList.map((c) => ({ v: c.id, l: c.name }))} />
           <button onClick={() => setNewCust(true)} type="button" className="cip-tap"
             style={{ background: "none", border: "none", color: C.gold, textDecoration: "underline", cursor: "pointer", fontSize: 13, padding: "2px 0", marginBottom: 14, fontFamily: "'Outfit',sans-serif", borderRadius: 4 }}>
@@ -316,17 +332,18 @@ function SellPlotForm({ plot, customers, agents, onCancel, onSold }) {
         </div>
       )}
 
-      <Select label="Closed by agent" value={agentId} placeholder="— Select agent —" onChange={setAgentId}
+      <Select label="Agent for this project" value={agentId} placeholder="— Select agent —"
+        onChange={(v) => { setAgentTouched(true); setAgentId(v); }}
         options={activeAgents.map((a) => ({ v: a.id, l: a.name }))} />
-      <Field label="Sale date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+      <Field label="Booking date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
       {agent && (
         <div style={{ background: C.goldSoft, borderRadius: 8, padding: 14, marginBottom: 14, fontSize: 13.5, color: C.ink }}>
-          Commission is computed automatically from {agent.name}'s rate on this project (and cascaded up their sponsor chain) once you confirm the sale.
+          This just books the plot to the customer — commission for {agent.name} (and their sponsor chain) accrues gradually as payments come in, not all at once now.
         </div>
       )}
       {msg && <p style={{ color: C.red, fontSize: 13 }}>{msg}</p>}
       <div style={{ display: "flex", gap: 8 }}>
-        <Button onClick={save} disabled={!valid || busy}>{busy ? "Recording…" : "Confirm sale"}</Button>
+        <Button onClick={save} disabled={!valid || busy}>{busy ? "Booking…" : "Confirm booking"}</Button>
         <Button kind="ghost" size="sm" onClick={onCancel}>Cancel</Button>
       </div>
     </div>

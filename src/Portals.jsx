@@ -11,17 +11,19 @@ export function AgentPortal({ agentId }) {
 
   useEffect(() => {
     (async () => {
-      const [agent, customers, commissions, downline, plots, transactions, projects] = await Promise.all([
+      const [agent, projectAgents, commissions, downline, plots, transactions, projects] = await Promise.all([
         supabase.from("agents").select("*").eq("id", agentId).single(),
-        supabase.from("customers").select("*").eq("agent_id", agentId),
+        supabase.from("customer_project_agents").select("customers(*)").eq("agent_id", agentId),
         supabase.from("commissions").select("*").eq("beneficiary_id", agentId),
         supabase.from("agents").select("*").eq("sponsor_id", agentId),
         supabase.from("plots").select("*"),
         supabase.from("transactions").select("*"),
         supabase.from("projects").select("*"),
       ]);
+      const customersById = new Map();
+      (projectAgents.data || []).forEach((row) => { if (row.customers) customersById.set(row.customers.id, row.customers); });
       setD({
-        agent: agent.data, customers: customers.data || [], commissions: commissions.data || [],
+        agent: agent.data, customers: [...customersById.values()], commissions: commissions.data || [],
         downline: downline.data || [], plots: plots.data || [],
         transactions: transactions.data || [], projects: projects.data || [],
       });
@@ -39,7 +41,7 @@ export function AgentPortal({ agentId }) {
   const plotsFor = (custId) => d.plots.filter((p) => p.customer_id === custId);
   const paidFor = (plotId) => d.transactions.filter((t) => t.plot_id === plotId).reduce((s, t) => s + Number(t.amount), 0);
   const projectName = (id) => d.projects.find((p) => p.id === id)?.name ?? "—";
-  const openPlots = d.plots.filter((p) => p.status !== "sold" && !d.projects.find((pr) => pr.id === p.project_id)?.archived);
+  const openPlots = d.plots.filter((p) => p.status === "available" && !d.projects.find((pr) => pr.id === p.project_id)?.archived);
 
   return (
     <>

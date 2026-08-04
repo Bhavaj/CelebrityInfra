@@ -3,7 +3,7 @@ import { supabase } from "../supabase";
 import { C, MONO, fmt, Panel, Tabs, Th, Td, Button, DangerDeleteButton, Field, Select, Modal, SearchBar, KV, Badge, TableScroll, Empty, useIsMobile, RowCard, RowLine } from "../ui";
 import AccessCode from "./AccessCode";
 
-export default function Agents({ agents, customers, commissions, plots, users, agentName, projects, activeProject, rates, view, setView, onDone }) {
+export default function Agents({ agents, customers, commissions, plots, users, agentName, projects, activeProject, rates, customerProjectAgents, view, setView, onDone }) {
   const activeProjectName = projects.find((p) => p.id === activeProject)?.name;
   const [adding, setAdding] = useState(false);
   const [openAgent, setOpenAgent] = useState(null);
@@ -37,6 +37,7 @@ export default function Agents({ agents, customers, commissions, plots, users, a
       {openAgent && (
         <AgentCard agent={openAgent} agents={agents} customers={customers} commissions={commissions}
           users={users} activeProject={activeProject} activeProjectName={activeProjectName} rates={rates}
+          customerProjectAgents={customerProjectAgents}
           onClose={() => setOpenAgent(null)} onOpenOther={setOpenAgent}
           onChanged={() => { setOpenAgent(null); onDone(); }} />
       )}
@@ -187,7 +188,7 @@ function RateNode({ agent, agents, depth, effectiveRate, rates, projectId, setRa
   );
 }
 
-function AgentCard({ agent, agents, customers, commissions, users, activeProject, activeProjectName, rates, onClose, onOpenOther, onChanged }) {
+function AgentCard({ agent, agents, customers, commissions, users, activeProject, activeProjectName, rates, customerProjectAgents, onClose, onOpenOther, onChanged }) {
   const [msg, setMsg] = useState("");
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(agent.name);
@@ -195,7 +196,8 @@ function AgentCard({ agent, agents, customers, commissions, users, activeProject
   const [quota, setQuota] = useState(String(agent.quota_percent));
   const [busy, setBusy] = useState(false);
   const email = users.find((u) => u.agent_id === agent.id)?.email;
-  const myCustomers = customers.filter((c) => c.agent_id === agent.id);
+  const myCustomerIds = new Set((customerProjectAgents || []).filter((a) => a.agent_id === agent.id).map((a) => a.customer_id));
+  const myCustomers = customers.filter((c) => myCustomerIds.has(c.id));
   const downline = agents.filter((a) => a.sponsor_id === agent.id);
   const sponsor = agents.find((a) => a.id === agent.sponsor_id);
   const myComm = commissions.filter((c) => c.beneficiary_id === agent.id);

@@ -26,13 +26,13 @@ export default function Admin() {
   const [activeProject, setActiveProject] = useState("");
   const [data, setData] = useState({
     agents: [], customers: [], plots: [], projects: [], commissions: [], transactions: [],
-    users: [], leads: [], rates: [], installments: [],
+    users: [], leads: [], rates: [], installments: [], customerProjectAgents: [],
   });
   const [loading, setLoading] = useState(true);
 
   async function load() {
     setLoading(true);
-    const [agents, customers, plots, projects, commissions, transactions, users, leads, rates, installments] = await Promise.all([
+    const [agents, customers, plots, projects, commissions, transactions, users, leads, rates, installments, customerProjectAgents] = await Promise.all([
       supabase.from("agents").select("*"),
       supabase.from("customers").select("*"),
       supabase.from("plots").select("*").order("plot_no"),
@@ -43,6 +43,7 @@ export default function Admin() {
       supabase.from("leads").select("*").order("created_at", { ascending: false }),
       supabase.from("agent_project_rates").select("*"),
       supabase.from("plot_installments").select("*").order("due_date"),
+      supabase.from("customer_project_agents").select("*"),
     ]);
     const projs = projects.data || [];
     setData({
@@ -51,6 +52,7 @@ export default function Admin() {
       commissions: commissions.data || [], transactions: transactions.data || [],
       users: users.data || [], leads: leads.data || [],
       rates: rates.data || [], installments: installments.data || [],
+      customerProjectAgents: customerProjectAgents.data || [],
     });
     const pickable = projs.filter((p) => !p.archived);
     setActiveProject((cur) => (cur && pickable.some((p) => p.id === cur)) ? cur : (pickable[0]?.id ?? ""));
@@ -134,20 +136,22 @@ export default function Admin() {
         {!loading && tab === "inventory" && (
           <Inventory plots={data.plots} projectId={activeProject} projects={data.projects}
             customers={data.customers} agents={data.agents} transactions={data.transactions}
-            installments={data.installments} customerName={customerName} onDone={load} onSold={onSold} />
+            installments={data.installments} customerProjectAgents={data.customerProjectAgents}
+            customerName={customerName} onDone={load} onSold={onSold} />
         )}
 
         {!loading && tab === "customers" && (
           <Customers customers={data.customers} plots={data.plots} transactions={data.transactions}
             installments={data.installments} users={data.users} agents={data.agents}
             projects={data.projects} activeProject={activeProject}
-            agentName={agentName} onDone={load} />
+            customerProjectAgents={data.customerProjectAgents} onDone={load} />
         )}
 
         {!loading && tab === "agents" && (
           <Agents agents={data.agents} customers={data.customers} commissions={data.commissions}
             plots={data.plots} users={data.users} agentName={agentName}
             projects={data.projects} activeProject={activeProject} rates={data.rates}
+            customerProjectAgents={data.customerProjectAgents}
             view={agentsView} setView={setAgentsView} onDone={load} />
         )}
 
