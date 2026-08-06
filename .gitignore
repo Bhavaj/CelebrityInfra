@@ -1,3 +1,5 @@
 node_modules
 dist
 .env
+# Raw hero-video source clips — only the re-encoded public/media/hero-scrub.mp4 is served
+/Landing Page Videos

@@ -1,5 +1,6 @@
-import { copyFileSync, mkdirSync } from "fs";
+import { copyFileSync, cpSync, mkdirSync } from "fs";
 mkdirSync("dist", { recursive: true });
 copyFileSync("public/index.html", "dist/index.html");
 copyFileSync("public/celebrity-logo.png", "dist/celebrity-logo.png");
-console.log("Homepage and logo copied to dist/ (site root) — /celebrity-logo.png is referenced as an absolute path by the homepage, so it must live at the site root regardless of the portal's /portal/ base.");
+cpSync("public/media", "dist/media", { recursive: true });
+console.log("Homepage, logo, and hero media copied to dist/ (site root) — the homepage references /celebrity-logo.png and /media/* as absolute paths, so they must live at the site root regardless of the portal's /portal/ base.");

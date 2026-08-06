@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <meta name="theme-color" content="#0B0A08" />
 <title>Celebrity's Park-1 — Celebrity Infra Pvt Ltd</title>
 <meta name="description" content="Celebrity's Park-1: a gated, plotted venture at Narayankhed, Telangana. 121 sq. yd. plots from ₹2,50,000 with EMI options." />
@@ -31,6 +31,15 @@
     --line:rgba(246,240,226,.11);
     --line-gold:rgba(201,162,39,.32);
     --ease:cubic-bezier(.16,1,.3,1);
+    /* Text-over-video legibility: a tight, dark, mostly-unblurred shadow
+       (reads as a hard contact edge, not a haze) plus a thin hard stroke
+       around the glyph itself — the stroke is what actually makes text
+       "stand out" rather than just "have a shadow"; the wide soft layer
+       underneath is only there to hold up on the busiest video frames. */
+    --shadow-head:0 1px 3px rgba(0,0,0,.95),0 3px 10px rgba(0,0,0,.9),0 8px 30px rgba(0,0,0,.65);
+    --shadow-body:0 1px 2px rgba(0,0,0,.95),0 2px 8px rgba(0,0,0,.9),0 5px 20px rgba(0,0,0,.6);
+    --stroke-head:.7px rgba(0,0,0,.55);
+    --stroke-body:.4px rgba(0,0,0,.5);
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth}
@@ -42,8 +51,19 @@
     line-height:1.6;
     overflow-x:hidden;
   }
+  /* The scrub video sits fixed behind the ENTIRE page and stays fully
+     visible everywhere — no panel fills, no blur boxes over it. A single
+     flat, uniform tint (not a top/bottom gradient, which would make some
+     scroll positions readable and others not depending on what's centred
+     in the viewport) gives every bit of text on the page the same baseline
+     contrast boost; text-shadow does the rest per-element. */
+  .bg-video{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 50%;z-index:-2;background:var(--ink-bg)}
+  .bg-scrim{position:fixed;inset:0;z-index:-1;pointer-events:none;background:
+      radial-gradient(140% 100% at 50% 40%,transparent 25%,rgba(0,0,0,.24) 100%),
+      rgba(5,4,3,.36)}
   body.nav-open{overflow:hidden}
   ::selection{background:rgba(201,162,39,.35);color:var(--ivory)}
+  a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--gold-lt);outline-offset:3px;border-radius:8px}
   .serif{font-family:'Cormorant Garamond',serif}
   .sc{font-family:'Cormorant SC',serif}
   img{max-width:100%}
@@ -87,27 +107,36 @@
   .nav-links a.nav-cta:active{transform:scale(.97)}
   .burger{display:none;background:none;border:none;color:var(--gold-lt);font-size:20px;cursor:pointer;width:38px;height:38px;border-radius:999px}
 
-  /* ---------- HERO ---------- */
-  .hero{position:relative;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:150px 6vw 90px;overflow:hidden}
+  /* ---------- HERO — normal-flow first screen, not pinned. The video behind
+     it is the global .bg-video; this header only supplies its own extra
+     scrim (headline contrast needs more darkening than the rest of the page)
+     and the centred headline/CTA content, which scrolls away like any other
+     content once the page moves — it doesn't need to "release" from a pin. ---------- */
+  .hero{position:relative;min-height:100dvh;display:flex;align-items:center;justify-content:center;text-align:center}
   .hero::before{content:"";position:absolute;inset:0;background:
-      radial-gradient(60% 55% at 50% 0%,rgba(201,162,39,.12),transparent 65%),
-      radial-gradient(45% 45% at 100% 100%,rgba(122,31,43,.12),transparent 60%),
-      radial-gradient(35% 35% at 0% 90%,rgba(31,138,85,.05),transparent 60%);
+      radial-gradient(60% 55% at 50% 0%,rgba(201,162,39,.16),transparent 65%),
+      radial-gradient(45% 45% at 100% 100%,rgba(122,31,43,.14),transparent 60%),
+      linear-gradient(180deg,rgba(6,5,3,.35) 0%,rgba(6,5,3,.1) 35%,rgba(6,5,3,.2) 75%,rgba(6,5,3,.5) 100%);
     pointer-events:none;z-index:0}
+  .hero-overlay{
+    position:relative;z-index:1;width:100%;max-width:900px;
+    padding:max(96px,calc(env(safe-area-inset-top) + 76px)) clamp(16px,6vw,48px) max(40px,calc(env(safe-area-inset-bottom) + 28px));
+    transition:opacity .05s linear;
+  }
 
   .brand-row{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:24px;opacity:0}
   .brand-row .ring{width:168px;height:168px;flex:none;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 18px 34px rgba(0,0,0,.5)) drop-shadow(0 0 20px rgba(201,162,39,.18))}
   .brand-row .ring img{width:100%;height:100%;object-fit:contain}
-  .brand-row .txt{font-size:12px;letter-spacing:.5px;color:var(--faint);text-align:center}
+  .brand-row .txt{font-size:12px;letter-spacing:.5px;color:var(--faint);text-align:center;text-shadow:var(--shadow-body);-webkit-text-stroke:var(--stroke-body)}
   .brand-row .txt b{display:block;font-size:13.5px;letter-spacing:.4px;color:var(--gold-lt);font-family:'Cormorant SC',serif;margin-top:2px}
   @media(max-width:640px){.brand-row .ring{width:112px;height:112px}}
 
-  .hero h1{font-family:'Cormorant Garamond',serif;font-style:normal;font-weight:600;font-size:clamp(52px,7vw,92px);line-height:.98;letter-spacing:.5px;opacity:0;text-wrap:balance}
+  .hero h1{font-family:'Cormorant Garamond',serif;font-style:normal;font-weight:600;font-size:clamp(52px,7vw,92px);line-height:.98;letter-spacing:.5px;opacity:0;text-wrap:balance;text-shadow:0 2px 4px rgba(0,0,0,.95),0 4px 14px rgba(0,0,0,.9),0 10px 40px rgba(0,0,0,.65);-webkit-text-stroke:1px rgba(0,0,0,.55)}
   .hero h1 .script{font-style:italic;font-weight:500;display:block;font-size:clamp(26px,.54em,60px);color:var(--gold-lt)}
   .hero h1 .num{font-family:'Manrope',sans-serif;font-style:normal;font-weight:600;display:inline-block;font-size:.72em;vertical-align:.06em;margin-left:.22em}
-  .hero .tagline{margin-top:20px;font-size:15px;letter-spacing:.5px;color:var(--ivory);opacity:0}
-  .hero .venue-line{margin-top:8px;font-size:13px;color:var(--gold-lt);opacity:0}
-  .hero .loc{margin:14px auto 0;font-size:15px;color:var(--muted);opacity:0;max-width:460px}
+  .hero .tagline{margin-top:20px;font-size:15px;letter-spacing:.5px;color:var(--ivory);opacity:0;text-shadow:var(--shadow-body);-webkit-text-stroke:var(--stroke-body)}
+  .hero .venue-line{margin-top:8px;font-size:13px;color:var(--gold-lt);opacity:0;text-shadow:var(--shadow-body);-webkit-text-stroke:var(--stroke-body)}
+  .hero .loc{margin:14px auto 0;font-size:15px;color:var(--muted);opacity:0;max-width:460px;text-shadow:var(--shadow-body);-webkit-text-stroke:var(--stroke-body)}
   .hero-cta{margin-top:38px;display:flex;gap:14px;flex-wrap:wrap;justify-content:center;opacity:0}
 
   .btn{border:none;cursor:pointer;font-family:'Manrope';font-size:13.5px;letter-spacing:.2px;font-weight:700;
@@ -125,8 +154,8 @@
   .hero-facts{display:flex;gap:0;margin:52px auto 0;border-top:1px solid var(--line);padding-top:20px;opacity:0;max-width:460px;justify-content:center}
   .hero-facts .f{flex:1;padding:0 18px;border-right:1px solid var(--line)}
   .hero-facts .f:last-child{border-right:0}
-  .hero-facts .f b{display:block;font-family:'Cormorant Garamond',serif;font-size:25px;color:var(--ivory);font-weight:600;font-variant-numeric:tabular-nums}
-  .hero-facts .f span{font-size:11px;letter-spacing:1.4px;color:var(--faint);text-transform:uppercase}
+  .hero-facts .f b{display:block;font-family:'Cormorant Garamond',serif;font-size:25px;color:var(--ivory);font-weight:600;font-variant-numeric:tabular-nums;text-shadow:var(--shadow-head);-webkit-text-stroke:var(--stroke-head)}
+  .hero-facts .f span{font-size:11px;letter-spacing:1.4px;color:var(--faint);text-transform:uppercase;text-shadow:var(--shadow-body);-webkit-text-stroke:var(--stroke-body)}
 
   .scroll-hint{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);color:var(--faint);font-size:11px;letter-spacing:3px;opacity:0;animation:fadeUp 1s var(--ease) 1.8s forwards}
   .scroll-hint .arrow{display:block;margin-top:8px;width:1px;height:26px;background:linear-gradient(var(--gold),transparent);animation:bob 2.2s ease-in-out infinite}
@@ -138,13 +167,37 @@
   .d1{animation-delay:.15s}.d2{animation-delay:.35s}.d3{animation-delay:.55s}.d4{animation-delay:.75s}.d5{animation-delay:.95s}
 
   /* ---------- TRUST STRIP — a static row, not an auto-scrolling marquee
-     that demands attention nothing here has earned. ---------- */
-  .trust{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:rgba(22,19,13,.4)}
+     that demands attention nothing here has earned. Stays a thin full-width
+     translucent band (not a card) for rhythm variety against the panels. ---------- */
+  .trust{border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
   .trust-row{display:flex;flex-wrap:wrap;justify-content:center;gap:14px 40px;padding:20px 6vw;max-width:1180px;margin:0 auto}
-  .trust-row span{display:flex;align-items:center;gap:10px;font-family:'Cormorant SC',serif;font-size:14px;letter-spacing:1px;color:var(--muted);white-space:nowrap}
+  .trust-row span{display:flex;align-items:center;gap:10px;font-family:'Cormorant SC',serif;font-size:14px;letter-spacing:1px;color:var(--muted);white-space:nowrap;text-shadow:var(--shadow-body);-webkit-text-stroke:var(--stroke-body)}
   .trust-row span::before{content:"";width:5px;height:5px;background:var(--gold);transform:rotate(45deg);flex:none}
 
-  section{padding:120px 6vw;position:relative}
+  /* ---------- SECTIONS — no panel, no fill, no blur. Every section is just
+     a spacing container; the video stays fully visible everywhere, all the
+     time. Legibility comes from the flat global .bg-scrim tint plus
+     per-element text-shadow (below), not from hiding the video behind a
+     card — that's the whole point of the redesign: strategically-placed
+     text and controls floating directly over continuous, unobstructed
+     footage, the way a movie title card sits over its background plate. ---------- */
+  section, footer{
+    position:relative;
+    width:min(100% - 24px,1180px);
+    margin:clamp(20px,4vw,48px) auto;
+    padding:clamp(48px,8vw,96px) clamp(24px,6vw,64px);
+  }
+  /* One shared text-shadow recipe for anything sitting directly on the
+     video: a tight dark contact shadow for edge definition + a wide soft
+     one that reads as ambient darkening around the glyph regardless of
+     what's playing behind it at that instant. */
+  .sec-head h2,.why-row h3,.loc-card h3,.cmd-wrap .quote,.enq-info h2,.stat .big,footer .fbrand{
+    text-shadow:var(--shadow-head);-webkit-text-stroke:var(--stroke-head);
+  }
+  .sec-head p,.sec-head .kicker,.why-row p,.loc-dl .row,.cmd-wrap .who,.enq-info p,.enq-info li,.stat .lbl,
+  footer .ftag,footer .fnav a,footer .flegal a,footer .legal,footer .copy{
+    text-shadow:var(--shadow-body);-webkit-text-stroke:var(--stroke-body);
+  }
   .sec-head{max-width:620px;margin-bottom:64px}
   .sec-head.center{text-align:center;margin-left:auto;margin-right:auto}
   .sec-head .kicker{font-size:12px;letter-spacing:3.5px;color:var(--gold);text-transform:uppercase;margin-bottom:16px;font-weight:600}
@@ -153,30 +206,32 @@
   .reveal{opacity:0;transform:translateY(26px);filter:blur(5px);transition:opacity .9s var(--ease),transform .9s var(--ease),filter .9s var(--ease)}
   .reveal.in{opacity:1;transform:none;filter:blur(0)}
 
-  /* ---------- Double-bezel panel — a nested "machined hardware" frame
-     used consistently for the offer, location, and testimonial panels
-     instead of a flat border+shadow card. ---------- */
-  .bezel{background:var(--shell);border:1px solid var(--line);border-radius:22px;padding:8px}
-  .bezel-core{background:var(--surface);border-radius:16px;box-shadow:inset 0 1px 0 rgba(246,240,226,.05)}
+  /* ---------- Double-bezel — now a pure outline (no fill), just enough to
+     group the offer/location/testimonial content as one unit without
+     blocking any video underneath it. ---------- */
+  .bezel{background:transparent;border:1px solid rgba(246,240,226,.22);border-radius:22px;padding:8px}
+  .bezel-core{background:transparent;border-radius:16px}
 
   /* ---------- OFFER — a single ticket-style panel with a torn divider,
-     not two floating columns. ---------- */
-  .offer{background:linear-gradient(180deg,rgba(26,22,15,.4) 0%,rgba(11,10,8,0) 100%)}
-  .ticket{max-width:980px;margin:0 auto}
+     not two floating columns. A faint warm glow (not a base fill, the
+     shared section-panel rule already supplies that) marks it out as the
+     conversion-focused section. ---------- */
+  .offer::before{content:"";position:absolute;inset:0;border-radius:inherit;background:radial-gradient(60% 50% at 50% 0%,rgba(201,162,39,.1),transparent 70%);pointer-events:none}
+  .ticket{max-width:980px;margin:0 auto;position:relative}
   .ticket-inner{display:grid;grid-template-columns:1fr 1.4fr;padding:0}
   .ticket-price{padding:52px 40px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
   .ticket-price::after{content:"";position:absolute;top:8%;bottom:8%;right:0;width:0;border-right:2px dashed rgba(201,162,39,.28)}
-  .ticket-price .size{font-size:13px;letter-spacing:3px;color:var(--gold-lt);text-transform:uppercase}
-  .ticket-price .amt{font-family:'Cormorant Garamond',serif;font-size:clamp(46px,6vw,68px);font-weight:600;line-height:1;margin:12px 0;color:var(--gold-lt);font-variant-numeric:tabular-nums}
-  .ticket-price .per{font-size:12.5px;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
-  .ticket-price .flag{display:inline-block;margin-top:22px;border:1px solid var(--gold);color:var(--gold-lt);font-size:11px;letter-spacing:1.5px;padding:7px 16px;border-radius:999px}
-  .ticket-perks{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line)}
-  .perk{background:var(--surface);padding:26px 24px;display:flex;gap:16px;align-items:flex-start;transition:background .3s var(--ease)}
+  .ticket-price .size{font-size:13px;letter-spacing:3px;color:var(--gold-lt);text-transform:uppercase;text-shadow:var(--shadow-body);-webkit-text-stroke:var(--stroke-body)}
+  .ticket-price .amt{font-family:'Cormorant Garamond',serif;font-size:clamp(46px,6vw,68px);font-weight:600;line-height:1;margin:12px 0;color:var(--gold-lt);font-variant-numeric:tabular-nums;text-shadow:var(--shadow-head);-webkit-text-stroke:.8px rgba(0,0,0,.5)}
+  .ticket-price .per{font-size:12.5px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;text-shadow:var(--shadow-body);-webkit-text-stroke:var(--stroke-body)}
+  .ticket-price .flag{display:inline-block;margin-top:22px;border:1px solid var(--gold);color:var(--gold-lt);font-size:11px;letter-spacing:1.5px;padding:7px 16px;border-radius:999px;background:rgba(5,4,3,.4)}
+  .ticket-perks{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(246,240,226,.14)}
+  .perk{background:transparent;padding:26px 24px;display:flex;gap:16px;align-items:flex-start;transition:background .3s var(--ease)}
   .perk:first-child{border-top-right-radius:16px}
-  .perk:hover{background:var(--surface-2)}
-  .perk .n{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--gold);flex:none;width:26px}
-  .perk b{display:block;font-size:15px;color:var(--ivory);font-weight:600;margin-bottom:4px}
-  .perk span{font-size:13.5px;color:var(--muted)}
+  .perk:hover{background:rgba(255,255,255,.05)}
+  .perk .n{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--gold);flex:none;width:26px;text-shadow:var(--shadow-body);-webkit-text-stroke:var(--stroke-body)}
+  .perk b{display:block;font-size:15px;color:var(--ivory);font-weight:600;margin-bottom:4px;text-shadow:var(--shadow-body);-webkit-text-stroke:var(--stroke-body)}
+  .perk span{font-size:13.5px;color:var(--muted);text-shadow:var(--shadow-body);-webkit-text-stroke:var(--stroke-body)}
   @media(max-width:900px){.ticket-inner{grid-template-columns:1fr}.ticket-price::after{display:none}.ticket-perks{grid-template-columns:1fr}}
 
   /* ---------- WHY — alternating rows with ghost numerals ---------- */
@@ -208,8 +263,8 @@
   .loc-visual .pin .ring::after{content:"";position:absolute;inset:-12px;border:1px solid rgba(201,162,39,.28);border-radius:50%;animation:pulse 2.6s ease-out infinite}
   @keyframes pulse{0%{transform:scale(.9);opacity:.8}100%{transform:scale(1.5);opacity:0}}
   .loc-visual .pin .dot{width:11px;height:11px;background:var(--gold);border-radius:50%}
-  .loc-visual .pin p{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--ivory)}
-  .loc-visual .pin span{font-size:11px;letter-spacing:2.5px;color:var(--faint);text-transform:uppercase}
+  .loc-visual .pin p{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--ivory);text-shadow:var(--shadow-head);-webkit-text-stroke:var(--stroke-head)}
+  .loc-visual .pin span{font-size:11px;letter-spacing:2.5px;color:var(--faint);text-transform:uppercase;text-shadow:var(--shadow-body);-webkit-text-stroke:var(--stroke-body)}
   @media(max-width:860px){.loc-wrap{grid-template-columns:1fr}.loc-visual{border-left:0;border-top:1px solid var(--line);min-height:260px}}
 
   /* ---------- TESTIMONIAL ---------- */
@@ -221,9 +276,8 @@
   .cmd-wrap .who span{font-size:12px;letter-spacing:2px;color:var(--gold);text-transform:uppercase}
 
   /* ---------- ENQUIRE ---------- */
-  .enquire{border-top:1px solid var(--line)}
   .enq-wrap{display:grid;grid-template-columns:.85fr 1.15fr;gap:0;max-width:1080px;margin:0 auto;align-items:stretch}
-  .enq-info{padding:50px;background:var(--surface);display:flex;flex-direction:column;justify-content:center;border-top-left-radius:16px;border-bottom-left-radius:16px}
+  .enq-info{padding:50px;display:flex;flex-direction:column;justify-content:center}
   .enq-info h2{font-family:'Cormorant Garamond',serif;font-size:clamp(28px,3.6vw,38px);font-weight:600;margin-bottom:14px}
   .enq-info .script{font-style:italic;color:var(--gold-lt)}
   .enq-info p{color:var(--muted);margin-bottom:24px;font-size:15px}
@@ -234,27 +288,32 @@
   .form{display:grid;gap:14px}
   .form .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
   .form label{display:block}
-  .form span.lbl{display:block;font-size:12px;color:var(--faint);margin-bottom:6px;letter-spacing:.3px}
+  .form span.lbl{display:block;font-size:12px;color:var(--faint);margin-bottom:6px;letter-spacing:.3px;text-shadow:var(--shadow-body);-webkit-text-stroke:var(--stroke-body)}
+  /* Form fields are the one place that keeps a real fill: a transparent
+     input floating directly on moving video is unreadable while typing
+     and doesn't read as "fillable" — this is the "strategically placed"
+     exception, not a contradiction of the rest of the page. */
   .form input{
-    width:100%;background:rgba(246,240,226,.045);border:1px solid var(--line);
+    width:100%;background:rgba(6,5,4,.55);border:1px solid rgba(246,240,226,.25);
     color:var(--ivory);padding:13px 15px;font-family:'Manrope';font-size:14.5px;border-radius:10px;transition:border .25s var(--ease),background .25s var(--ease);
   }
-  .form input::placeholder{color:rgba(246,240,226,.32)}
-  .form input:focus{outline:none;border-color:var(--gold);background:rgba(201,162,39,.06)}
+  .form input::placeholder{color:rgba(246,240,226,.4)}
+  .form input:focus{outline:none;border-color:var(--gold);background:rgba(20,16,9,.65)}
   .form button{margin-top:6px;width:100%;justify-content:center;padding:15px 0}
-  .form-note{font-size:12.5px;color:var(--faint);margin-top:14px}
-  .form-error{display:none;font-size:13px;color:#E2685A;margin-top:10px}
+  .form-note{font-size:12.5px;color:var(--faint);margin-top:14px;text-shadow:var(--shadow-body);-webkit-text-stroke:var(--stroke-body)}
+  .form-error{display:none;font-size:13px;color:#E2685A;margin-top:10px;text-shadow:var(--shadow-body);-webkit-text-stroke:var(--stroke-body)}
   .form-error.show{display:block}
   .enq-success{display:none;text-align:center;padding:20px 10px}
   .enq-success.show{display:block}
-  .enq-success .ring{width:52px;height:52px;border-radius:50%;border:1px solid var(--emerald);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;color:var(--emerald-lt);font-size:22px}
-  .enq-success h3{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--ivory);margin-bottom:8px}
-  .enq-success p{color:var(--muted);font-size:13.5px}
+  .enq-success .ring{width:52px;height:52px;border-radius:50%;border:1px solid var(--emerald);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;color:var(--emerald-lt);font-size:22px;background:rgba(5,4,3,.4)}
+  .enq-success h3{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--ivory);margin-bottom:8px;text-shadow:var(--shadow-head);-webkit-text-stroke:var(--stroke-head)}
+  .enq-success p{color:var(--muted);font-size:13.5px;text-shadow:var(--shadow-body);-webkit-text-stroke:var(--stroke-body)}
   .enq-form-panel .form-wrap.hide{display:none}
   @media(max-width:900px){.enq-wrap{grid-template-columns:1fr}.enq-info{border-radius:16px 16px 0 0}.enq-form-panel{border-radius:0 0 16px 16px}.form .row{grid-template-columns:1fr}}
 
-  /* ---------- FOOTER ---------- */
-  footer{background:#080705;color:var(--muted);padding:56px 6vw 34px;text-align:center;border-top:1px solid var(--line)}
+  /* ---------- FOOTER — shares the section-panel treatment (rounded glass
+     card over the video) for visual consistency with everything above it. ---------- */
+  footer{color:var(--muted);text-align:center;padding-top:56px;padding-bottom:34px}
   footer .fbrand{font-family:'Cormorant SC',serif;font-size:20px;letter-spacing:3px;color:var(--gold-lt);margin-bottom:6px}
   footer .ftag{font-size:12px;color:var(--faint)}
   footer .fnav{display:flex;gap:26px;justify-content:center;margin:26px 0;flex-wrap:wrap}
@@ -266,28 +325,48 @@
   footer .copy{margin-top:20px;font-size:12px;color:var(--faint)}
 
   @media(max-width:860px){
-    .nav-shell{top:12px;width:calc(100vw - 24px)}
+    .nav-shell{top:calc(env(safe-area-inset-top) + 12px);width:calc(100vw - 24px)}
     .nav-links{position:fixed;inset:0 0 0 auto;height:100dvh;width:min(78vw,320px);background:var(--ink-bg);border-left:1px solid var(--line-gold);flex-direction:column;justify-content:center;gap:6px;transform:translateX(100%);transition:transform .4s var(--ease);padding:40px;overflow-y:auto}
     .nav-links.open{transform:none}
-    .nav-links a{font-size:16px}
-    .burger{display:flex;align-items:center;justify-content:center;z-index:60}
-    section{padding:80px 6vw}
+    .nav-links a{font-size:16px;padding:13px 16px}
+    .burger{display:flex;align-items:center;justify-content:center;z-index:60;width:44px;height:44px}
+    section, footer{padding:56px 24px;border-radius:22px;width:min(100% - 16px,1180px)}
   }
-  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none;filter:none}.hero *{opacity:1!important}}
-
-  /* ---------- GATEWAY — a real modelled 3D scene (marble pillars, iron
-     gate, gold crown finials), not a decorative shape. ---------- */
-  .gateway{background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-  .gateway .sec-head{max-width:640px}
-  .gw-panel{position:relative;max-width:1180px;margin:0 auto;aspect-ratio:16/9;padding:10px}
-  .gw-panel canvas{width:100%;height:100%;display:block;border-radius:14px}
-  .gw-fallback{position:absolute;inset:10px;border-radius:14px;background:
-      radial-gradient(60% 60% at 50% 40%,rgba(201,162,39,.14),transparent 70%),var(--shell);
-    display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:13px;letter-spacing:1px}
-  @media(max-width:700px){.gw-panel{aspect-ratio:4/5}}
+  /* Short, wide viewports (landscape phones): the hero is normal-flow now
+     (not pinned to exactly one viewport), so nothing here is load-bearing
+     for "can the user reach the CTA" — this only trims the first screen so
+     it doesn't feel oversized while still needing a full scroll to clear it. */
+  @media(max-height:500px) and (orientation:landscape){
+    .hero-overlay{padding-top:max(48px,calc(env(safe-area-inset-top) + 32px));padding-bottom:max(24px,env(safe-area-inset-bottom))}
+    .brand-row{margin-bottom:8px}
+    .brand-row .ring{width:44px;height:44px}
+    .brand-row .txt{font-size:11px}
+    .hero h1{font-size:clamp(28px,7vw,44px)}
+    .hero .tagline{margin-top:8px;font-size:13px}
+    .hero-cta{margin-top:16px}
+    .hero-facts{margin-top:24px}
+    .scroll-hint{display:none}
+  }
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none;filter:none}.hero-overlay{opacity:1!important;transform:none!important}}
 </style>
 </head>
 <body>
+
+<video
+  id="heroVideo"
+  class="bg-video"
+  muted
+  playsinline
+  webkit-playsinline="true"
+  preload="auto"
+  disablepictureinpicture
+  poster="/media/hero-poster.jpg"
+  aria-hidden="true"
+  tabindex="-1"
+>
+  <source src="/media/hero-scrub.mp4" type="video/mp4" />
+</video>
+<div class="bg-scrim" aria-hidden="true"></div>
 
 <div class="grain" aria-hidden="true"></div>
 <div id="scrollbar"></div>
@@ -309,25 +388,27 @@
   </nav>
 </div>
 
-<header class="hero" id="heroSection">
-  <div class="brand-row rise d1">
-    <span class="ring"><img src="/celebrity-logo.png" alt="Celebrity Infra Pvt Ltd" /></span>
-    <span class="txt">Celebrity Infra Pvt Ltd<b>Presents</b></span>
-  </div>
-  <h1 class="rise d2"><span class="script">Celebrity's</span>PARK<span class="num">1</span></h1>
-  <div class="tagline rise d3">Building prestige. Creating a legacy that lasts.</div>
-  <div class="venue-line rise d3">Grand venture opening · 12 July 2026</div>
-  <div class="loc rise d3">A gated, plotted venture at Narayankhed, Telangana, built for families who want land that holds its value.</div>
-  <div class="hero-cta rise d4">
-    <button class="btn btn-gold" onclick="document.getElementById('enquire').scrollIntoView()">
-      Book a site visit <span class="go">&rarr;</span>
-    </button>
-    <button class="btn btn-ghost" onclick="document.getElementById('offer').scrollIntoView()">View the offer</button>
-  </div>
-  <div class="hero-facts rise d5">
-    <div class="f"><b>9</b><span>Acres planned</span></div>
-    <div class="f"><b>121</b><span>Sq. yd / plot</span></div>
-    <div class="f"><b>&#8377;2.5L</b><span>Starting price</span></div>
+<header class="hero" id="heroSection" aria-label="Celebrity's Park-1 introduction">
+  <div class="hero-overlay" id="heroOverlay">
+    <div class="brand-row rise d1">
+      <span class="ring"><img src="/celebrity-logo.png" alt="Celebrity Infra Pvt Ltd" /></span>
+      <span class="txt"><b>Presents</b></span>
+    </div>
+    <h1 class="rise d2"><span class="script">Celebrity's</span>PARK<span class="num">1</span></h1>
+    <div class="tagline rise d3">Building prestige. Creating a legacy that lasts.</div>
+    <div class="venue-line rise d3">Grand venture opening · 12 July 2026</div>
+    <div class="loc rise d3">A gated, plotted venture at Narayankhed, Telangana, built for families who want land that holds its value.</div>
+    <div class="hero-cta rise d4">
+      <button class="btn btn-gold" onclick="document.getElementById('enquire').scrollIntoView()">
+        Book a site visit <span class="go">&rarr;</span>
+      </button>
+      <button class="btn btn-ghost" onclick="document.getElementById('offer').scrollIntoView()">View the offer</button>
+    </div>
+    <div class="hero-facts rise d5">
+      <div class="f"><b>9</b><span>Acres planned</span></div>
+      <div class="f"><b>121</b><span>Sq. yd / plot</span></div>
+      <div class="f"><b>&#8377;2.5L</b><span>Starting price</span></div>
+    </div>
   </div>
   <div class="scroll-hint">SCROLL<span class="arrow"></span></div>
 </header>
@@ -337,19 +418,6 @@
     <span>Clear titles</span><span>Gated community</span><span>Easy EMI</span><span>Resort membership</span><span>Narayankhed, Telangana</span>
   </div>
 </div>
-
-<section id="gateway" class="gateway">
-  <div class="sec-head center reveal">
-    <div class="kicker">The Gateway</div>
-    <h2>Every legacy has an entrance</h2>
-    <p>A modelled preview of the gated entrance at Park-1, built as a real 3D scene, not a photo.</p>
-  </div>
-  <div class="gw-panel bezel reveal">
-    <span class="cnr a"></span><span class="cnr b"></span><span class="cnr c"></span><span class="cnr d"></span>
-    <div class="gw-fallback" id="gwFallback">3D preview unavailable on this device</div>
-    <canvas id="gwCanvas" style="position:relative;z-index:1"></canvas>
-  </div>
-</section>
 
 <section id="venture">
   <div class="sec-head reveal">
@@ -401,7 +469,7 @@
   </div>
 </section>
 
-<section style="padding-top:0">
+<section aria-label="Key figures">
   <div class="stats reveal">
     <div class="stat"><div class="big serif" data-count="9">0</div><div class="lbl">Acres planned</div></div>
     <div class="stat"><div class="big serif" data-count="121">0</div><div class="lbl">Sq. yards / plot</div></div>
@@ -502,6 +570,96 @@
 </footer>
 
 <script>
+  // ---------- PAGE-LONG SCROLL-SCRUB ----------
+  // The video is a fixed full-page background (.bg-video), not confined to
+  // the hero — its currentTime is driven by scroll progress across the
+  // WHOLE document, so it keeps advancing as every section (each its own
+  // floating glass panel) scrolls past on top of it. The video is
+  // re-encoded all-keyframe (keyint=1) so any seek is a cheap single-frame
+  // decode, not a GOP walk — that's what makes scrubbing every rAF tick
+  // affordable. currentTime is eased toward the scroll-derived target
+  // (lerp) rather than snapped, so fast/jerky wheel and touch input still
+  // reads as smooth motion.
+  (function pageScrub(){
+    const video = document.getElementById('heroVideo');
+    const heroOverlay = document.getElementById('heroOverlay');
+    if (!video) return;
+
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (reduceMotion) {
+      video.loop = true;
+      video.autoplay = true;
+      video.play().catch(() => {});
+      if (heroOverlay) heroOverlay.style.opacity = '1';
+      return;
+    }
+
+    let duration = 0;
+    let ready = false;
+    let targetTime = 0;
+    let easedTime = 0;
+    let primed = false;
+
+    function primeDecoder() {
+      if (primed) return;
+      primed = true;
+      const p = video.play();
+      if (p && p.then) p.then(() => video.pause()).catch(() => {});
+      else video.pause();
+    }
+
+    function onMetadataReady() {
+      duration = video.duration || 0;
+      ready = duration > 0;
+      primeDecoder();
+      onScroll();
+    }
+    // The <video> starts fetching as soon as the parser sees it, well before
+    // this script (at the bottom of the page) runs — on a fast connection
+    // 'loadedmetadata' can fire before addEventListener below ever attaches,
+    // which left `ready` false forever and froze the scrub. Check the
+    // already-arrived state first; only wait on the event if it hasn't.
+    if (video.readyState >= 1 && video.duration) {
+      onMetadataReady();
+    } else {
+      video.addEventListener('loadedmetadata', onMetadataReady, { once: true });
+    }
+
+    function pageProgress() {
+      const total = document.documentElement.scrollHeight - innerHeight;
+      if (total <= 0) return 0;
+      return Math.min(1, Math.max(0, scrollY / total));
+    }
+
+    function onScroll() {
+      if (ready) targetTime = pageProgress() * duration;
+      // The hero headline only needs to dissolve within its own first
+      // screen, independent of how long the rest of the page is.
+      if (heroOverlay) {
+        const fadeP = Math.min(1, scrollY / (innerHeight * 0.7));
+        heroOverlay.style.opacity = String(1 - fadeP);
+        heroOverlay.style.transform = `translateY(${(fadeP * -28).toFixed(1)}px)`;
+        heroOverlay.style.pointerEvents = fadeP > 0.6 ? 'none' : 'auto';
+      }
+    }
+
+    function tick() {
+      if (ready) {
+        easedTime += (targetTime - easedTime) * 0.12;
+        if (Math.abs(easedTime - video.currentTime) > 0.008) {
+          video.currentTime = Math.min(easedTime, duration - 0.05);
+        }
+      }
+      requestAnimationFrame(tick);
+    }
+
+    addEventListener('scroll', onScroll, { passive: true });
+    addEventListener('resize', onScroll);
+    onScroll();
+    requestAnimationFrame(tick);
+  })();
+
   const nav=document.getElementById('nav');
   const scrollbar=document.getElementById('scrollbar');
   addEventListener('scroll',()=>{
@@ -566,300 +724,6 @@
     enquireForm.closest('.form-wrap').classList.add('hide');
     enqSuccess.classList.add('show');
   });
-</script>
-
-<script type="module">
-  // The Gateway — a real modelled 3D scene: marble pillars with genuine
-  // fluted columns (instanced rods, not a texture), wrought-iron gate bars,
-  // and gold crown finials echoing the crest logo. Every repeated detail
-  // (flutes, bars, crown prongs) is real instanced geometry, not a flat
-  // extrusion standing in for a solid — a flat "2.5D" panel reads as fake
-  // from any angle other than straight-on, so the whole point of using
-  // cylinders/tori/cones here instead of planes is that it holds up as the
-  // camera drifts.
-  const gwCanvas = document.getElementById('gwCanvas');
-  const gwFallback = document.getElementById('gwFallback');
-  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  if (gwCanvas && !reduceMotion) {
-    try {
-      const THREE = await import('https://esm.sh/three@0.160.0');
-      const { RoomEnvironment } = await import('https://esm.sh/three@0.160.0/examples/jsm/environments/RoomEnvironment.js');
-      gwFallback.style.display = 'none';
-
-      const scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x100D08);
-      scene.fog = new THREE.Fog(0x100D08, 10, 17);
-      const camera = new THREE.PerspectiveCamera(36, 16 / 9, 0.1, 100);
-      const renderer = new THREE.WebGLRenderer({ canvas: gwCanvas, antialias: true });
-      renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
-      renderer.outputColorSpace = THREE.SRGBColorSpace;
-      renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.25;
-
-      // A real reflection environment is what separates "PBR material" from
-      // "flat plastic toy" — MeshPhysicalMaterial's metalness/clearcoat has
-      // nothing to reflect without one, which is why gold/marble read dull
-      // and matte without this even with correct roughness values.
-      const pmrem = new THREE.PMREMGenerator(renderer);
-      scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-
-      const root = new THREE.Group();
-      scene.add(root);
-
-      // ---- materials -----------------------------------------------------
-      const marble = new THREE.MeshPhysicalMaterial({ color: 0xEDE6D6, roughness: 0.32, metalness: 0.05, clearcoat: 0.5, clearcoatRoughness: 0.25, envMapIntensity: 1.1 });
-      const gold = new THREE.MeshPhysicalMaterial({ color: 0xC9A227, roughness: 0.22, metalness: 0.95, clearcoat: 0.5, clearcoatRoughness: 0.15, envMapIntensity: 1.6, emissive: 0x3a2c05, emissiveIntensity: 0.25 });
-      const goldLt = new THREE.MeshPhysicalMaterial({ color: 0xE7C665, roughness: 0.16, metalness: 0.97, clearcoat: 0.6, envMapIntensity: 1.8, emissive: 0x4a3a0c, emissiveIntensity: 0.3 });
-      const iron = new THREE.MeshStandardMaterial({ color: 0x1C1712, roughness: 0.4, metalness: 0.75, envMapIntensity: 1 });
-      const hedge = new THREE.MeshStandardMaterial({ color: 0x2F4A34, roughness: 0.85 });
-      const potMat = new THREE.MeshStandardMaterial({ color: 0x342A1E, roughness: 0.7 });
-
-      // ---- ground: a real marble plaza (canvas-generated radial veining,
-      // not a flat solid colour) ------------------------------------------
-      function marbleCanvas() {
-        const c = document.createElement('canvas');
-        c.width = c.height = 512;
-        const ctx = c.getContext('2d');
-        ctx.fillStyle = '#EDE6D6';
-        ctx.fillRect(0, 0, 512, 512);
-        ctx.strokeStyle = 'rgba(180,168,140,.35)';
-        for (let i = 0; i < 26; i++) {
-          ctx.beginPath();
-          const a = Math.random() * Math.PI * 2, r0 = Math.random() * 240;
-          const x0 = 256 + Math.cos(a) * r0, y0 = 256 + Math.sin(a) * r0;
-          ctx.moveTo(x0, y0);
-          ctx.lineWidth = 0.6 + Math.random() * 1.4;
-          ctx.quadraticCurveTo(x0 + (Math.random() - 0.5) * 160, y0 + (Math.random() - 0.5) * 160, x0 + (Math.random() - 0.5) * 260, y0 + (Math.random() - 0.5) * 260);
-          ctx.stroke();
-        }
-        for (let r = 60; r < 250; r += 44) {
-          ctx.strokeStyle = 'rgba(160,146,112,.18)';
-          ctx.lineWidth = 1;
-          ctx.beginPath(); ctx.arc(256, 256, r, 0, Math.PI * 2); ctx.stroke();
-        }
-        return c;
-      }
-      const groundTex = new THREE.CanvasTexture(marbleCanvas());
-      groundTex.colorSpace = THREE.SRGBColorSpace;
-      const ground = new THREE.Mesh(
-        new THREE.CircleGeometry(7, 64),
-        new THREE.MeshStandardMaterial({ map: groundTex, roughness: 0.5, metalness: 0.05 })
-      );
-      ground.rotation.x = -Math.PI / 2;
-      root.add(ground);
-
-      // soft contact shadow under the gate
-      function shadowCanvas() {
-        const c = document.createElement('canvas'); c.width = c.height = 256;
-        const ctx = c.getContext('2d');
-        const g = ctx.createRadialGradient(128, 128, 10, 128, 128, 128);
-        g.addColorStop(0, 'rgba(0,0,0,.45)'); g.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = g; ctx.fillRect(0, 0, 256, 256);
-        return c;
-      }
-      const shadowTex = new THREE.CanvasTexture(shadowCanvas());
-      const shadowBlob = new THREE.Mesh(
-        new THREE.PlaneGeometry(7, 3.4),
-        new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false })
-      );
-      shadowBlob.rotation.x = -Math.PI / 2;
-      shadowBlob.position.y = 0.012;
-      root.add(shadowBlob);
-
-      // ---- one pillar (fluted shaft, capital, crown finial) --------------
-      function buildPillar(side) {
-        const g = new THREE.Group();
-        const plinth = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.35, 1.1), marble);
-        plinth.position.y = 0.175;
-        g.add(plinth);
-
-        const shaftH = 3.4;
-        const shaftY = 0.35 + shaftH / 2;
-        const core = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.44, shaftH, 32), marble);
-        core.position.y = shaftY;
-        g.add(core);
-
-        const fluteGeo = new THREE.CylinderGeometry(0.08, 0.08, shaftH * 0.93, 12);
-        const flutes = new THREE.InstancedMesh(fluteGeo, marble, 22);
-        const dummy = new THREE.Object3D();
-        for (let i = 0; i < 22; i++) {
-          const a = (i / 22) * Math.PI * 2;
-          dummy.position.set(Math.cos(a) * 0.45, shaftY, Math.sin(a) * 0.45);
-          dummy.rotation.set(0, 0, 0);
-          dummy.updateMatrix();
-          flutes.setMatrixAt(i, dummy.matrix);
-        }
-        g.add(flutes);
-
-        const neckRing = new THREE.Mesh(new THREE.TorusGeometry(0.44, 0.045, 12, 32), gold);
-        neckRing.rotation.x = Math.PI / 2;
-        neckRing.position.y = 0.35 + shaftH;
-        g.add(neckRing);
-
-        const capital = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.4, 0.32, 32), marble);
-        capital.position.y = 0.35 + shaftH + 0.16;
-        g.add(capital);
-
-        const abacusY = 0.35 + shaftH + 0.32 + 0.09;
-        const abacus = new THREE.Mesh(new THREE.BoxGeometry(1.26, 0.16, 1.26), marble);
-        abacus.position.y = abacusY;
-        g.add(abacus);
-
-        // crown finial — orb + band + five slender radiating prongs, echoing
-        // the crest's crown motif rather than a spiky toy star.
-        const finialBase = abacusY + 0.08;
-        const band = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.032, 12, 28), gold);
-        band.rotation.x = Math.PI / 2;
-        band.position.y = finialBase + 0.05;
-        g.add(band);
-
-        const orb = new THREE.Mesh(new THREE.SphereGeometry(0.19, 28, 22), goldLt);
-        orb.position.y = finialBase + 0.24;
-        g.add(orb);
-
-        const prongGeo = new THREE.ConeGeometry(0.045, 0.34, 12);
-        const prongs = new THREE.InstancedMesh(prongGeo, gold, 5);
-        for (let i = 0; i < 5; i++) {
-          const a = (i / 5) * Math.PI * 2;
-          dummy.position.set(Math.cos(a) * 0.13, finialBase + 0.32, Math.sin(a) * 0.13);
-          dummy.rotation.set(0, 0, 0);
-          dummy.lookAt(new THREE.Vector3(Math.cos(a) * 0.32, finialBase + 0.75, Math.sin(a) * 0.32));
-          dummy.rotateX(Math.PI / 2);
-          dummy.updateMatrix();
-          prongs.setMatrixAt(i, dummy.matrix);
-        }
-        g.add(prongs);
-
-        const topOrb = new THREE.Mesh(new THREE.SphereGeometry(0.1, 22, 18), goldLt);
-        topOrb.position.y = finialBase + 0.58;
-        g.add(topOrb);
-
-        g.position.x = side * 2.1;
-        return g;
-      }
-      root.add(buildPillar(-1));
-      root.add(buildPillar(1));
-
-      // ---- wrought-iron gate infill between the pillars ------------------
-      const gateGroup = new THREE.Group();
-      const innerX = 1.64, gateW = innerX * 2, barBottom = 0.15, barTop = 2.65, barH = barTop - barBottom;
-
-      [-innerX, innerX].forEach((x) => {
-        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, barH, 12), iron);
-        post.position.set(x, barBottom + barH / 2, 0);
-        gateGroup.add(post);
-      });
-
-      const barGeo = new THREE.CylinderGeometry(0.032, 0.032, barH - 0.1, 8);
-      const barCount = 15;
-      const bars = new THREE.InstancedMesh(barGeo, iron, barCount);
-      const dummy2 = new THREE.Object3D();
-      for (let i = 0; i < barCount; i++) {
-        const t = (i + 1) / (barCount + 1);
-        dummy2.position.set(-innerX + gateW * t, barBottom + barH / 2, 0);
-        dummy2.updateMatrix();
-        bars.setMatrixAt(i, dummy2.matrix);
-      }
-      gateGroup.add(bars);
-
-      [barBottom + 0.05, barBottom + barH / 2, barTop - 0.05].forEach((y) => {
-        const band = new THREE.Mesh(new THREE.BoxGeometry(gateW + 0.1, 0.05, 0.07), iron);
-        band.position.y = y;
-        gateGroup.add(band);
-      });
-
-      const medallion = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.04, 32), gold);
-      medallion.rotation.x = Math.PI / 2;
-      medallion.position.set(0, barBottom + barH / 2, 0.03);
-      gateGroup.add(medallion);
-      const medallionRing = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.022, 12, 32), goldLt);
-      medallionRing.rotation.x = Math.PI / 2;
-      medallionRing.position.copy(medallion.position);
-      gateGroup.add(medallionRing);
-      const medallionCore = new THREE.Mesh(new THREE.SphereGeometry(0.08, 20, 16), goldLt);
-      medallionCore.position.set(0, barBottom + barH / 2, 0.08);
-      gateGroup.add(medallionCore);
-
-      // ornamental arch above the gate's center — three smooth nested arcs
-      // (not five faceted hoops) fanning up to a small crest finial, reading
-      // as ironwork rather than a stack of toy rings.
-      [0.46, 0.34, 0.22].forEach((r, i) => {
-        const arc = new THREE.Mesh(new THREE.TorusGeometry(r, 0.022, 12, 40, Math.PI), i === 1 ? goldLt : gold);
-        arc.position.set(0, barTop + 0.02, 0);
-        arc.rotation.z = Math.PI;
-        gateGroup.add(arc);
-      });
-      const archFinial = new THREE.Mesh(new THREE.SphereGeometry(0.07, 18, 14), goldLt);
-      archFinial.position.set(0, barTop + 0.02 + 0.46, 0);
-      gateGroup.add(archFinial);
-
-      root.add(gateGroup);
-
-      // ---- flanking topiary for scale + life ------------------------------
-      [-3.05, 3.05].forEach((x) => {
-        const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.32, 0.42, 16), potMat);
-        pot.position.set(x, 0.21, 0.6);
-        root.add(pot);
-        const ball = new THREE.Mesh(new THREE.SphereGeometry(0.32, 16, 14), hedge);
-        ball.position.set(x, 0.42 + 0.32, 0.6);
-        root.add(ball);
-      });
-
-      // ---- lighting (three-point: warm key, soft rim, fill) --------------
-      scene.add(new THREE.HemisphereLight(0xFFF2D0, 0x1A1510, 0.85));
-      scene.add(new THREE.AmbientLight(0x221C12, 0.25));
-      const key = new THREE.DirectionalLight(0xFFE4A8, 1.7);
-      key.position.set(4, 6, 4);
-      scene.add(key);
-      const rim = new THREE.PointLight(0x8A5A4A, 0.45, 22);
-      rim.position.set(-5, 4, -6);
-      scene.add(rim);
-      const fill = new THREE.PointLight(0xE7C665, 0.5, 20);
-      fill.position.set(-2, 2, 5);
-      scene.add(fill);
-
-      // Frame the whole structure (ground through the crown finials, ~y=4.9)
-      // -- these were clipped out of view when the pillar height increased
-      // without re-checking the camera's vertical coverage.
-      camera.position.set(0, 2.5, 8.1);
-      camera.lookAt(0, 2.35, 0);
-
-      function resize() {
-        const w = gwCanvas.clientWidth || 1, h = gwCanvas.clientHeight || 1;
-        renderer.setSize(w, h, false);
-        camera.aspect = w / h;
-        camera.updateProjectionMatrix();
-      }
-      addEventListener('resize', resize);
-      resize();
-
-      let visible = true;
-      new IntersectionObserver((es) => { visible = es[0].isIntersecting; }, { threshold: 0 }).observe(gwCanvas);
-
-      let targetYaw = 0, curYaw = 0;
-      if (matchMedia('(pointer:fine)').matches) {
-        gwCanvas.addEventListener('pointermove', (e) => {
-          const r = gwCanvas.getBoundingClientRect();
-          targetYaw = ((e.clientX - r.left) / r.width - 0.5) * 0.35;
-        });
-      }
-
-      let t = 0;
-      function animate() {
-        requestAnimationFrame(animate);
-        if (!visible) return;
-        t += 0.006;
-        curYaw += (targetYaw - curYaw) * 0.04;
-        root.rotation.y = Math.sin(t) * 0.12 + curYaw;
-        renderer.render(scene, camera);
-      }
-      animate();
-    } catch (err) {
-      console.error('Gateway 3D scene failed to load', err);
-      gwFallback.style.display = 'flex';
-    }
-  }
 </script>
 </body>
 </html>
