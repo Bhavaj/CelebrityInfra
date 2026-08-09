@@ -9,7 +9,7 @@
 <link rel="icon" type="image/png" href="/celebrity-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:wght@400;500;600;700&family=Cormorant+SC:wght@500;600&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:wght@400;500;600;700&family=Cormorant+SC:wght@500;600&family=Josefin+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --ink-bg:#0B0A08;
@@ -45,7 +45,7 @@
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth}
   body{
-    font-family:'Manrope',sans-serif;
+    font-family:'Josefin Sans',sans-serif;
     background:var(--ink-bg);
     color:var(--ivory);
     -webkit-font-smoothing:antialiased;
@@ -70,9 +70,13 @@
      IntersectionObserver, which the browser handles cheaply. That split is
      what keeps scrubbing smooth instead of janky. ---------- */
   .bg-video{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 50%;z-index:-2;background:var(--ink-bg)}
+  /* Darkened enough that the video reads as atmosphere, not competition for
+     the text sitting on top of it — client feedback was that text was
+     unreadable against the (much brighter) new footage, so this went from a
+     thin .28 tint to a real ~55% darkening with extra fall-off at the edges. */
   .bg-scrim{position:fixed;inset:0;z-index:-1;pointer-events:none;background:
-      radial-gradient(140% 100% at 50% 40%,transparent 20%,rgba(0,0,0,.28) 100%),
-      rgba(5,4,3,.28)}
+      radial-gradient(120% 90% at 50% 38%,rgba(0,0,0,.38) 0%,rgba(0,0,0,.58) 100%),
+      rgba(5,4,3,.34)}
 
   /* Fixed, non-interactive grain — breaks the flat-vector digital feel.
      Only ever on a fixed layer, never on a scrolling container (perf). */
@@ -119,27 +123,36 @@
     position:relative;min-height:100dvh;display:flex;align-items:center;justify-content:center;text-align:center;
     padding:max(110px,calc(env(safe-area-inset-top) + 90px)) clamp(16px,5vw,48px) max(56px,calc(env(safe-area-inset-bottom) + 32px));
   }
-  /* No panel here on purpose — this is the one element that's on-screen and
-     unmoving for the entire time the video plays behind it on load, so a
-     blurred backdrop here pays its recompute cost continuously rather than
-     once. Text sits directly on the video; shadow+stroke carry legibility,
-     same technique as a film title card. */
+  /* A real (flat, unblurred) backing card, not just shadow+stroke on raw
+     video — client feedback was that the old shadow-only approach was
+     unreadable. Flat rgba fill instead of backdrop-blur/glass on purpose:
+     this card is on-screen and unmoving for the entire time the
+     continuously-scrubbing video plays behind it, and a blurred backdrop
+     would force a re-sample of the video every frame for as long as the
+     hero is in view — a flat fill costs nothing extra to composite. The
+     gold hairline border is the literal "give it a border" fix; shadow+
+     stroke on the text itself stays on as a second line of defense. */
   .hero-panel{
-    width:100%;max-width:820px;min-width:0;
+    width:100%;max-width:860px;min-width:0;
     display:flex;flex-direction:column;align-items:center;
+    background:rgba(9,8,6,.62);
+    border:1px solid rgba(231,198,101,.38);
+    border-radius:32px;
+    padding:clamp(40px,6vw,68px) clamp(24px,5vw,64px);
+    box-shadow:0 30px 80px -30px rgba(0,0,0,.75);
   }
   .hero-panel .ring{width:130px;height:130px;flex:none;margin:0 auto 14px;filter:drop-shadow(0 18px 34px rgba(0,0,0,.6)) drop-shadow(0 0 20px rgba(201,162,39,.22))}
   .hero-panel .ring img{width:100%;height:100%;object-fit:contain}
   .hero-panel .presents{font-size:15px;letter-spacing:.5px;color:var(--gold-lt);font-family:'Cormorant SC',serif;text-shadow:0 1px 10px rgba(0,0,0,.85),0 3px 20px rgba(0,0,0,.7)}
-  .hero-panel h1{font-family:'Cinzel',serif;font-weight:700;font-size:clamp(58px,8vw,104px);line-height:1;letter-spacing:1px;margin-top:10px;text-wrap:balance;text-shadow:0 2px 6px rgba(0,0,0,.95),0 8px 26px rgba(0,0,0,.85),0 20px 50px rgba(0,0,0,.6);-webkit-text-stroke:1px rgba(0,0,0,.45)}
-  .hero-panel h1 .script{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;display:block;font-size:clamp(26px,.5em,58px);letter-spacing:.5px;color:var(--gold-lt)}
-  .hero-panel h1 .num{font-family:'Manrope',sans-serif;font-style:normal;font-weight:600;display:inline-block;font-size:.72em;vertical-align:.06em;margin-left:.22em}
-  .hero-panel .tagline{margin-top:20px;font-size:19px;letter-spacing:.3px;color:var(--ivory);text-shadow:0 1px 10px rgba(0,0,0,.85),0 4px 24px rgba(0,0,0,.7)}
-  .hero-panel .venue-line{margin-top:10px;font-size:15px;color:var(--gold-lt);text-shadow:0 1px 10px rgba(0,0,0,.85),0 3px 20px rgba(0,0,0,.7)}
+  .hero-panel h1{font-family:'Cinzel',serif;font-weight:700;font-size:clamp(64px,9vw,120px);line-height:1;letter-spacing:1px;margin-top:14px;text-wrap:balance;text-shadow:0 2px 6px rgba(0,0,0,.95),0 8px 26px rgba(0,0,0,.85),0 20px 50px rgba(0,0,0,.6);-webkit-text-stroke:1px rgba(0,0,0,.45)}
+  .hero-panel h1 .script{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;display:block;font-size:clamp(28px,.5em,60px);letter-spacing:.5px;color:var(--gold-lt)}
+  .hero-panel h1 .num{font-family:'Josefin Sans',sans-serif;font-style:normal;font-weight:600;display:inline-block;font-size:.72em;vertical-align:.06em;margin-left:.22em}
+  .hero-panel .tagline{margin-top:22px;font-size:clamp(19px,2.4vw,23px);font-weight:500;letter-spacing:.3px;color:var(--ivory);text-shadow:0 1px 10px rgba(0,0,0,.85),0 4px 24px rgba(0,0,0,.7)}
+  .hero-panel .venue-line{margin-top:10px;font-size:16px;font-weight:500;color:var(--gold-lt);text-shadow:0 1px 10px rgba(0,0,0,.85),0 3px 20px rgba(0,0,0,.7)}
 
   .hero-cta{margin-top:30px;display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
 
-  .btn{border:none;cursor:pointer;font-family:'Manrope';font-size:15px;letter-spacing:.2px;font-weight:700;
+  .btn{border:none;cursor:pointer;font-family:'Josefin Sans';font-size:15px;letter-spacing:.2px;font-weight:700;
     border-radius:999px;transition:transform .3s var(--ease),box-shadow .3s var(--ease),background .3s var(--ease);
     display:inline-flex;align-items:center;gap:10px}
   .btn:active{transform:scale(.97)}
@@ -154,8 +167,8 @@
   .hero-facts{display:flex;gap:0;margin:30px auto 0;border-top:1px solid rgba(246,240,226,.2);padding-top:22px;max-width:540px;width:100%;justify-content:center}
   .hero-facts .f{flex:1;min-width:0;padding:0 clamp(8px,3vw,20px);border-right:1px solid rgba(246,240,226,.2)}
   .hero-facts .f:last-child{border-right:0}
-  .hero-facts .f b{display:block;font-family:'Cinzel',serif;font-size:30px;color:var(--ivory);font-weight:600;font-variant-numeric:tabular-nums;text-shadow:0 2px 10px rgba(0,0,0,.9),0 6px 22px rgba(0,0,0,.7)}
-  .hero-facts .f span{font-size:13px;letter-spacing:1.4px;color:var(--faint);text-transform:uppercase;text-shadow:0 1px 10px rgba(0,0,0,.85),0 3px 20px rgba(0,0,0,.7)}
+  .hero-facts .f b{display:block;font-family:'Cinzel',serif;font-size:34px;color:var(--ivory);font-weight:600;font-variant-numeric:tabular-nums;text-shadow:0 2px 10px rgba(0,0,0,.9),0 6px 22px rgba(0,0,0,.7)}
+  .hero-facts .f span{font-size:13px;font-weight:500;letter-spacing:1.4px;color:var(--gold-lt);text-transform:uppercase;text-shadow:0 1px 10px rgba(0,0,0,.85),0 3px 20px rgba(0,0,0,.7)}
 
   .scroll-hint{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);z-index:1;color:var(--faint);font-size:11px;letter-spacing:3px;opacity:0;animation:fadeUpHint 1s var(--ease) 1.8s forwards;transition:opacity .3s var(--ease);text-shadow:0 1px 10px rgba(0,0,0,.85),0 3px 20px rgba(0,0,0,.7)}
   .scroll-hint .arrow{display:block;margin-top:8px;width:1px;height:26px;background:linear-gradient(var(--gold),transparent);animation:bob 2.2s ease-in-out infinite}
@@ -166,24 +179,29 @@
   .rise{opacity:0;animation:fadeUp .9s var(--ease) forwards}
   .d1{animation-delay:.15s}.d2{animation-delay:.35s}.d3{animation-delay:.55s}.d4{animation-delay:.75s}.d5{animation-delay:.95s}
 
-  /* ---------- TRUST STRIP — thin translucent band, not a full panel. ---------- */
-  .trust{border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  /* ---------- TRUST STRIP — thin band, now with a real (flat, unblurred)
+     fill instead of sitting raw on the video, same reasoning as the hero
+     panel below. ---------- */
+  .trust{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:rgba(10,9,7,.5)}
   .trust-row{display:flex;flex-wrap:wrap;justify-content:center;gap:14px 40px;padding:20px 6vw;max-width:1180px;margin:0 auto}
-  .trust-row span{display:flex;align-items:center;gap:10px;font-family:'Cormorant SC',serif;font-size:15px;letter-spacing:1px;color:var(--muted);white-space:nowrap}
+  .trust-row span{display:flex;align-items:center;gap:10px;font-family:'Cormorant SC',serif;font-size:15px;font-weight:600;letter-spacing:1px;color:var(--ivory);white-space:nowrap}
   .trust-row span::before{content:"";width:5px;height:5px;background:var(--gold);transform:rotate(45deg);flex:none}
 
-  /* ---------- SECTIONS — no fill at all now, just a hairline border for
-     grouping (the "subtle border" that stands in for a panel) and
-     `perspective` so the reveal-in tilt still reads as depth. Text carries
-     its own legibility via --shadow-head/--shadow-body + a hard stroke —
-     the same technique already proven on the hero, which has never had a
-     backing panel. That stroke is what makes text read as blended into the
-     scene with a defined edge, rather than a flat sticker or a hazy shadow. ---------- */
+  /* ---------- SECTIONS — a real (flat, unblurred) backing fill plus the
+     hairline border, not just a border on raw video. Client feedback was
+     that body text was unreadable against the new (much brighter) footage
+     with border-only panels — text-shadow/stroke alone wasn't enough once
+     the video behind it was bright or busy. Flat rgba fill (not
+     backdrop-blur) keeps this cheap: the video keeps scrubbing behind the
+     gaps between sections for atmosphere, but the reading area itself no
+     longer depends on what frame happens to be playing. `perspective` stays
+     so the reveal-in tilt still reads as depth. ---------- */
   section, footer{
     position:relative;
     width:min(100% - 96px,1040px);
     margin:clamp(32px,6vw,72px) auto;
     padding:clamp(64px,9vw,120px) clamp(24px,6vw,64px);
+    background:rgba(15,13,8,.82);
     border:1px solid rgba(246,240,226,.16);
     border-radius:28px;
     perspective:1400px;
@@ -292,7 +310,7 @@
   .form span.lbl{display:block;font-size:13px;color:var(--faint);margin-bottom:6px;letter-spacing:.3px}
   .form input{
     width:100%;background:rgba(246,240,226,.06);border:1px solid rgba(246,240,226,.2);
-    color:var(--ivory);padding:14px 15px;font-family:'Manrope';font-size:16px;border-radius:10px;transition:border .25s var(--ease),background .25s var(--ease);
+    color:var(--ivory);padding:14px 15px;font-family:'Josefin Sans';font-size:16px;border-radius:10px;transition:border .25s var(--ease),background .25s var(--ease);
   }
   .form input::placeholder{color:rgba(246,240,226,.35)}
   .form input:focus{outline:none;border-color:var(--gold);background:rgba(201,162,39,.08)}
