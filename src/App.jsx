@@ -52,10 +52,15 @@ export default function App() {
         const pending = peekPendingCode();
         if (pending) {
           const { error } = await supabase.rpc("claim_access_code", { p_code: pending });
-          clearPendingCode();
           if (error) {
+            // Leave the pending code in sessionStorage on failure (instead of
+            // clearing it unconditionally) so a transient error — the RPC
+            // used to fail here every time on an ambiguous-column bug —
+            // doesn't strand the code; a refresh retries the same claim
+            // automatically instead of silently losing it.
             setClaimError(error.message);
           } else {
+            clearPendingCode();
             setClaimError("");
             ({ data } = await supabase.from("profiles").select("*").eq("id", session.user.id).single());
           }
