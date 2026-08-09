@@ -72,7 +72,9 @@ export default function Inventory({ plots, projectId, customers, agents, transac
               const tx = transactions.filter((t) => t.plot_id === p.id);
               const paid = tx.reduce((s, t) => s + Number(t.amount), 0);
               const plotInstallments = installments.filter((i) => i.plot_id === p.id);
-              const { overdue } = (p.status === "sold" || p.status === "booked") ? scheduleStatus(plotInstallments, paid) : { overdue: 0 };
+              const hasMoney = p.status === "sold" || p.status === "booked";
+              const { overdue } = hasMoney ? scheduleStatus(plotInstallments, paid) : { overdue: 0 };
+              const pct = p.price ? Math.round((paid / Number(p.price)) * 100) : 0;
               return (
                 <div key={p.id} onClick={() => setOpenPlot(p)} className="cip-card cip-tap cip-in-fast"
                   style={{ background: C.panel2, border: `1px solid ${overdue > 0 ? C.red : C.line}`, borderLeft: `4px solid ${statusColor[p.status]}`, borderRadius: 10, padding: 14, cursor: "pointer" }}>
@@ -83,7 +85,16 @@ export default function Inventory({ plots, projectId, customers, agents, transac
                   <div style={{ fontSize: 12, color: C.muted, marginTop: 8 }}>{p.size_sqyd} sq.yd</div>
                   <div style={{ fontSize: 15, fontWeight: 600, color: C.ink, marginTop: 2 }}>{fmt(p.price)}</div>
                   {p.customer_id && <div style={{ fontSize: 11, color: C.emeraldLt, marginTop: 6 }}>→ {customerName(p.customer_id)}</div>}
-                  {(p.status === "sold" || p.status === "booked") && overdue > 0 && <div style={{ marginTop: 8 }}><Badge text={`Overdue ${fmt(overdue)}`} color={C.red} /></div>}
+                  {hasMoney && (
+                    <div style={{ marginTop: 8 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10.5, color: C.muted, marginBottom: 4 }}>
+                        <span>{fmt(paid)} paid</span>
+                        <span>{fmt(Math.max(0, Number(p.price) - paid))} due</span>
+                      </div>
+                      <ProgressBar pct={pct} color={overdue > 0 ? `linear-gradient(90deg,#7a2a24,${C.red})` : undefined} />
+                    </div>
+                  )}
+                  {hasMoney && overdue > 0 && <div style={{ marginTop: 8 }}><Badge text={`Overdue ${fmt(overdue)}`} color={C.red} /></div>}
                 </div>
               );
             })}

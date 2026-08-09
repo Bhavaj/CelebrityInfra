@@ -99,6 +99,7 @@ export default function Admin() {
   const revenue = soldOrBooked.reduce((s, p) => s + Number(p.price), 0);
   const collected = projectTx.reduce((s, t) => s + Number(t.amount), 0);
   const payout = projectCommissions.reduce((s, c) => s + Number(c.amount), 0);
+  const payoutOutstanding = projectCommissions.filter((c) => !c.paid_at).reduce((s, c) => s + Number(c.amount), 0);
   const projectCustomerIds = new Set(soldOrBooked.map((p) => p.customer_id).filter(Boolean));
   // agents.length is a global count — customer_project_agents is the record
   // of which agent is actually working which project, so use that instead.
@@ -166,7 +167,8 @@ export default function Admin() {
             <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
               <Stat label="Revenue booked" value={fmt(revenue)} accent={C.steel} icon="payments" />
               <Stat label="Collected" value={fmt(collected)} accent={C.green} icon="account_balance_wallet" />
-              <Stat label="Commission payout" value={fmt(payout)} accent={C.gold} icon="percent" />
+              <Stat label="Commission accrued" value={fmt(payout)} accent={C.gold} icon="percent" />
+              <Stat label="Payout outstanding" value={fmt(payoutOutstanding)} accent={payoutOutstanding > 0 ? C.red : C.green} icon="account_balance" />
               <Stat label="Plots sold" value={`${sold.length}/${projectPlots.length}`} icon="domain" />
               <Stat label="Customers" value={projectCustomerIds.size} icon="group" />
               <Stat label="Agents" value={projectAgentIds.size} icon="handshake" />

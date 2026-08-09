@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { supabase } from "../supabase";
-import { C, MONO, fmt, Panel, Tabs, Th, Td, Button, DangerDeleteButton, Field, Select, Modal, SearchBar, KV, Badge, TableScroll, Empty, useIsMobile, RowCard, RowLine } from "../ui";
+import { C, MONO, fmt, fmtDate, Panel, Tabs, Th, Td, Button, DangerDeleteButton, Field, Select, Modal, SearchBar, KV, Badge, TableScroll, Empty, useIsMobile, RowCard, RowLine } from "../ui";
 import AccessCode from "./AccessCode";
 
 export default function Agents({ agents, customers, commissions, plots, users, agentName, projects, activeProject, rates, customerProjectAgents, view, setView, onDone }) {
@@ -28,7 +28,7 @@ export default function Agents({ agents, customers, commissions, plots, users, a
 
       {view === "commissions" && (
         <CommissionsLedger commissions={commissions} plots={plots} agentName={agentName}
-          activeProject={activeProject} projectName={activeProjectObj?.name} />
+          activeProject={activeProject} projectName={activeProjectObj?.name} onDone={onDone} />
       )}
 
       {adding && <CreateAgent agents={agents} onClose={() => setAdding(false)} onDone={() => { setAdding(false); onDone(); }} />}
@@ -36,7 +36,7 @@ export default function Agents({ agents, customers, commissions, plots, users, a
         <AgentCard agent={openAgent} agents={agents} customers={customers} commissions={commissions}
           users={users} activeProject={activeProject} activeProjectName={activeProjectName} rates={rates}
           customerProjectAgents={customerProjectAgents}
-          onClose={() => setOpenAgent(null)} onOpenOther={setOpenAgent}
+          onClose={() => setOpenAgent(null)} onOpenOther={setOpenAgent} onDone={onDone}
           onChanged={() => { setOpenAgent(null); onDone(); }} />
       )}
     </>
@@ -164,13 +164,14 @@ function NetworkNode({ agent, agents, onOpen, depth, collapsed, toggle, projectI
   );
 }
 
-function AgentCard({ agent, agents, customers, commissions, users, activeProject, activeProjectName, rates, customerProjectAgents, onClose, onOpenOther, onChanged }) {
+function AgentCard({ agent, agents, customers, commissions, users, activeProject, activeProjectName, rates, customerProjectAgents, onClose, onOpenOther, onChanged, onDone }) {
   const [msg, setMsg] = useState("");
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(agent.name);
   const [phone, setPhone] = useState(agent.phone || "");
   const [quota, setQuota] = useState(String(agent.quota_percent));
   const [busy, setBusy] = useState(false);
+  const [payingOut, setPayingOut] = useState(false);
   const email = users.find((u) => u.agent_id === agent.id)?.email;
   const myCustomerIds = new Set((customerProjectAgents || []).filter((a) => a.agent_id === agent.id).map((a) => a.customer_id));
   const myCustomers = customers.filter((c) => myCustomerIds.has(c.id));
@@ -180,6 +181,18 @@ function AgentCard({ agent, agents, customers, commissions, users, activeProject
   const direct = myComm.filter((c) => c.kind === "Direct").reduce((s, c) => s + Number(c.amount), 0);
   const bonus = myComm.filter((c) => c.kind !== "Direct").reduce((s, c) => s + Number(c.amount), 0);
   const leaf = downline.length === 0 && myCustomers.length === 0 && myComm.length === 0;
+  const paidOut = myComm.filter((c) => c.paid_at).reduce((s, c) => s + Number(c.amount), 0);
+  const outstanding = direct + bonus - paidOut;
+
+  async function markAllPaid() {
+    setPayingOut(true); setMsg("");
+    const { error } = await supabase.from("commissions")
+      .update({ paid_at: new Date().toISOString() })
+      .eq("beneficiary_id", agent.id).is("paid_at", null);
+    setPayingOut(false);
+    if (error) { setMsg(error.message); return; }
+    onDone();
+  }
 
   const projectOverride = activeProject && rates?.find((r) => r.project_id === activeProject && r.agent_id === agent.id);
   const projectRate = activeProject ? (projectOverride ? Number(projectOverride.commission_pct) : Number(agent.quota_percent)) : null;
@@ -235,6 +248,13 @@ function AgentCard({ agent, agents, customers, commissions, users, activeProject
       <KV k="Direct commission" v={fmt(direct)} />
       <KV k="Referral bonus" v={fmt(bonus)} />
       <KV k="Total earned" v={fmt(direct + bonus)} />
+      <KV k="Paid out" v={<span style={{ color: C.emeraldLt }}>{fmt(paidOut)}</span>} />
+      <KV k="Outstanding" v={<span style={{ color: outstanding > 0 ? C.gold : C.ink }}>{fmt(outstanding)}</span>} />
+      {outstanding > 0 && (
+        <div style={{ marginTop: 10 }}>
+          <Button size="sm" onClick={markAllPaid} disabled={payingOut}>{payingOut ? "Marking paid…" : `Mark ${fmt(outstanding)} as paid out`}</Button>
+        </div>
+      )}
 
       <div style={{ marginTop: 16 }}>
         <div style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8, fontFamily: MONO }}>Customers ({myCustomers.length})</div>
@@ -300,10 +320,12 @@ function CreateAgent({ agents, onDone, onClose }) {
   );
 }
 
-function CommissionsLedger({ commissions, plots, agentName, activeProject, projectName }) {
+function CommissionsLedger({ commissions, plots, agentName, activeProject, projectName, onDone }) {
   const mobile = useIsMobile();
   const [q, setQ] = useState("");
   const [kind, setKind] = useState("");
+  const [paidFilter, setPaidFilter] = useState("");
+  const [busyId, setBusyId] = useState(null);
   const plotNo = (id) => plots.find((p) => p.id === id)?.plot_no ?? "—";
   // Scoped to the selected project via each commission's plot, same as every
   // other project-scoped stat/ledger — previously this showed every
@@ -312,11 +334,22 @@ function CommissionsLedger({ commissions, plots, agentName, activeProject, proje
   const scoped = projectPlotIds ? commissions.filter((c) => projectPlotIds.has(c.plot_id)) : commissions;
   const rows = scoped.filter((c) => {
     if (kind && c.kind !== kind) return false;
+    if (paidFilter === "paid" && !c.paid_at) return false;
+    if (paidFilter === "outstanding" && c.paid_at) return false;
     if (!q) return true;
     const hay = `${agentName(c.beneficiary_id)} ${plotNo(c.plot_id)} ${c.kind}`.toLowerCase();
     return hay.includes(q.toLowerCase());
   });
   const total = rows.reduce((s, c) => s + Number(c.amount), 0);
+  const outstandingTotal = rows.filter((c) => !c.paid_at).reduce((s, c) => s + Number(c.amount), 0);
+
+  async function togglePaid(c) {
+    setBusyId(c.id);
+    const { error } = await supabase.from("commissions")
+      .update({ paid_at: c.paid_at ? null : new Date().toISOString() }).eq("id", c.id);
+    setBusyId(null);
+    if (!error) onDone();
+  }
 
   return (
     <Panel title="Payout ledger"
@@ -328,9 +361,15 @@ function CommissionsLedger({ commissions, plots, agentName, activeProject, proje
           <Select compact={!mobile} value={kind} onChange={setKind} placeholder="All types"
             options={[{ v: "Direct", l: "Direct" }, { v: "Referral bonus", l: "Referral bonus" }]} />
         </div>
+        <div style={{ width: mobile ? "100%" : undefined }}>
+          <Select compact={!mobile} value={paidFilter} onChange={setPaidFilter} placeholder="Paid & outstanding"
+            options={[{ v: "outstanding", l: "Outstanding only" }, { v: "paid", l: "Paid only" }]} />
+        </div>
       </div>
     }>
-      <div style={{ fontSize: 13, color: C.muted, marginBottom: 12 }}>{rows.length} entries · total {fmt(total)}</div>
+      <div style={{ fontSize: 13, color: C.muted, marginBottom: 12 }}>
+        {rows.length} entries · total {fmt(total)}{outstandingTotal > 0 && <span style={{ color: C.gold }}> · {fmt(outstandingTotal)} outstanding</span>}
+      </div>
       {rows.length === 0 ? <Empty>No commissions match your search.</Empty> : mobile ? (
         <div>
           {rows.map((c) => (
@@ -342,13 +381,19 @@ function CommissionsLedger({ commissions, plots, agentName, activeProject, proje
               <RowLine label="Beneficiary" value={agentName(c.beneficiary_id)} />
               <RowLine label="Share" value={`${c.pct}%`} />
               <RowLine label="Amount" value={fmt(c.amount)} bold />
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
+                <Badge text={c.paid_at ? `Paid ${fmtDate(c.paid_at)}` : "Outstanding"} color={c.paid_at ? C.emeraldLt : C.gold} />
+                <Button kind="ghost" size="sm" onClick={() => togglePaid(c)} disabled={busyId === c.id}>
+                  {busyId === c.id ? "…" : c.paid_at ? "Mark unpaid" : "Mark paid"}
+                </Button>
+              </div>
             </RowCard>
           ))}
         </div>
       ) : (
-        <TableScroll minWidth={620}>
+        <TableScroll minWidth={720}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead><tr><Th>Plot</Th><Th>Beneficiary</Th><Th>Type</Th><Th right>%</Th><Th right>Amount</Th></tr></thead>
+            <thead><tr><Th>Plot</Th><Th>Beneficiary</Th><Th>Type</Th><Th right>%</Th><Th right>Amount</Th><Th>Status</Th><Th /></tr></thead>
             <tbody>
               {rows.map((c) => (
                 <tr key={c.id}>
@@ -357,6 +402,12 @@ function CommissionsLedger({ commissions, plots, agentName, activeProject, proje
                   <Td><span style={{ color: c.kind === "Direct" ? C.emeraldLt : C.goldLt, fontWeight: 600, fontSize: 13 }}>{c.kind}</span></Td>
                   <Td right>{c.pct}%</Td>
                   <Td right bold>{fmt(c.amount)}</Td>
+                  <Td><Badge text={c.paid_at ? `Paid ${fmtDate(c.paid_at)}` : "Outstanding"} color={c.paid_at ? C.emeraldLt : C.gold} /></Td>
+                  <Td>
+                    <Button kind="ghost" size="sm" onClick={() => togglePaid(c)} disabled={busyId === c.id}>
+                      {busyId === c.id ? "…" : c.paid_at ? "Mark unpaid" : "Mark paid"}
+                    </Button>
+                  </Td>
                 </tr>
               ))}
             </tbody>

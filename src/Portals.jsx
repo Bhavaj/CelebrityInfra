@@ -36,6 +36,8 @@ export function AgentPortal({ agentId }) {
 
   const direct = d.commissions.filter((c) => c.kind === "Direct").reduce((s, c) => s + Number(c.amount), 0);
   const bonus = d.commissions.filter((c) => c.kind !== "Direct").reduce((s, c) => s + Number(c.amount), 0);
+  const paidOut = d.commissions.filter((c) => c.paid_at).reduce((s, c) => s + Number(c.amount), 0);
+  const outstanding = direct + bonus - paidOut;
   const plotNo = (id) => d.plots.find((p) => p.id === id)?.plot_no ?? "—";
   const plotProject = (plotId) => d.projects.find((pr) => pr.id === d.plots.find((p) => p.id === plotId)?.project_id)?.name ?? "—";
   const plotsFor = (custId) => d.plots.filter((p) => p.customer_id === custId);
@@ -53,6 +55,8 @@ export function AgentPortal({ agentId }) {
         <Stat label="Direct commission" value={fmt(direct)} accent={C.steel} />
         <Stat label="Referral bonus" value={fmt(bonus)} accent={C.gold} />
         <Stat label="Total earned" value={fmt(direct + bonus)} accent={C.green} />
+        <Stat label="Paid out" value={fmt(paidOut)} accent={C.emeraldLt} />
+        <Stat label="Outstanding" value={fmt(outstanding)} accent={outstanding > 0 ? C.gold : undefined} />
         <Stat label="My customers" value={d.customers.length} />
         <Stat label="Agents I invited" value={d.downline.length} />
       </div>
@@ -96,13 +100,14 @@ export function AgentPortal({ agentId }) {
                 </div>
                 <RowLine label="Share" value={`${c.pct}%`} />
                 <RowLine label="Amount" value={fmt(c.amount)} bold />
+                <RowLine label="Status" value={c.paid_at ? `Paid ${fmtDate(c.paid_at)}` : "Outstanding"} />
               </RowCard>
             ))}
           </div>
         ) : (
-          <TableScroll minWidth={480}>
+          <TableScroll minWidth={560}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead><tr><Th>Plot</Th><Th>Type</Th><Th right>%</Th><Th right>Amount</Th></tr></thead>
+              <thead><tr><Th>Plot</Th><Th>Type</Th><Th right>%</Th><Th right>Amount</Th><Th>Status</Th></tr></thead>
               <tbody>
                 {d.commissions.map((c) => (
                   <tr key={c.id}>
@@ -110,6 +115,11 @@ export function AgentPortal({ agentId }) {
                     <Td><span style={{ color: c.kind === "Direct" ? C.emeraldLt : C.goldLt, fontWeight: 600, fontSize: 13 }}>{c.kind}</span></Td>
                     <Td right>{c.pct}%</Td>
                     <Td right bold>{fmt(c.amount)}</Td>
+                    <Td>
+                      <span style={{ color: c.paid_at ? C.emeraldLt : C.goldLt, fontWeight: 600, fontSize: 13 }}>
+                        {c.paid_at ? `Paid ${fmtDate(c.paid_at)}` : "Outstanding"}
+                      </span>
+                    </Td>
                   </tr>
                 ))}
               </tbody>
