@@ -20,7 +20,7 @@ const TAB_SUBTITLE = {
 export default function Admin() {
   const mobile = useIsMobile(900);
   const [tab, setTab] = useState("overview");
-  const [agentsView, setAgentsView] = useState("tree");
+  const [agentsView, setAgentsView] = useState("network");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [manageProjectsOpen, setManageProjectsOpen] = useState(false);
   const [activeProject, setActiveProject] = useState("");
@@ -65,16 +65,25 @@ export default function Admin() {
   const pickableProjects = data.projects.filter((p) => !p.archived);
   const activeProjectObj = data.projects.find((p) => p.id === activeProject);
 
-  // Overview stats are scoped to the active project.
+  // Overview stats are scoped to the active project. "sold" is used only for
+  // the literal sold-count stat; everywhere money/customers are involved we
+  // use soldOrBooked, since a booked plot already has a committed price and
+  // (usually) payments against it — using sold-only there made "Collected"
+  // exceed "Revenue booked" for any project with booked-but-unsold plots.
   const projectPlots = data.plots.filter((p) => p.project_id === activeProject);
   const plotIds = new Set(projectPlots.map((p) => p.id));
   const projectCommissions = data.commissions.filter((c) => plotIds.has(c.plot_id));
   const projectTx = data.transactions.filter((t) => plotIds.has(t.plot_id));
   const sold = projectPlots.filter((p) => p.status === "sold");
-  const revenue = sold.reduce((s, p) => s + Number(p.price), 0);
+  const soldOrBooked = projectPlots.filter((p) => p.status === "sold" || p.status === "booked");
+  const revenue = soldOrBooked.reduce((s, p) => s + Number(p.price), 0);
   const collected = projectTx.reduce((s, t) => s + Number(t.amount), 0);
   const payout = projectCommissions.reduce((s, c) => s + Number(c.amount), 0);
-  const projectCustomerIds = new Set(sold.map((p) => p.customer_id).filter(Boolean));
+  const projectCustomerIds = new Set(soldOrBooked.map((p) => p.customer_id).filter(Boolean));
+  // agents.length is a global count — customer_project_agents is the record
+  // of which agent is actually working which project, so use that instead.
+  const projectAgentIds = new Set(data.customerProjectAgents.filter((a) => a.project_id === activeProject).map((a) => a.agent_id));
+  // leads has no project_id in the schema, so this stays global by necessity.
   const newLeadsCount = data.leads.filter((l) => l.status === "new").length;
 
   const onSold = () => { load(); setTab("agents"); setAgentsView("commissions"); };
@@ -127,8 +136,8 @@ export default function Admin() {
               <Stat label="Commission payout" value={fmt(payout)} accent={C.gold} icon="percent" />
               <Stat label="Plots sold" value={`${sold.length}/${projectPlots.length}`} icon="domain" />
               <Stat label="Customers" value={projectCustomerIds.size} icon="group" />
-              <Stat label="Agents" value={data.agents.length} icon="handshake" />
-              <Stat label="New leads" value={newLeadsCount} accent={newLeadsCount > 0 ? C.gold : undefined} icon="campaign" />
+              <Stat label="Agents" value={projectAgentIds.size} icon="handshake" />
+              <Stat label="New leads (all projects)" value={newLeadsCount} accent={newLeadsCount > 0 ? C.gold : undefined} icon="campaign" />
             </div>
           )
         )}

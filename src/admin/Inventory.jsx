@@ -17,6 +17,38 @@ export function scheduleStatus(installments, paid) {
   return { overdue, nextDueDate: next?.due_date || null, dueSoFar };
 }
 
+// Chronological record of every payment against a plot — first row is
+// whichever payment was recorded first (usually the booking advance), each
+// later payment (installment, final, etc.) appends below with a running
+// balance, so admin can see at a glance what's been collected and when.
+export function PaymentLedger({ transactions }) {
+  const sorted = [...transactions].sort((a, b) => {
+    if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+    return String(a.created_at || "").localeCompare(String(b.created_at || ""));
+  });
+  let running = 0;
+  return (
+    <TableScroll minWidth={420}>
+      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <thead><tr><Th>Date</Th><Th>Type</Th><Th right>Amount</Th><Th right>Balance</Th></tr></thead>
+        <tbody>
+          {sorted.map((t) => {
+            running += Number(t.amount);
+            return (
+              <tr key={t.id}>
+                <Td>{fmtDate(t.date)}</Td>
+                <Td>{t.type || "—"}</Td>
+                <Td right>{fmt(t.amount)}</Td>
+                <Td right bold>{fmt(running)}</Td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </TableScroll>
+  );
+}
+
 export default function Inventory({ plots, projectId, customers, agents, transactions, installments, customerProjectAgents, customerName, onDone, onSold }) {
   const mobile = useIsMobile();
   const [adding, setAdding] = useState(false);
@@ -147,13 +179,8 @@ function PlotCard({ plot, customers, agents, transactions, installments, custome
 
       {tx.length > 0 && (
         <div style={{ marginTop: 16 }}>
-          <div style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8, fontFamily: MONO }}>Payments</div>
-          {tx.map((t) => (
-            <div key={t.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 14, padding: "6px 0", borderBottom: `1px solid ${C.line}` }}>
-              <span style={{ color: C.muted }}>{t.date} · {t.type}</span>
-              <span style={{ color: C.ink, fontWeight: 500 }}>{fmt(t.amount)}</span>
-            </div>
-          ))}
+          <div style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8, fontFamily: MONO }}>Payment ledger</div>
+          <PaymentLedger transactions={tx} />
         </div>
       )}
 
@@ -261,11 +288,15 @@ function InstallmentSchedule({ plotId, installments, onDone }) {
   );
 }
 
+// The customer's agent for this plot's project is decided once, in the
+// "Agent by project" section on the customer's record — this form just
+// reads that (single source of truth) instead of asking again. Only if the
+// customer has no agent yet for this project does it ask, and that pick is
+// saved back into customer_project_agents so it's remembered for next time.
 function BookPlotForm({ plot, customers, agents, customerProjectAgents, onCancel, onSold }) {
   const activeAgents = agents.filter((a) => !a.archived);
   const [customerId, setCustomerId] = useState("");
   const [agentId, setAgentId] = useState("");
-  const [agentTouched, setAgentTouched] = useState(false);
   const [date, setDate] = useState(todayISO());
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
@@ -274,14 +305,15 @@ function BookPlotForm({ plot, customers, agents, customerProjectAgents, onCancel
   const [newPhone, setNewPhone] = useState("");
   const [custList, setCustList] = useState(customers);
 
-  const agent = activeAgents.find((a) => a.id === agentId);
+  const customer = custList.find((c) => c.id === customerId);
+  const assignment = customerId && customerProjectAgents?.find((a) => a.customer_id === customerId && a.project_id === plot.project_id);
+  const assignedAgent = assignment && agents.find((a) => a.id === assignment.agent_id);
+  const pickedAgent = activeAgents.find((a) => a.id === agentId);
+  const agent = assignedAgent || pickedAgent;
 
   function pickCustomer(id) {
     setCustomerId(id);
-    if (!agentTouched) {
-      const assigned = customerProjectAgents?.find((a) => a.customer_id === id && a.project_id === plot.project_id);
-      setAgentId(assigned?.agent_id || "");
-    }
+    setAgentId("");
   }
 
   async function addCustomer() {
@@ -297,16 +329,23 @@ function BookPlotForm({ plot, customers, agents, customerProjectAgents, onCancel
   }
 
   async function save() {
+    const finalAgentId = assignedAgent ? assignedAgent.id : agentId;
+    if (!finalAgentId) return;
     setBusy(true); setMsg("");
+    if (!assignedAgent) {
+      const { error: linkError } = await supabase.from("customer_project_agents")
+        .upsert({ customer_id: customerId, project_id: plot.project_id, agent_id: finalAgentId }, { onConflict: "customer_id,project_id" });
+      if (linkError) { setBusy(false); setMsg(linkError.message); return; }
+    }
     const { error } = await supabase.rpc("book_plot", {
-      p_plot_id: plot.id, p_customer_id: customerId, p_agent_id: agentId, p_booking_date: date,
+      p_plot_id: plot.id, p_customer_id: customerId, p_agent_id: finalAgentId, p_booking_date: date,
     });
     setBusy(false);
     if (error) { setMsg(error.message); return; }
     onSold();
   }
 
-  const valid = customerId && agentId;
+  const valid = customerId && (assignedAgent || agentId);
 
   return (
     <div style={{ marginTop: 18, borderTop: `1px solid ${C.line}`, paddingTop: 16 }}>
@@ -332,9 +371,14 @@ function BookPlotForm({ plot, customers, agents, customerProjectAgents, onCancel
         </div>
       )}
 
-      <Select label="Agent for this project" value={agentId} placeholder="— Select agent —"
-        onChange={(v) => { setAgentTouched(true); setAgentId(v); }}
-        options={activeAgents.map((a) => ({ v: a.id, l: a.name }))} />
+      {customer && (assignedAgent ? (
+        <div style={{ fontSize: 13.5, color: C.ink, marginBottom: 14 }}>
+          Agent for this project: <strong>{assignedAgent.name}</strong>
+        </div>
+      ) : (
+        <Select label="Agent for this project (no agent assigned yet)" value={agentId} placeholder="— Select agent —"
+          onChange={setAgentId} options={activeAgents.map((a) => ({ v: a.id, l: a.name }))} />
+      ))}
       <Field label="Booking date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
       {agent && (
         <div style={{ background: C.goldSoft, borderRadius: 8, padding: 14, marginBottom: 14, fontSize: 13.5, color: C.ink }}>

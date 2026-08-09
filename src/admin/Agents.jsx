@@ -13,24 +13,22 @@ export default function Agents({ agents, customers, commissions, plots, users, a
     <>
       <div style={{ marginBottom: 18 }}>
         <Tabs value={view} onChange={setView} options={[
-          { v: "tree", l: "Agent tree" },
-          { v: "rates", l: "Commission rates" },
+          { v: "network", l: "Agent network" },
           { v: "commissions", l: "Payout ledger" },
         ]} />
       </div>
 
-      {view === "tree" && (
-        <Panel title="Agent network" right={<Button onClick={() => setAdding(true)}>＋ Add Agent</Button>}>
-          <AgentTree agents={agents} agentName={agentName} onOpen={setOpenAgent} />
+      {view === "network" && (
+        <Panel title="Agent network"
+          subtitle={activeProject ? `Commission rate shown is for ${activeProjectObj?.name || "the selected project"} — leave blank to use each agent's default rate.` : "Select a project above to set commission rates for it — showing default rates for now."}
+          right={<Button onClick={() => setAdding(true)}>＋ Add Agent</Button>}>
+          <AgentNetwork agents={agents} onOpen={setOpenAgent} projectId={activeProject} rates={rates} onDone={onDone} />
         </Panel>
       )}
 
-      {view === "rates" && (
-        <RatesView agents={agents} projectId={activeProject} projectName={activeProjectObj?.name} rates={rates} onDone={onDone} />
-      )}
-
       {view === "commissions" && (
-        <CommissionsLedger commissions={commissions} plots={plots} agentName={agentName} />
+        <CommissionsLedger commissions={commissions} plots={plots} agentName={agentName}
+          activeProject={activeProject} projectName={activeProjectObj?.name} />
       )}
 
       {adding && <CreateAgent agents={agents} onClose={() => setAdding(false)} onDone={() => { setAdding(false); onDone(); }} />}
@@ -46,17 +44,35 @@ export default function Agents({ agents, customers, commissions, plots, users, a
 }
 
 // Org-chart-style tree — each node with reports gets a +/− toggle so deep
-// downlines can be collapsed instead of forcing a horizontal scroll.
-function AgentTree({ agents, agentName, onOpen }) {
+// downlines can be collapsed instead of forcing a horizontal scroll. Also
+// carries the per-project commission rate inline (editable, with a live
+// cascade preview), so this one tree is both "who reports to whom" and
+// "what does everyone earn" — no separate near-identical view needed.
+// Mirrors the record_sale() gap-fill logic 1:1: an agent's rate for a given
+// project falls back to their default quota_percent when unset, and each
+// parent's override on a given child = parent_rate - child_rate (clamped at 0).
+function AgentNetwork({ agents, onOpen, projectId, rates, onDone }) {
   const roots = agents.filter((a) => !a.sponsor_id);
   const parentIds = new Set(agents.filter((a) => a.sponsor_id).map((a) => a.sponsor_id));
   const [collapsed, setCollapsed] = useState({});
 
-  if (roots.length === 0) return <Empty>No agents yet. Use ＋ Add Agent to build your tree.</Empty>;
+  if (roots.length === 0) return <Empty>No agents yet. Use ＋ Add Agent to build your network.</Empty>;
 
   const toggle = (id) => setCollapsed((c) => ({ ...c, [id]: !c[id] }));
   const collapseAll = () => setCollapsed(Object.fromEntries([...parentIds].map((id) => [id, true])));
   const expandAll = () => setCollapsed({});
+
+  const effectiveRate = (agentId) => {
+    const override = projectId && rates.find((r) => r.project_id === projectId && r.agent_id === agentId);
+    if (override) return Number(override.commission_pct);
+    return Number(agents.find((a) => a.id === agentId)?.quota_percent ?? 0);
+  };
+
+  async function setRate(agentId, pct) {
+    if (pct === "" || isNaN(Number(pct))) return;
+    await supabase.rpc("set_agent_project_rate", { p_project_id: projectId, p_agent_id: agentId, p_pct: Number(pct) });
+    onDone();
+  }
 
   return (
     <div>
@@ -72,15 +88,21 @@ function AgentTree({ agents, agentName, onOpen }) {
           </button>
         </div>
       )}
-      {roots.map((r) => <TreeNode key={r.id} agent={r} agents={agents} agentName={agentName} onOpen={onOpen} depth={0} collapsed={collapsed} toggle={toggle} />)}
+      {roots.map((r) => (
+        <NetworkNode key={r.id} agent={r} agents={agents} onOpen={onOpen} depth={0} collapsed={collapsed} toggle={toggle}
+          projectId={projectId} rates={rates} effectiveRate={effectiveRate} setRate={setRate} />
+      ))}
     </div>
   );
 }
 
-function TreeNode({ agent, agents, agentName, onOpen, depth, collapsed, toggle }) {
+function NetworkNode({ agent, agents, onOpen, depth, collapsed, toggle, projectId, rates, effectiveRate, setRate }) {
+  const [draft, setDraft] = useState(null);
   const children = agents.filter((a) => a.sponsor_id === agent.id);
   const hasChildren = children.length > 0;
   const isOpen = !collapsed[agent.id];
+  const own = effectiveRate(agent.id);
+  const hasOverride = projectId && rates.some((r) => r.project_id === projectId && r.agent_id === agent.id);
 
   return (
     <div style={{ marginLeft: depth ? 10 : 0, paddingLeft: depth ? 14 : 0, borderLeft: depth ? `1px solid ${C.line}` : "none" }}>
@@ -103,86 +125,40 @@ function TreeNode({ agent, agents, agentName, onOpen, depth, collapsed, toggle }
             {agent.archived && <Badge text="Archived" color={C.muted} />}
             {hasChildren && <span style={{ fontSize: 10.5, color: C.muted, fontFamily: MONO }}>{children.length} report{children.length === 1 ? "" : "s"}</span>}
           </div>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 5, fontSize: 11.5, color: C.muted, fontFamily: MONO }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 5, fontSize: 11.5, color: C.muted, fontFamily: MONO }}>
             <span>{agent.member_code}</span>
             <span>{agent.phone}</span>
-            <span style={{ color: C.goldLt }}>default rate {agent.quota_percent}%</span>
+            {projectId && !agent.archived ? (
+              <span onClick={(e) => e.stopPropagation()} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                <input type="number" value={draft ?? own} onChange={(e) => setDraft(e.target.value)}
+                  onBlur={() => { if (draft !== null && Number(draft) !== own) setRate(agent.id, draft); setDraft(null); }}
+                  style={{ width: 56, padding: "3px 6px", border: `1px solid ${C.line}`, borderRadius: 5, background: C.field, color: C.ink, textAlign: "right", fontSize: 12.5, fontFamily: "'Outfit',sans-serif" }} />
+                <span>%</span>
+                {!hasOverride && <span style={{ color: C.faint }}>(default)</span>}
+              </span>
+            ) : (
+              <span style={{ color: C.goldLt }}>{projectId ? "archived" : "default"} rate {agent.quota_percent}%</span>
+            )}
           </div>
+          {projectId && hasChildren && (
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 6 }}>
+              {children.map((c) => {
+                const childRate = effectiveRate(c.id);
+                const override = Math.max(0, own - childRate);
+                return (
+                  <span key={c.id} style={{ fontSize: 11.5, color: override > 0 ? C.gold : C.faint, fontFamily: MONO }}>
+                    ↳ {c.name} sells → earns {override}%
+                  </span>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
       {hasChildren && isOpen && children.map((c) => (
-        <TreeNode key={c.id} agent={c} agents={agents} agentName={agentName} onOpen={onOpen} depth={depth + 1} collapsed={collapsed} toggle={toggle} />
-      ))}
-    </div>
-  );
-}
-
-// Per-project negotiated commission rate, plus a live cascade preview so the
-// admin can see exactly what override each upline earns before any sale
-// happens. Mirrors the record_sale() gap-fill logic 1:1: an agent's rate for
-// this project falls back to their default quota_percent when unset, and
-// each parent's override on a given child = parent_rate - child_rate
-// (clamped at 0).
-function RatesView({ agents, projectId, projectName, rates, onDone }) {
-  if (!projectId) return <Panel title="Commission rates"><Empty>Select a project to manage its commission rates.</Empty></Panel>;
-
-  const activeAgents = agents.filter((a) => !a.archived);
-  const roots = activeAgents.filter((a) => !a.sponsor_id);
-  const effectiveRate = (agentId) => {
-    const override = rates.find((r) => r.project_id === projectId && r.agent_id === agentId);
-    if (override) return Number(override.commission_pct);
-    return Number(agents.find((a) => a.id === agentId)?.quota_percent ?? 0);
-  };
-
-  async function setRate(agentId, pct) {
-    if (pct === "" || isNaN(Number(pct))) return;
-    await supabase.rpc("set_agent_project_rate", { p_project_id: projectId, p_agent_id: agentId, p_pct: Number(pct) });
-    onDone();
-  }
-
-  return (
-    <Panel title="Commission rates" subtitle={`Negotiated % for ${projectName || "this project"} — leave blank to use each agent's default rate.`}>
-      {roots.length === 0 ? <Empty>No agents yet.</Empty> : roots.map((r) => (
-        <RateNode key={r.id} agent={r} agents={activeAgents} depth={0} effectiveRate={effectiveRate} rates={rates} projectId={projectId} setRate={setRate} />
-      ))}
-    </Panel>
-  );
-}
-
-function RateNode({ agent, agents, depth, effectiveRate, rates, projectId, setRate }) {
-  const [draft, setDraft] = useState(null);
-  const children = agents.filter((a) => a.sponsor_id === agent.id);
-  const own = effectiveRate(agent.id);
-  const hasOverride = rates.some((r) => r.project_id === projectId && r.agent_id === agent.id);
-
-  return (
-    <div style={{ marginLeft: depth ? 10 : 0, paddingLeft: depth ? 14 : 0, borderLeft: depth ? `1px solid ${C.line}` : "none", marginTop: 8 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", background: depth === 0 ? C.goldSoft : C.panel2, border: `1px solid ${C.line}`, borderRadius: 8, padding: "10px 12px" }}>
-        <span style={{ fontWeight: 700, color: C.ink, fontSize: 14, minWidth: 120 }}>{agent.name}</span>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <input type="number" value={draft ?? own} onChange={(e) => setDraft(e.target.value)}
-            onBlur={() => { if (draft !== null && Number(draft) !== own) setRate(agent.id, draft); setDraft(null); }}
-            style={{ width: 70, padding: "6px 8px", border: `1px solid ${C.line}`, borderRadius: 6, background: C.field, color: C.ink, textAlign: "right", fontSize: 13.5, fontFamily: "'Outfit',sans-serif" }} />
-          <span style={{ color: C.muted, fontSize: 13 }}>%</span>
-          {!hasOverride && <span style={{ fontSize: 11, color: C.faint }}>(default)</span>}
-        </div>
-        {children.length > 0 && (
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
-            {children.map((c) => {
-              const childRate = effectiveRate(c.id);
-              const override = Math.max(0, own - childRate);
-              return (
-                <span key={c.id} style={{ fontSize: 11.5, color: override > 0 ? C.gold : C.faint, fontFamily: MONO }}>
-                  ↳ {c.name} sells → earns {override}%
-                </span>
-              );
-            })}
-          </div>
-        )}
-      </div>
-      {children.map((c) => (
-        <RateNode key={c.id} agent={c} agents={agents} depth={depth + 1} effectiveRate={effectiveRate} rates={rates} projectId={projectId} setRate={setRate} />
+        <NetworkNode key={c.id} agent={c} agents={agents} onOpen={onOpen} depth={depth + 1} collapsed={collapsed} toggle={toggle}
+          projectId={projectId} rates={rates} effectiveRate={effectiveRate} setRate={setRate} />
       ))}
     </div>
   );
@@ -324,12 +300,17 @@ function CreateAgent({ agents, onDone, onClose }) {
   );
 }
 
-function CommissionsLedger({ commissions, plots, agentName }) {
+function CommissionsLedger({ commissions, plots, agentName, activeProject, projectName }) {
   const mobile = useIsMobile();
   const [q, setQ] = useState("");
   const [kind, setKind] = useState("");
   const plotNo = (id) => plots.find((p) => p.id === id)?.plot_no ?? "—";
-  const rows = commissions.filter((c) => {
+  // Scoped to the selected project via each commission's plot, same as every
+  // other project-scoped stat/ledger — previously this showed every
+  // commission across every project regardless of the selector above.
+  const projectPlotIds = activeProject ? new Set(plots.filter((p) => p.project_id === activeProject).map((p) => p.id)) : null;
+  const scoped = projectPlotIds ? commissions.filter((c) => projectPlotIds.has(c.plot_id)) : commissions;
+  const rows = scoped.filter((c) => {
     if (kind && c.kind !== kind) return false;
     if (!q) return true;
     const hay = `${agentName(c.beneficiary_id)} ${plotNo(c.plot_id)} ${c.kind}`.toLowerCase();
@@ -338,7 +319,9 @@ function CommissionsLedger({ commissions, plots, agentName }) {
   const total = rows.reduce((s, c) => s + Number(c.amount), 0);
 
   return (
-    <Panel title="Commission ledger" right={
+    <Panel title="Payout ledger"
+      subtitle={activeProject ? `Commission payouts for ${projectName || "the selected project"}.` : "Select a project above to scope this ledger — showing every project for now."}
+      right={
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", flexDirection: mobile ? "column" : "row" }}>
         <SearchBar value={q} onChange={setQ} placeholder="Search agent, plot…" />
         <div style={{ width: mobile ? "100%" : undefined }}>

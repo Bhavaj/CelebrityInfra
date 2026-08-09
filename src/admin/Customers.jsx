@@ -3,7 +3,7 @@ import { supabase } from "../supabase";
 import { C, MONO, fmt, fmtDate, todayISO, Panel, Th, Td, Button, DangerDeleteButton, SearchBar, Modal, KV, DueBadge, ProgressBar, TableScroll, Empty, useIsMobile, RowCard, RowLine, Field, Select, Badge } from "../ui";
 import AccessCode from "./AccessCode";
 import RecordPayment from "./RecordPayment";
-import { scheduleStatus } from "./Inventory";
+import { scheduleStatus, PaymentLedger } from "./Inventory";
 
 export default function Customers({ customers, plots, transactions, installments, users, agents, projects, activeProject, customerProjectAgents, onDone }) {
   const mobile = useIsMobile();
@@ -121,9 +121,18 @@ function CustomerCard({ customer, plots, transactions, installments, allPlots, p
   const [name, setName] = useState(customer.name);
   const [phone, setPhone] = useState(customer.phone || "");
   const [busy, setBusy] = useState(false);
+  const [openLedgers, setOpenLedgers] = useState(new Set());
   const projectName = (id) => projects.find((p) => p.id === id)?.name ?? "—";
   const totalPaid = plots.reduce((s, p) => s + transactions.filter((t) => t.plot_id === p.id).reduce((a, t) => a + Number(t.amount), 0), 0);
   const deletable = plots.length === 0 && transactions.filter((t) => t.customer_id === customer.id).length === 0;
+
+  function toggleLedger(plotId) {
+    setOpenLedgers((prev) => {
+      const next = new Set(prev);
+      next.has(plotId) ? next.delete(plotId) : next.add(plotId);
+      return next;
+    });
+  }
 
   async function saveEdit() {
     setBusy(true); setMsg("");
@@ -189,6 +198,19 @@ function CustomerCard({ customer, plots, transactions, installments, allPlots, p
                 {fmt(paid)} paid of {fmt(p.price)} · Agent: {closer ? closer.name : "—"}
               </div>
               <ProgressBar pct={pct} color={overdue > 0 ? `linear-gradient(90deg,#7a2a24,${C.red})` : undefined} />
+              {tx.length > 0 && (
+                <div style={{ marginTop: 10 }}>
+                  <button type="button" onClick={() => toggleLedger(p.id)} className="cip-tap"
+                    style={{ background: "none", border: "none", color: C.gold, textDecoration: "underline", cursor: "pointer", fontSize: 12.5, padding: 0, fontFamily: "'Outfit',sans-serif" }}>
+                    {openLedgers.has(p.id) ? "Hide payment ledger" : `Payment ledger (${tx.length})`}
+                  </button>
+                  {openLedgers.has(p.id) && (
+                    <div style={{ marginTop: 8 }}>
+                      <PaymentLedger transactions={tx} />
+                    </div>
+                  )}
+                </div>
+              )}
               <div style={{ marginTop: 10 }}>
                 <RecordPayment plotId={p.id} price={p.price} paid={paid} onDone={onPaymentAdded} />
               </div>
@@ -261,36 +283,50 @@ function CustomerProjectAgents({ customer, projects, agents, customerProjectAgen
 
 // Attaches this existing customer to another available plot (any project) —
 // closes the gap where admin previously had no way to sell a second plot to
-// someone who already owns one.
+// someone who already owns one. The customer's agent for a project is
+// decided once, in the "Agent by project" section above — this form just
+// reads that (single source of truth) instead of asking again. Only if the
+// customer has no agent yet for the picked plot's project does it ask, and
+// that pick is saved back into customer_project_agents so it's remembered
+// for next time.
 function AssignPlotForm({ customer, plots, projects, agents, customerProjectAgents, onCancel, onDone }) {
   const activeAgents = agents.filter((a) => !a.archived);
   const availablePlots = plots.filter((p) => p.status === "available");
   const projectName = (id) => projects.find((p) => p.id === id)?.name ?? "—";
   const [plotId, setPlotId] = useState("");
   const [agentId, setAgentId] = useState("");
-  const [agentTouched, setAgentTouched] = useState(false);
   const [date, setDate] = useState(todayISO());
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const plot = availablePlots.find((p) => p.id === plotId);
+  const assignment = plot && customerProjectAgents?.find((a) => a.customer_id === customer.id && a.project_id === plot.project_id);
+  const assignedAgent = assignment && agents.find((a) => a.id === assignment.agent_id);
+
   function pickPlot(id) {
     setPlotId(id);
-    if (!agentTouched) {
-      const plot = availablePlots.find((p) => p.id === id);
-      const assigned = customerProjectAgents?.find((a) => a.customer_id === customer.id && a.project_id === plot?.project_id);
-      setAgentId(assigned?.agent_id || "");
-    }
+    setAgentId("");
   }
 
   async function save() {
+    if (!plot) return;
+    const finalAgentId = assignedAgent ? assignedAgent.id : agentId;
+    if (!finalAgentId) return;
     setBusy(true); setMsg("");
+    if (!assignedAgent) {
+      const { error: linkError } = await supabase.from("customer_project_agents")
+        .upsert({ customer_id: customer.id, project_id: plot.project_id, agent_id: finalAgentId }, { onConflict: "customer_id,project_id" });
+      if (linkError) { setBusy(false); setMsg(linkError.message); return; }
+    }
     const { error } = await supabase.rpc("book_plot", {
-      p_plot_id: plotId, p_customer_id: customer.id, p_agent_id: agentId, p_booking_date: date,
+      p_plot_id: plotId, p_customer_id: customer.id, p_agent_id: finalAgentId, p_booking_date: date,
     });
     setBusy(false);
     if (error) { setMsg(error.message); return; }
     onDone();
   }
+
+  const valid = plotId && (assignedAgent || agentId);
 
   return (
     <div style={{ marginTop: 4, marginBottom: 18, background: C.field, border: `1px solid ${C.line}`, borderRadius: 10, padding: 14 }}>
@@ -299,13 +335,18 @@ function AssignPlotForm({ customer, plots, projects, agents, customerProjectAgen
         <>
           <Select label="Plot" value={plotId} placeholder="— Select an available plot —" onChange={pickPlot}
             options={availablePlots.map((p) => ({ v: p.id, l: `${p.plot_no} · ${projectName(p.project_id)} · ${fmt(p.price)}` }))} />
-          <Select label="Agent for this project" value={agentId} placeholder="— Select agent —"
-            onChange={(v) => { setAgentTouched(true); setAgentId(v); }}
-            options={activeAgents.map((a) => ({ v: a.id, l: a.name }))} />
+          {plot && (assignedAgent ? (
+            <div style={{ fontSize: 13.5, color: C.ink, marginBottom: 14 }}>
+              Agent for {projectName(plot.project_id)}: <strong>{assignedAgent.name}</strong>
+            </div>
+          ) : (
+            <Select label={`Agent for ${projectName(plot.project_id)} (no agent assigned yet)`} value={agentId} placeholder="— Select agent —"
+              onChange={setAgentId} options={activeAgents.map((a) => ({ v: a.id, l: a.name }))} />
+          ))}
           <Field label="Booking date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           {msg && <p style={{ color: C.red, fontSize: 13 }}>{msg}</p>}
           <div style={{ display: "flex", gap: 8 }}>
-            <Button onClick={save} disabled={!plotId || !agentId || busy}>{busy ? "Booking…" : "Confirm booking"}</Button>
+            <Button onClick={save} disabled={!valid || busy}>{busy ? "Booking…" : "Confirm booking"}</Button>
             <Button kind="ghost" size="sm" onClick={onCancel}>Cancel</Button>
           </div>
         </>

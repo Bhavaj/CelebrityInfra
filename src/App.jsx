@@ -137,7 +137,7 @@ function NoAccount({ error }) {
     <div className="cip-card" style={{ background: C.panel, border: `1px solid ${C.line}`, borderTop: `3px solid ${C.red}`, borderRadius: R.lg, padding: "clamp(20px, 5vw, 32px)", maxWidth: 560 }}>
       <h2 style={{ fontFamily: FONT, fontWeight: 700, fontSize: 24, color: C.ink, margin: "0 0 8px" }}>You don't have an account yet</h2>
       <p style={{ color: C.muted, fontSize: 15, lineHeight: 1.6 }}>
-        {error || <>This login isn't linked to any account. If you were given an invite code, use it on the sign-up screen — otherwise, ask an admin to grant you access.</>}
+        {error || <>This login isn't linked to any account. Go back and use "Create account" with the invite code your admin gave you — otherwise, ask an admin for a code.</>}
       </p>
     </div>
   );
@@ -150,7 +150,7 @@ function NotLinked({ kind, error }) {
       <p style={{ color: C.muted, fontSize: 15, lineHeight: 1.6 }}>
         {error
           ? error
-          : <>Your login isn't linked to a {kind} record yet. The admin needs to give you a fresh invite code, or connect your account to your {kind} profile.</>}
+          : <>Your login isn't linked to a {kind} record yet. Ask the admin for a fresh invite code and use "Create account" to claim it.</>}
       </p>
     </div>
   );

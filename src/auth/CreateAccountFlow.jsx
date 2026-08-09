@@ -32,7 +32,7 @@ export default function CreateAccountFlow({ role }) {
   if (preview) {
     return (
       <>
-        <Hint>Claiming <strong style={{ color: C.goldLt }}>{preview.label}</strong>'s {ROLE_LABEL[role].toLowerCase()} access.</Hint>
+        <Hint>Claiming <strong style={{ color: C.goldLt }}>{preview.label}</strong>'s {ROLE_LABEL[role].toLowerCase()} access. Verify your email below, then set a password — that's what you'll sign in with every time after this.</Hint>
         <SetPasswordFlow helperText="Verify your email to finish creating your account." />
       </>
     );
@@ -40,7 +40,7 @@ export default function CreateAccountFlow({ role }) {
 
   return (
     <form onSubmit={checkCode}>
-      <Hint>Enter the one-time code your admin gave you.</Hint>
+      <Hint>Enter the one-time code your admin gave you. This is the only code you'll need — it links your account automatically.</Hint>
       <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="e.g. K7M2P9XQ" required style={codeInputStyle} />
       <ErrorText>{msg}</ErrorText>
       <div style={{ marginTop: 16 }}>
