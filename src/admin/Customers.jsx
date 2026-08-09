@@ -198,7 +198,9 @@ function CustomerCard({ customer, plots, transactions, installments, allPlots, p
                 {fmt(paid)} paid of {fmt(p.price)} · Agent: {closer ? closer.name : "—"}
               </div>
               <ProgressBar pct={pct} color={overdue > 0 ? `linear-gradient(90deg,#7a2a24,${C.red})` : undefined} />
-              {tx.length > 0 && (
+              {tx.length === 0 ? (
+                <p style={{ fontSize: 12.5, color: C.muted, marginTop: 10, marginBottom: 0 }}>No payments recorded yet.</p>
+              ) : (
                 <div style={{ marginTop: 10 }}>
                   <button type="button" onClick={() => toggleLedger(p.id)} className="cip-tap"
                     style={{ background: "none", border: "none", color: C.gold, textDecoration: "underline", cursor: "pointer", fontSize: 12.5, padding: 0, fontFamily: "'Outfit',sans-serif" }}>

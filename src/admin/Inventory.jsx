@@ -177,10 +177,12 @@ function PlotCard({ plot, customers, agents, transactions, installments, custome
         </div>
       )}
 
-      {tx.length > 0 && (
+      {(plot.status === "sold" || plot.status === "booked") && (
         <div style={{ marginTop: 16 }}>
           <div style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8, fontFamily: MONO }}>Payment ledger</div>
-          <PaymentLedger transactions={tx} />
+          {tx.length > 0 ? <PaymentLedger transactions={tx} /> : (
+            <p style={{ fontSize: 13.5, color: C.muted, margin: 0 }}>No payments recorded yet — the first one you add below (e.g. the booking advance) will show up here.</p>
+          )}
         </div>
       )}
 

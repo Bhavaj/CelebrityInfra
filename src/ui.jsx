@@ -71,9 +71,9 @@ export function useTilt(strength = 7) {
   };
 }
 
-export function Icon({ name, size = 20, style }) {
+export function Icon({ name, size = 20, style, className }) {
   return (
-    <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: size, lineHeight: 1, ...style }}>
+    <span className={className ? `material-symbols-outlined ${className}` : "material-symbols-outlined"} aria-hidden="true" style={{ fontSize: size, lineHeight: 1, ...style }}>
       {name}
     </span>
   );

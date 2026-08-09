@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "./supabase";
-import { C, DISPLAY, fmt, PageHeader, Panel, Stat, Modal, Select, Button, useIsMobile } from "./ui";
+import { C, R, DISPLAY, fmt, PageHeader, Panel, Stat, Modal, Select, Button, Icon, useIsMobile } from "./ui";
 import Sidebar from "./admin/Sidebar";
 import Inventory, { ManageProjects } from "./admin/Inventory";
 import Customers from "./admin/Customers";
@@ -29,6 +29,7 @@ export default function Admin() {
     users: [], leads: [], rates: [], installments: [], customerProjectAgents: [],
   });
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -59,6 +60,12 @@ export default function Admin() {
     setLoading(false);
   }
   useEffect(() => { load(); }, []);
+
+  async function refresh() {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  }
 
   const agentName = (id) => data.agents.find((a) => a.id === id)?.name ?? "—";
   const customerName = (id) => data.customers.find((c) => c.id === id)?.name ?? "—";
@@ -106,6 +113,11 @@ export default function Admin() {
       <Button kind="ghost" size="sm" onClick={() => setManageProjectsOpen(true)}>
         {pickableProjects.length > 0 ? "Manage Projects" : "+ New project"}
       </Button>
+      <button onClick={refresh} disabled={refreshing} type="button" className="cip-tap" title="Refresh data from database" aria-label="Refresh data"
+        style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, flex: "none",
+          borderRadius: R.md, border: `1px solid ${C.line}`, background: C.field, color: C.ink, cursor: refreshing ? "default" : "pointer" }}>
+        <Icon name="refresh" size={17} className={refreshing ? "cip-spin" : undefined} />
+      </button>
     </div>
   );
 

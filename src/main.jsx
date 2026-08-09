@@ -102,6 +102,9 @@ style.textContent = `
   @keyframes cipDrawerIn{from{transform:translateX(-100%)}to{transform:translateX(0)}}
   .cip-drawer-in{animation:cipDrawerIn .28s cubic-bezier(.16,1,.3,1) both}
 
+  @keyframes cipSpin{to{transform:rotate(360deg)}}
+  .cip-spin{animation:cipSpin .7s linear infinite}
+
   /* Staggered children — apply .cip-stagger to a container of .cip-in items */
   .cip-stagger > *{animation-fill-mode:both}
   .cip-stagger > *:nth-child(1){animation-delay:.02s}
