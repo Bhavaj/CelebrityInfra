@@ -31,16 +31,18 @@
     --line:rgba(246,240,226,.11);
     --line-gold:rgba(201,162,39,.32);
     --ease:cubic-bezier(.16,1,.3,1);
-    /* Text-directly-on-video legibility: the same recipe already proven on
-       the hero (which has no backing panel at all) — a tight dark contact
-       shadow for edge definition, a wider soft one for ambient darkening
-       regardless of what's playing behind it, and a thin hard stroke around
-       the glyph itself. The stroke is what actually reads as "the text has
-       a subtle border", not the shadow. */
-    --shadow-head:0 2px 6px rgba(0,0,0,.95),0 8px 26px rgba(0,0,0,.85),0 20px 50px rgba(0,0,0,.6);
-    --shadow-body:0 1px 3px rgba(0,0,0,.95),0 4px 16px rgba(0,0,0,.85),0 10px 30px rgba(0,0,0,.6);
-    --stroke-head:1px rgba(0,0,0,.45);
-    --stroke-body:.5px rgba(0,0,0,.45);
+    /* Text-directly-on-video legibility: content has to blend with the
+       video (no boxes/cards behind it), so this is the ONLY thing carrying
+       contrast — a tight dark contact shadow for edge definition, a much
+       wider/heavier soft one for ambient darkening regardless of what's
+       playing behind it, and a real hard stroke around the glyph itself.
+       The stroke is what actually reads as "the text has a border", not
+       the shadow — pushed noticeably harder than a typical title-card
+       stroke since there's no backing panel to fall back on. */
+    --shadow-head:0 2px 8px rgba(0,0,0,1),0 10px 32px rgba(0,0,0,.92),0 26px 64px rgba(0,0,0,.78);
+    --shadow-body:0 1px 4px rgba(0,0,0,1),0 6px 22px rgba(0,0,0,.92),0 16px 40px rgba(0,0,0,.74);
+    --stroke-head:1.5px rgba(0,0,0,.62);
+    --stroke-body:.75px rgba(0,0,0,.58);
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth}
@@ -71,12 +73,12 @@
      what keeps scrubbing smooth instead of janky. ---------- */
   .bg-video{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 50%;z-index:-2;background:var(--ink-bg)}
   /* Darkened enough that the video reads as atmosphere, not competition for
-     the text sitting on top of it — client feedback was that text was
-     unreadable against the (much brighter) new footage, so this went from a
-     thin .28 tint to a real ~55% darkening with extra fall-off at the edges. */
+     the text sitting on top of it — content has no backing cards, so this
+     global darkening plus the text-shadow/stroke tokens above are the
+     entire legibility system now. */
   .bg-scrim{position:fixed;inset:0;z-index:-1;pointer-events:none;background:
-      radial-gradient(120% 90% at 50% 38%,rgba(0,0,0,.38) 0%,rgba(0,0,0,.58) 100%),
-      rgba(5,4,3,.34)}
+      radial-gradient(120% 90% at 50% 38%,rgba(0,0,0,.46) 0%,rgba(0,0,0,.66) 100%),
+      rgba(5,4,3,.4)}
 
   /* Fixed, non-interactive grain — breaks the flat-vector digital feel.
      Only ever on a fixed layer, never on a scrolling container (perf). */
@@ -123,23 +125,23 @@
     position:relative;min-height:100dvh;display:flex;align-items:center;justify-content:center;text-align:center;
     padding:max(110px,calc(env(safe-area-inset-top) + 90px)) clamp(16px,5vw,48px) max(56px,calc(env(safe-area-inset-bottom) + 32px));
   }
-  /* A real (flat, unblurred) backing card, not just shadow+stroke on raw
-     video — client feedback was that the old shadow-only approach was
-     unreadable. Flat rgba fill instead of backdrop-blur/glass on purpose:
-     this card is on-screen and unmoving for the entire time the
-     continuously-scrubbing video plays behind it, and a blurred backdrop
-     would force a re-sample of the video every frame for as long as the
-     hero is in view — a flat fill costs nothing extra to composite. The
-     gold hairline border is the literal "give it a border" fix; shadow+
-     stroke on the text itself stays on as a second line of defense. */
+  /* No card/box here — content has to blend with the video, not sit on a
+     panel. A soft, edgeless radial glow (plain gradient, not a blurred
+     backdrop-filter, so it costs nothing extra to composite against the
+     continuously-scrubbing video) sits behind the text and fades all the
+     way to transparent with no visible edge — it darkens the air directly
+     around the words without ever reading as "a rectangle." Legibility
+     comes from that glow plus the much heavier text-shadow/stroke tokens. */
   .hero-panel{
     width:100%;max-width:860px;min-width:0;
     display:flex;flex-direction:column;align-items:center;
-    background:rgba(9,8,6,.62);
-    border:1px solid rgba(231,198,101,.38);
-    border-radius:32px;
-    padding:clamp(40px,6vw,68px) clamp(24px,5vw,64px);
-    box-shadow:0 30px 80px -30px rgba(0,0,0,.75);
+    padding:clamp(20px,4vw,40px) clamp(12px,4vw,32px);
+    position:relative;
+  }
+  .hero-panel::before{
+    content:"";position:absolute;inset:-12% -15%;z-index:-1;
+    background:radial-gradient(58% 62% at 50% 46%,rgba(3,2,1,.55) 0%,rgba(3,2,1,.3) 46%,rgba(3,2,1,0) 76%);
+    pointer-events:none;
   }
   .hero-panel .ring{width:130px;height:130px;flex:none;margin:0 auto 14px;filter:drop-shadow(0 18px 34px rgba(0,0,0,.6)) drop-shadow(0 0 20px rgba(201,162,39,.22))}
   .hero-panel .ring img{width:100%;height:100%;object-fit:contain}
@@ -179,34 +181,34 @@
   .rise{opacity:0;animation:fadeUp .9s var(--ease) forwards}
   .d1{animation-delay:.15s}.d2{animation-delay:.35s}.d3{animation-delay:.55s}.d4{animation-delay:.75s}.d5{animation-delay:.95s}
 
-  /* ---------- TRUST STRIP — thin band, now with a real (flat, unblurred)
-     fill instead of sitting raw on the video, same reasoning as the hero
-     panel below. ---------- */
-  .trust{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:rgba(10,9,7,.5)}
+  /* ---------- TRUST STRIP — just the hairline rules, no fill: blends with
+     the video like everything else, legibility carried by shadow/stroke. ---------- */
+  .trust{border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
   .trust-row{display:flex;flex-wrap:wrap;justify-content:center;gap:14px 40px;padding:20px 6vw;max-width:1180px;margin:0 auto}
   .trust-row span{display:flex;align-items:center;gap:10px;font-family:'Cormorant SC',serif;font-size:15px;font-weight:600;letter-spacing:1px;color:var(--ivory);white-space:nowrap}
   .trust-row span::before{content:"";width:5px;height:5px;background:var(--gold);transform:rotate(45deg);flex:none}
 
-  /* ---------- SECTIONS — a real (flat, unblurred) backing fill plus the
-     hairline border, not just a border on raw video. Client feedback was
-     that body text was unreadable against the new (much brighter) footage
-     with border-only panels — text-shadow/stroke alone wasn't enough once
-     the video behind it was bright or busy. Flat rgba fill (not
-     backdrop-blur) keeps this cheap: the video keeps scrubbing behind the
-     gaps between sections for atmosphere, but the reading area itself no
-     longer depends on what frame happens to be playing. `perspective` stays
-     so the reveal-in tilt still reads as depth. ---------- */
+  /* ---------- SECTIONS — no fill: a hairline border for grouping only,
+     video stays fully visible through the whole section. Legibility is
+     carried entirely by the global scrim + the heavy text-shadow/stroke
+     tokens, plus a soft edgeless glow behind each section's heading block
+     (below) for the largest, most important text. `perspective` stays so
+     the reveal-in tilt still reads as depth. ---------- */
   section, footer{
     position:relative;
     width:min(100% - 96px,1040px);
     margin:clamp(32px,6vw,72px) auto;
     padding:clamp(64px,9vw,120px) clamp(24px,6vw,64px);
-    background:rgba(15,13,8,.82);
     border:1px solid rgba(246,240,226,.16);
     border-radius:28px;
     perspective:1400px;
   }
-  .sec-head{max-width:640px;margin-bottom:64px}
+  .sec-head{max-width:640px;margin-bottom:64px;position:relative}
+  .sec-head::before{
+    content:"";position:absolute;inset:-14% -22%;z-index:-1;
+    background:radial-gradient(65% 68% at 50% 42%,rgba(3,2,1,.46) 0%,rgba(3,2,1,.22) 48%,rgba(3,2,1,0) 78%);
+    pointer-events:none;
+  }
   .sec-head.center{text-align:center;margin-left:auto;margin-right:auto}
   .sec-head .kicker{font-size:14.5px;letter-spacing:3.5px;color:var(--gold);text-transform:uppercase;margin-bottom:16px;font-weight:600}
   .sec-head h2{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(34px,5vw,52px);line-height:1.15;color:var(--ivory);text-wrap:balance}
