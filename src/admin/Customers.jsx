@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { supabase } from "../supabase";
-import { C, MONO, fmt, fmtDate, todayISO, Panel, Th, Td, Button, DangerDeleteButton, SearchBar, Modal, KV, DueBadge, ProgressBar, TableScroll, Empty, useIsMobile, RowCard, RowLine, Field, Select, Badge } from "../ui";
+import { C, R, MONO, FONT, fmt, fmtDate, todayISO, Panel, Th, Td, Button, DangerDeleteButton, SearchBar, Modal, Icon, DueBadge, ProgressBar, TableScroll, Empty, useIsMobile, RowCard, RowLine, Field, Select, Badge } from "../ui";
 import AccessCode from "./AccessCode";
 import RecordPayment from "./RecordPayment";
-import { scheduleStatus, PaymentLedger } from "./Inventory";
+import { scheduleStatus, PaymentLedger, Fact, MoneyFact } from "./Inventory";
 
 export default function Customers({ customers, plots, transactions, installments, users, agents, projects, activeProject, customerProjectAgents, onDone }) {
   const mobile = useIsMobile();
@@ -121,13 +121,17 @@ function CustomerCard({ customer, plots, transactions, installments, allPlots, p
   const [name, setName] = useState(customer.name);
   const [phone, setPhone] = useState(customer.phone || "");
   const [busy, setBusy] = useState(false);
-  const [openLedgers, setOpenLedgers] = useState(new Set());
+  // A customer with just one plot is the common case — open it by default so
+  // there's nothing to click through to see the thing you almost certainly
+  // came here for; customers with several plots start collapsed to a scan-
+  // able summary list instead of dumping every ledger/payment-form at once.
+  const [expandedPlots, setExpandedPlots] = useState(() => new Set(plots.length === 1 ? [plots[0].id] : []));
   const projectName = (id) => projects.find((p) => p.id === id)?.name ?? "—";
   const totalPaid = plots.reduce((s, p) => s + transactions.filter((t) => t.plot_id === p.id).reduce((a, t) => a + Number(t.amount), 0), 0);
   const deletable = plots.length === 0 && transactions.filter((t) => t.customer_id === customer.id).length === 0;
 
-  function toggleLedger(plotId) {
-    setOpenLedgers((prev) => {
+  function toggleExpanded(plotId) {
+    setExpandedPlots((prev) => {
       const next = new Set(prev);
       next.has(plotId) ? next.delete(plotId) : next.add(plotId);
       return next;
@@ -165,9 +169,14 @@ function CustomerCard({ customer, plots, transactions, installments, allPlots, p
   return (
     <Modal title={customer.name} onClose={onClose} maxWidth={720}>
       {msg && <p style={{ color: C.red, fontSize: 13, marginBottom: 12 }}>{msg}</p>}
-      <KV k="Member ID" v={customer.member_code} />
-      <KV k="Phone" v={customer.phone} />
-      <KV k="Total paid across all plots" v={fmt(totalPaid)} />
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px 20px", marginBottom: 18 }}>
+        <Fact label="Member ID" value={customer.member_code} />
+        <Fact label="Phone" value={customer.phone} />
+      </div>
+      <div style={{ background: C.field, border: `1px solid ${C.line}`, borderRadius: R.lg, padding: 16, marginBottom: 20 }}>
+        <MoneyFact label="Total paid across all plots" value={fmt(totalPaid)} accent={C.emeraldLt} />
+      </div>
 
       <CustomerProjectAgents customer={customer} projects={projects} agents={agents}
         customerProjectAgents={customerProjectAgents} onChanged={onChanged} />
@@ -178,44 +187,45 @@ function CustomerCard({ customer, plots, transactions, installments, allPlots, p
           <Button size="sm" onClick={() => setAssigning((v) => !v)}>{assigning ? "Close" : "＋ Book another plot"}</Button>
         </div>
 
-        {plots.length === 0 ? <p style={{ fontSize: 14, color: C.muted }}>No plots yet.</p> : plots.map((p) => {
+        {plots.length === 0 ? <Empty>No plots yet.</Empty> : plots.map((p) => {
           const tx = transactions.filter((t) => t.plot_id === p.id);
           const paid = tx.reduce((s, t) => s + Number(t.amount), 0);
           const plotInstallments = installments.filter((i) => i.plot_id === p.id);
           const { overdue, nextDueDate } = scheduleStatus(plotInstallments, paid);
           const pct = p.price ? Math.round((paid / Number(p.price)) * 100) : 0;
           const closer = agents.find((a) => a.id === p.closed_by_agent_id);
+          const isOpen = expandedPlots.has(p.id);
           return (
-            <div key={p.id} style={{ background: C.field, border: `1px solid ${C.line}`, borderRadius: 10, padding: 14, marginBottom: 10 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
-                <span style={{ fontWeight: 700, color: C.ink }}>{p.plot_no} · {projectName(p.project_id)}</span>
-                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                  <Badge text={p.status} color={p.status === "sold" ? C.muted : C.steel} />
-                  <DueBadge overdue={overdue} dueDate={nextDueDate} />
+            <div key={p.id} style={{ background: C.field, border: `1px solid ${overdue > 0 ? C.red : C.line}`, borderRadius: 10, marginBottom: 10, overflow: "hidden" }}>
+              <button type="button" onClick={() => toggleExpanded(p.id)} className="cip-tap"
+                style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: 14, background: "none", border: "none", cursor: "pointer", textAlign: "left", fontFamily: FONT }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, color: C.ink, fontSize: 14.5 }}>{p.plot_no} · {projectName(p.project_id)}</div>
+                  <div style={{ fontSize: 12.5, color: C.muted, marginTop: 3 }}>{fmt(paid)} of {fmt(p.price)} paid</div>
                 </div>
-              </div>
-              <div style={{ fontSize: 13, color: C.muted, marginBottom: 8 }}>
-                {fmt(paid)} paid of {fmt(p.price)} · Agent: {closer ? closer.name : "—"}
-              </div>
-              <ProgressBar pct={pct} color={overdue > 0 ? `linear-gradient(90deg,#7a2a24,${C.red})` : undefined} />
-              {tx.length === 0 ? (
-                <p style={{ fontSize: 12.5, color: C.muted, marginTop: 10, marginBottom: 0 }}>No payments recorded yet.</p>
-              ) : (
-                <div style={{ marginTop: 10 }}>
-                  <button type="button" onClick={() => toggleLedger(p.id)} className="cip-tap"
-                    style={{ background: "none", border: "none", color: C.gold, textDecoration: "underline", cursor: "pointer", fontSize: 12.5, padding: 0, fontFamily: "'Outfit',sans-serif" }}>
-                    {openLedgers.has(p.id) ? "Hide payment ledger" : `Payment ledger (${tx.length})`}
-                  </button>
-                  {openLedgers.has(p.id) && (
-                    <div style={{ marginTop: 8 }}>
-                      <PaymentLedger transactions={tx} />
-                    </div>
-                  )}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flex: "none" }}>
+                  <Badge text={p.status} color={p.status === "sold" ? C.muted : C.steel} />
+                  {overdue > 0 && <Badge text="Overdue" color={C.red} />}
+                  <Icon name={isOpen ? "expand_less" : "expand_more"} size={20} style={{ color: C.muted }} />
+                </div>
+              </button>
+              {isOpen && (
+                <div style={{ padding: "0 14px 16px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+                    <span style={{ fontSize: 13, color: C.muted }}>Agent: {closer ? closer.name : "—"}</span>
+                    <DueBadge overdue={overdue} dueDate={nextDueDate} />
+                  </div>
+                  <ProgressBar pct={pct} color={overdue > 0 ? `linear-gradient(90deg,#7a2a24,${C.red})` : undefined} />
+
+                  <div style={{ marginTop: 14 }}>
+                    {tx.length > 0 ? <PaymentLedger transactions={tx} /> : (
+                      <p style={{ fontSize: 12.5, color: C.muted, margin: 0 }}>No payments recorded yet.</p>
+                    )}
+                  </div>
+
+                  <RecordPayment plotId={p.id} price={p.price} paid={paid} onDone={onPaymentAdded} />
                 </div>
               )}
-              <div style={{ marginTop: 10 }}>
-                <RecordPayment plotId={p.id} price={p.price} paid={paid} onDone={onPaymentAdded} />
-              </div>
             </div>
           );
         })}

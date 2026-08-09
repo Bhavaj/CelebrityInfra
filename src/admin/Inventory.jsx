@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { supabase } from "../supabase";
-import { C, MONO, fmt, fmtDate, todayISO, Panel, Stat, Badge, DueBadge, ProgressBar, Th, Td, Button, DangerDeleteButton, Field, Select, Modal, KV, useIsMobile, TableScroll, Empty } from "../ui";
+import { C, R, MONO, FONT, DISPLAY, fmt, fmtDate, todayISO, Panel, Stat, Badge, DueBadge, ProgressBar, Th, Td, Button, DangerDeleteButton, Field, Select, Modal, Tabs, useIsMobile, TableScroll, Empty } from "../ui";
 import RecordPayment from "./RecordPayment";
 
 const statusColor = { available: C.green, blocked: C.gold, booked: C.steel, sold: C.muted };
@@ -106,6 +106,7 @@ export default function Inventory({ plots, projectId, customers, agents, transac
 function PlotCard({ plot, customers, agents, transactions, installments, customerProjectAgents, onClose, onChanged, onPaymentAdded, onSold }) {
   const [selling, setSelling] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [detailTab, setDetailTab] = useState("ledger");
   const [msg, setMsg] = useState("");
   const [plotNo, setPlotNo] = useState(plot.plot_no);
   const [size, setSize] = useState(String(plot.size_sqyd));
@@ -113,9 +114,10 @@ function PlotCard({ plot, customers, agents, transactions, installments, custome
   const [busy, setBusy] = useState(false);
   const cust = customers.find((c) => c.id === plot.customer_id);
   const closer = agents.find((a) => a.id === plot.closed_by_agent_id);
-  const tx = transactions.filter((t) => t.plot_id === plot.id).sort((a, b) => (a.date < b.date ? 1 : -1));
+  const tx = transactions.filter((t) => t.plot_id === plot.id);
   const paid = tx.reduce((s, t) => s + Number(t.amount), 0);
   const deletable = plot.status === "available" || plot.status === "blocked";
+  const hasMoney = plot.status === "sold" || plot.status === "booked";
   const { overdue, nextDueDate } = scheduleStatus(installments, paid);
   const pct = plot.price ? Math.round((paid / Number(plot.price)) * 100) : 0;
 
@@ -158,67 +160,86 @@ function PlotCard({ plot, customers, agents, transactions, installments, custome
   }
 
   return (
-    <Modal title={`Plot ${plot.plot_no}`} onClose={onClose}>
+    <Modal title={
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        Plot {plot.plot_no}
+        <Badge text={plot.status} color={statusColor[plot.status]} />
+      </span>
+    } onClose={onClose} maxWidth={640}>
       {msg && <p style={{ color: C.red, fontSize: 13, marginBottom: 12 }}>{msg}</p>}
-      <KV k="Status" v={<Badge text={plot.status} color={statusColor[plot.status]} />} />
-      <KV k="Size" v={`${plot.size_sqyd} sq.yd`} />
-      <KV k="Price" v={fmt(plot.price)} />
-      <KV k="Buyer" v={cust ? cust.name : "—"} />
-      <KV k="Agent" v={closer ? closer.name : "—"} />
-      {plot.sale_date && <KV k="Booking date" v={plot.sale_date} />}
 
-      {(plot.status === "sold" || plot.status === "booked") && (
-        <div style={{ marginTop: 16 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
-            <span style={{ fontSize: 13, color: C.muted }}>{fmt(paid)} of {fmt(plot.price)} collected</span>
-            <DueBadge overdue={overdue} dueDate={nextDueDate} />
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px 20px", marginBottom: 20 }}>
+        <Fact label="Size" value={`${plot.size_sqyd} sq.yd`} />
+        <Fact label="Price" value={fmt(plot.price)} />
+        <Fact label="Buyer" value={cust ? cust.name : "—"} />
+        <Fact label="Agent" value={closer ? closer.name : "—"} />
+        {plot.sale_date && <Fact label="Booking date" value={fmtDate(plot.sale_date)} />}
+      </div>
+
+      {hasMoney && (
+        <div style={{ background: C.field, border: `1px solid ${C.line}`, borderRadius: R.lg, padding: 16, marginBottom: 18 }}>
+          <div style={{ display: "flex", gap: 28, flexWrap: "wrap", marginBottom: 14 }}>
+            <MoneyFact label="Paid" value={fmt(paid)} accent={C.emeraldLt} />
+            <MoneyFact label="Remaining" value={fmt(Math.max(0, Number(plot.price) - paid))} accent={overdue > 0 ? C.red : undefined} />
           </div>
           <ProgressBar pct={pct} color={overdue > 0 ? `linear-gradient(90deg,#7a2a24,${C.red})` : undefined} />
+          <div style={{ marginTop: 10 }}><DueBadge overdue={overdue} dueDate={nextDueDate} /></div>
         </div>
       )}
 
-      {(plot.status === "sold" || plot.status === "booked") && (
-        <div style={{ marginTop: 16 }}>
-          <div style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8, fontFamily: MONO }}>Payment ledger</div>
-          {tx.length > 0 ? <PaymentLedger transactions={tx} /> : (
-            <p style={{ fontSize: 13.5, color: C.muted, margin: 0 }}>No payments recorded yet — the first one you add below (e.g. the booking advance) will show up here.</p>
-          )}
+      {hasMoney && plot.customer_id && (
+        <RecordPayment plotId={plot.id} price={plot.price} paid={paid} onDone={onPaymentAdded} />
+      )}
+
+      {hasMoney && (
+        <div style={{ marginTop: 20 }}>
+          <Tabs value={detailTab} onChange={setDetailTab} options={[
+            { v: "ledger", l: `Ledger${tx.length ? ` · ${tx.length}` : ""}` },
+            { v: "schedule", l: `Schedule${installments.length ? ` · ${installments.length}` : ""}` },
+          ]} />
+          <div style={{ marginTop: 14 }}>
+            {detailTab === "ledger" ? (
+              tx.length > 0 ? <PaymentLedger transactions={tx} /> : (
+                <p style={{ fontSize: 13.5, color: C.muted, margin: 0 }}>No payments recorded yet — the first one you add above (e.g. the booking advance) will show up here.</p>
+              )
+            ) : (
+              <InstallmentSchedule plotId={plot.id} installments={installments} onDone={onPaymentAdded} />
+            )}
+          </div>
         </div>
       )}
 
-      {(plot.status === "sold" || plot.status === "booked") && (
-        <InstallmentSchedule plotId={plot.id} installments={installments} onDone={onPaymentAdded} />
-      )}
-
-      {(plot.status === "available" || plot.status === "blocked") && !selling && (
-        <div style={{ display: "flex", gap: 8, marginTop: 18, flexWrap: "wrap" }}>
-          <Button kind="ghost" size="sm" onClick={() => { setPlotNo(plot.plot_no); setSize(String(plot.size_sqyd)); setPrice(String(plot.price)); setEditing(true); }}>Edit</Button>
-          {plot.status !== "available" && <Button kind="ghost" size="sm" onClick={() => setStatus("available")}>Mark available</Button>}
-          {plot.status !== "blocked" && <Button kind="ghost" size="sm" onClick={() => setStatus("blocked")}>Mark blocked</Button>}
-          <Button onClick={() => setSelling(true)}>Book this plot</Button>
-          {deletable && <DangerDeleteButton label={`plot ${plot.plot_no}`} onConfirm={remove} />}
-        </div>
-      )}
-      {plot.status === "booked" && (
-        <div style={{ display: "flex", gap: 8, marginTop: 18, flexWrap: "wrap" }}>
-          <Button kind="ghost" size="sm" onClick={() => { setPlotNo(plot.plot_no); setSize(String(plot.size_sqyd)); setPrice(String(plot.price)); setEditing(true); }}>Edit</Button>
-          <Button kind="ghost" size="sm" onClick={() => setStatus("sold")}>Mark sold</Button>
-        </div>
-      )}
-      {plot.status === "sold" && (
-        <div style={{ marginTop: 18 }}>
-          <Button kind="ghost" size="sm" onClick={() => { setPlotNo(plot.plot_no); setSize(String(plot.size_sqyd)); setPrice(String(plot.price)); setEditing(true); }}>Edit</Button>
-        </div>
-      )}
+      <div style={{ display: "flex", gap: 8, marginTop: 20, paddingTop: 18, borderTop: `1px solid ${C.line}`, flexWrap: "wrap" }}>
+        <Button kind="ghost" size="sm" onClick={() => { setPlotNo(plot.plot_no); setSize(String(plot.size_sqyd)); setPrice(String(plot.price)); setEditing(true); }}>Edit</Button>
+        {plot.status === "blocked" && <Button kind="ghost" size="sm" onClick={() => setStatus("available")}>Mark available</Button>}
+        {plot.status === "available" && <Button kind="ghost" size="sm" onClick={() => setStatus("blocked")}>Mark blocked</Button>}
+        {plot.status === "available" && !selling && <Button onClick={() => setSelling(true)}>Book this plot</Button>}
+        {plot.status === "booked" && <Button onClick={() => setStatus("sold")}>Mark sold</Button>}
+        {deletable && <DangerDeleteButton label={`plot ${plot.plot_no}`} onConfirm={remove} />}
+      </div>
 
       {plot.status === "available" && selling && (
         <BookPlotForm plot={plot} customers={customers} agents={agents} customerProjectAgents={customerProjectAgents} onCancel={() => setSelling(false)} onSold={onSold} />
       )}
-
-      {(plot.status === "sold" || plot.status === "booked") && plot.customer_id && (
-        <RecordPayment plotId={plot.id} price={plot.price} paid={paid} onDone={onPaymentAdded} />
-      )}
     </Modal>
+  );
+}
+
+export function Fact({ label, value }) {
+  return (
+    <div>
+      <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT, marginBottom: 3 }}>{label}</div>
+      <div style={{ fontSize: 14.5, color: C.ink, fontWeight: 600, fontFamily: FONT }}>{value}</div>
+    </div>
+  );
+}
+
+export function MoneyFact({ label, value, accent }) {
+  return (
+    <div>
+      <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</div>
+      <div style={{ fontSize: 22, fontWeight: 700, color: accent || C.ink, fontFamily: DISPLAY }}>{value}</div>
+    </div>
   );
 }
 
@@ -253,8 +274,7 @@ function InstallmentSchedule({ plotId, installments, onDone }) {
   }
 
   return (
-    <div style={{ marginTop: 16, borderTop: `1px solid ${C.line}`, paddingTop: 14 }}>
-      <div style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10, fontFamily: MONO }}>Payment schedule</div>
+    <div>
       {installments.length === 0 ? (
         <p style={{ fontSize: 13.5, color: C.muted, marginBottom: 12 }}>No schedule set yet — add installments below so due dates show up for the customer and agent.</p>
       ) : (
