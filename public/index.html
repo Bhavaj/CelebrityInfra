@@ -77,8 +77,8 @@
      global darkening plus the text-shadow/stroke tokens above are the
      entire legibility system now. */
   .bg-scrim{position:fixed;inset:0;z-index:-1;pointer-events:none;background:
-      radial-gradient(120% 90% at 50% 38%,rgba(0,0,0,.46) 0%,rgba(0,0,0,.66) 100%),
-      rgba(5,4,3,.4)}
+      radial-gradient(120% 90% at 50% 38%,rgba(0,0,0,.24) 0%,rgba(0,0,0,.4) 100%),
+      rgba(5,4,3,.2)}
 
   /* Fixed, non-interactive grain — breaks the flat-vector digital feel.
      Only ever on a fixed layer, never on a scrolling container (perf). */
@@ -140,7 +140,7 @@
   }
   .hero-panel::before{
     content:"";position:absolute;inset:-12% -15%;z-index:-1;
-    background:radial-gradient(58% 62% at 50% 46%,rgba(3,2,1,.55) 0%,rgba(3,2,1,.3) 46%,rgba(3,2,1,0) 76%);
+    background:radial-gradient(58% 62% at 50% 46%,rgba(3,2,1,.4) 0%,rgba(3,2,1,.2) 46%,rgba(3,2,1,0) 76%);
     pointer-events:none;
   }
   .hero-panel .ring{width:130px;height:130px;flex:none;margin:0 auto 14px;filter:drop-shadow(0 18px 34px rgba(0,0,0,.6)) drop-shadow(0 0 20px rgba(201,162,39,.22))}
@@ -206,13 +206,13 @@
   .sec-head{max-width:640px;margin-bottom:64px;position:relative}
   .sec-head::before{
     content:"";position:absolute;inset:-14% -22%;z-index:-1;
-    background:radial-gradient(65% 68% at 50% 42%,rgba(3,2,1,.46) 0%,rgba(3,2,1,.22) 48%,rgba(3,2,1,0) 78%);
+    background:radial-gradient(65% 68% at 50% 42%,rgba(3,2,1,.34) 0%,rgba(3,2,1,.15) 48%,rgba(3,2,1,0) 78%);
     pointer-events:none;
   }
   .sec-head.center{text-align:center;margin-left:auto;margin-right:auto}
   .sec-head .kicker{font-size:14.5px;letter-spacing:3.5px;color:var(--gold);text-transform:uppercase;margin-bottom:16px;font-weight:600}
   .sec-head h2{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(34px,5vw,52px);line-height:1.15;color:var(--ivory);text-wrap:balance}
-  .sec-head p{color:var(--muted);font-size:18px;margin-top:14px;max-width:60ch}
+  .sec-head p{color:var(--muted);font-size:20px;margin-top:14px;max-width:60ch}
   /* Shared legibility recipe, applied broadly rather than per-element. */
   .sec-head h2,.why-row h3,.loc-card h3,.cmd-wrap .quote,.enq-info h2,.stat .big,footer .fbrand,
   .ticket-price .amt,.loc-visual .pin p{
@@ -241,25 +241,25 @@
   .ticket-inner{display:grid;grid-template-columns:1fr 1.4fr;padding:0}
   .ticket-price{padding:52px 40px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
   .ticket-price::after{content:"";position:absolute;top:8%;bottom:8%;right:0;width:0;border-right:2px dashed rgba(201,162,39,.28)}
-  .ticket-price .size{font-size:14.5px;letter-spacing:3px;color:var(--gold-lt);text-transform:uppercase}
+  .ticket-price .size{font-size:16px;letter-spacing:3px;color:var(--gold-lt);text-transform:uppercase}
   .ticket-price .amt{font-family:'Cinzel',serif;font-size:clamp(44px,6.6vw,70px);font-weight:600;line-height:1;margin:14px 0;color:var(--gold-lt);font-variant-numeric:tabular-nums;overflow-wrap:break-word}
-  .ticket-price .per{font-size:13.5px;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
-  .ticket-price .flag{display:inline-block;margin-top:22px;border:1px solid var(--gold);color:var(--gold-lt);font-size:12.5px;letter-spacing:1.5px;padding:7px 16px;border-radius:999px}
+  .ticket-price .per{font-size:15px;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
+  .ticket-price .flag{display:inline-block;margin-top:22px;border:1px solid var(--gold);color:var(--gold-lt);font-size:14px;letter-spacing:1.5px;padding:7px 16px;border-radius:999px}
   .ticket-perks{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(246,240,226,.14)}
   .perk{background:transparent;padding:26px 24px;display:flex;gap:16px;align-items:flex-start;transition:background .3s var(--ease)}
   .perk:first-child{border-top-right-radius:16px}
   .perk:hover{background:rgba(255,255,255,.04)}
-  .perk .n{font-family:'Cormorant Garamond',serif;font-size:23px;color:var(--gold);flex:none;width:26px}
-  .perk b{display:block;font-size:17px;color:var(--ivory);font-weight:600;margin-bottom:4px}
-  .perk span{font-size:15px;color:var(--muted)}
+  .perk .n{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--gold);flex:none;width:26px}
+  .perk b{display:block;font-size:19px;color:var(--ivory);font-weight:600;margin-bottom:4px}
+  .perk span{font-size:17px;color:var(--muted)}
   @media(max-width:900px){.ticket-inner{grid-template-columns:1fr}.ticket-price::after{display:none}.ticket-perks{grid-template-columns:1fr}}
 
   /* ---------- WHY — alternating rows with ghost numerals ---------- */
   .why-row{display:grid;grid-template-columns:.4fr 1fr;gap:40px;align-items:center;max-width:900px;margin:0 auto 6px;padding:36px 0;border-bottom:1px solid var(--line)}
   .why-row:last-child{border-bottom:0}
   .why-row .ghost{font-family:'Cinzel',serif;font-size:84px;font-weight:600;color:var(--gold-deep);line-height:1;text-align:center}
-  .why-row h3{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:27px;color:var(--ivory);margin-bottom:8px}
-  .why-row p{color:var(--muted);font-size:16.5px}
+  .why-row h3{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:29px;color:var(--ivory);margin-bottom:8px}
+  .why-row p{color:var(--muted);font-size:18.5px}
   @media(max-width:640px){.why-row{grid-template-columns:1fr;text-align:left}.why-row .ghost{font-size:54px;text-align:left}}
 
   /* ---------- STATS ---------- */
@@ -267,24 +267,46 @@
   .stat{flex:1;min-width:180px;text-align:center;padding:40px 20px;border-right:1px solid var(--line)}
   .stat:last-child{border-right:0}
   .stat .big{font-family:'Cinzel',serif;font-weight:600;font-size:clamp(38px,5.2vw,54px);color:var(--ivory);line-height:1;font-variant-numeric:tabular-nums}
-  .stat .lbl{font-size:13px;letter-spacing:1.4px;color:var(--faint);text-transform:uppercase;margin-top:8px}
+  .stat .lbl{font-size:14.5px;letter-spacing:1.4px;color:var(--faint);text-transform:uppercase;margin-top:8px}
 
   /* ---------- LOCATION ---------- */
   .loc-wrap{display:grid;grid-template-columns:1fr 1fr;gap:0;max-width:1100px;margin:0 auto;align-items:stretch}
   .loc-card{padding:48px;display:flex;flex-direction:column;justify-content:center}
   .loc-card h3{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;color:var(--gold-lt);margin-bottom:6px}
-  .loc-card .sub{font-size:13.5px;letter-spacing:2px;color:var(--faint);text-transform:uppercase;margin-bottom:24px}
+  .loc-card .sub{font-size:15px;letter-spacing:2px;color:var(--faint);text-transform:uppercase;margin-bottom:24px}
   .loc-dl{display:flex;flex-direction:column;gap:16px}
-  .loc-dl .row{display:grid;grid-template-columns:22px 1fr;gap:12px;font-size:16px;color:var(--ivory)}
+  .loc-dl .row{display:grid;grid-template-columns:22px 1fr;gap:12px;font-size:18px;color:var(--ivory)}
   .loc-dl .row span.b{color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:18px}
+  /* A schematic site-plan, not just a floating dot: a faint plotted-grid
+     pattern (echoes the actual plot layout) fading out at the edges, a
+     road line running through it, a compass mark, and a distance scale —
+     enough map-language to read as "a map" instead of empty space. */
   .loc-visual{border-left:1px solid var(--line);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;min-height:340px;padding:24px}
+  .loc-visual::before{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background-image:
+      repeating-linear-gradient(0deg,rgba(201,162,39,.16) 0 1px,transparent 1px 38px),
+      repeating-linear-gradient(90deg,rgba(201,162,39,.16) 0 1px,transparent 1px 38px);
+    -webkit-mask-image:radial-gradient(65% 65% at 50% 50%,#000 40%,transparent 88%);
+            mask-image:radial-gradient(65% 65% at 50% 50%,#000 40%,transparent 88%);
+  }
+  .loc-visual::after{
+    content:"";position:absolute;left:-5%;right:-5%;top:38%;height:2px;pointer-events:none;
+    background:repeating-linear-gradient(90deg,rgba(231,198,101,.55) 0 14px,transparent 14px 24px);
+    transform:rotate(-7deg);
+  }
+  .loc-visual .compass{position:absolute;top:22px;right:24px;width:34px;height:34px;border:1px solid rgba(231,198,101,.5);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cormorant SC',serif;font-size:12px;color:var(--gold-lt);text-shadow:var(--shadow-body)}
+  .loc-visual .compass::before{content:"";position:absolute;top:-7px;left:50%;width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-bottom:7px solid var(--gold-lt);transform:translateX(-50%)}
+  .loc-visual .scale{position:absolute;left:24px;bottom:20px;display:flex;align-items:center;gap:8px}
+  .loc-visual .scale i{display:block;width:46px;height:1px;background:var(--gold-lt)}
+  .loc-visual .scale span{font-size:11.5px;letter-spacing:1px;color:var(--muted);text-shadow:var(--shadow-body)}
   .loc-visual .pin{text-align:center;color:var(--gold-lt);position:relative}
   .loc-visual .pin .ring{width:64px;height:64px;border:1px solid var(--gold);border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;position:relative}
   .loc-visual .pin .ring::after{content:"";position:absolute;inset:-12px;border:1px solid rgba(201,162,39,.28);border-radius:50%;animation:pulse 2.6s ease-out infinite}
   @keyframes pulse{0%{transform:scale(.9);opacity:.8}100%{transform:scale(1.5);opacity:0}}
   .loc-visual .pin .dot{width:11px;height:11px;background:var(--gold);border-radius:50%}
   .loc-visual .pin p{font-family:'Cormorant Garamond',serif;font-size:23px;color:var(--ivory)}
-  .loc-visual .pin span{font-size:12px;letter-spacing:2.5px;color:var(--faint);text-transform:uppercase}
+  .loc-visual .pin span{font-size:13.5px;letter-spacing:2.5px;color:var(--gold-lt);text-transform:uppercase}
   @media(max-width:860px){.loc-wrap{grid-template-columns:1fr}.loc-visual{border-left:0;border-top:1px solid var(--line);min-height:260px}}
 
   /* ---------- TESTIMONIAL ---------- */
@@ -293,7 +315,7 @@
   .cmd-wrap .quote{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(23px,3.2vw,32px);line-height:1.45;color:var(--ivory);font-weight:500;text-wrap:balance}
   .cmd-wrap .who{margin-top:28px}
   .cmd-wrap .who b{font-family:'Cormorant SC',serif;font-size:19px;letter-spacing:1.5px;color:var(--ivory);font-weight:600;display:block}
-  .cmd-wrap .who span{font-size:12.5px;letter-spacing:2px;color:var(--gold);text-transform:uppercase}
+  .cmd-wrap .who span{font-size:14px;letter-spacing:2px;color:var(--gold);text-transform:uppercase}
 
   /* ---------- ENQUIRE ---------- */
   .enquire{border-top:1px solid var(--line)}
@@ -301,15 +323,15 @@
   .enq-info{padding:50px;display:flex;flex-direction:column;justify-content:center}
   .enq-info h2{font-family:'Cormorant Garamond',serif;font-size:clamp(30px,4vw,42px);font-weight:600;margin-bottom:14px}
   .enq-info .script{font-style:italic;color:var(--gold-lt)}
-  .enq-info p{color:var(--muted);margin-bottom:24px;font-size:16.5px}
+  .enq-info p{color:var(--muted);margin-bottom:24px;font-size:18.5px}
   .enq-info ul{list-style:none;display:flex;flex-direction:column;gap:14px}
-  .enq-info li{display:flex;gap:12px;font-size:15.5px;color:var(--ivory)}
+  .enq-info li{display:flex;gap:12px;font-size:17.5px;color:var(--ivory)}
   .enq-info li .b{color:var(--gold);font-family:'Cormorant Garamond',serif}
   .enq-form-panel{padding:44px;position:relative}
   .form{display:grid;gap:14px}
   .form .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
   .form label{display:block}
-  .form span.lbl{display:block;font-size:13px;color:var(--faint);margin-bottom:6px;letter-spacing:.3px}
+  .form span.lbl{display:block;font-size:14.5px;color:var(--faint);margin-bottom:6px;letter-spacing:.3px}
   .form input{
     width:100%;background:rgba(246,240,226,.06);border:1px solid rgba(246,240,226,.2);
     color:var(--ivory);padding:14px 15px;font-family:'Josefin Sans';font-size:16px;border-radius:10px;transition:border .25s var(--ease),background .25s var(--ease);
@@ -317,7 +339,7 @@
   .form input::placeholder{color:rgba(246,240,226,.35)}
   .form input:focus{outline:none;border-color:var(--gold);background:rgba(201,162,39,.08)}
   .form button{margin-top:6px;width:100%;justify-content:center;padding:15px 0}
-  .form-note{font-size:13px;color:var(--faint);margin-top:14px}
+  .form-note{font-size:14.5px;color:var(--faint);margin-top:14px}
   .form-error{display:none;font-size:13.5px;color:#E2685A;margin-top:10px}
   .form-error.show{display:block}
   .enq-success{display:none;text-align:center;padding:20px 10px}
@@ -331,14 +353,14 @@
   /* ---------- FOOTER ---------- */
   footer{color:var(--muted);text-align:center;padding-top:56px;padding-bottom:34px}
   footer .fbrand{font-family:'Cinzel',serif;font-size:22px;letter-spacing:3px;color:var(--gold-lt);margin-bottom:6px}
-  footer .ftag{font-size:14px;color:var(--faint)}
+  footer .ftag{font-size:16px;color:var(--faint)}
   footer .fnav{display:flex;gap:26px;justify-content:center;margin:26px 0;flex-wrap:wrap}
-  footer .fnav a{color:var(--muted);text-decoration:none;font-size:14.5px;transition:color .25s var(--ease)}
+  footer .fnav a{color:var(--muted);text-decoration:none;font-size:16px;transition:color .25s var(--ease)}
   footer .fnav a:hover{color:var(--gold-lt)}
   footer .flegal{display:flex;gap:20px;justify-content:center;margin-bottom:18px;flex-wrap:wrap}
-  footer .flegal a{color:var(--faint);text-decoration:underline;font-size:13px}
-  footer .legal{font-size:12.5px;color:var(--faint);max-width:640px;margin:0 auto;line-height:1.7}
-  footer .copy{margin-top:20px;font-size:13px;color:var(--faint)}
+  footer .flegal a{color:var(--faint);text-decoration:underline;font-size:14.5px}
+  footer .legal{font-size:14px;color:var(--faint);max-width:640px;margin:0 auto;line-height:1.7}
+  footer .copy{margin-top:20px;font-size:14.5px;color:var(--faint)}
 
   @media(max-width:860px){
     .nav-shell{top:calc(env(safe-area-inset-top) + 12px);width:calc(100vw - 24px)}
@@ -510,11 +532,13 @@
       </div>
     </div>
     <div class="loc-visual bezel-core">
+      <div class="compass">N</div>
       <div class="pin">
         <div class="ring"><div class="dot"></div></div>
         <p>Park-1</p>
         <span>Narayankhed</span>
       </div>
+      <div class="scale"><i></i><span>&asymp; 2 km</span></div>
     </div>
   </div>
 </section>
