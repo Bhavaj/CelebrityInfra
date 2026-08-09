@@ -8,6 +8,18 @@ import Agents from "./admin/Agents";
 import Leads from "./admin/Leads";
 import LinkUsers from "./LinkUsers";
 
+// Deterministic per-project accent color — same project always gets the same
+// color within a session, so switching projects is an obvious color change
+// at the header, not just a small text swap easy to miss before acting on
+// the wrong project (adding a plot, setting a rate, etc.).
+const PROJECT_ACCENTS = [C.gold, C.emeraldLt, C.wineLt, C.steel, C.goldLt];
+function projectColor(id) {
+  if (!id) return C.muted;
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  return PROJECT_ACCENTS[hash % PROJECT_ACCENTS.length];
+}
+
 const TAB_LABEL = { overview: "Overview", inventory: "Plots", customers: "Customers", agents: "Agents", leads: "Leads" };
 const TAB_SUBTITLE = {
   overview: "Snapshot of the currently selected project.",
@@ -71,6 +83,7 @@ export default function Admin() {
   const customerName = (id) => data.customers.find((c) => c.id === id)?.name ?? "—";
   const pickableProjects = data.projects.filter((p) => !p.archived);
   const activeProjectObj = data.projects.find((p) => p.id === activeProject);
+  const activeColor = projectColor(activeProject);
 
   // Overview stats are scoped to the active project. "sold" is used only for
   // the literal sold-count stat; everywhere money/customers are involved we
@@ -105,9 +118,12 @@ export default function Admin() {
   const projectPicker = (
     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
       {pickableProjects.length > 0 && (
-        <div style={{ minWidth: mobile ? "100%" : 240 }}>
-          <Select value={activeProject} onChange={setActiveProject}
-            options={pickableProjects.map((p) => ({ v: p.id, l: p.name }))} />
+        <div style={{ display: "flex", alignItems: "center", gap: 8, background: `${activeColor}1f`, border: `1.5px solid ${activeColor}`, borderRadius: R.pill, padding: "4px 12px", minWidth: mobile ? "100%" : 240 }}>
+          <span style={{ width: 9, height: 9, borderRadius: "50%", background: activeColor, flex: "none" }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <Select compact value={activeProject} onChange={setActiveProject}
+              options={pickableProjects.map((p) => ({ v: p.id, l: p.name }))} />
+          </div>
         </div>
       )}
       <Button kind="ghost" size="sm" onClick={() => setManageProjectsOpen(true)}>
@@ -127,7 +143,12 @@ export default function Admin() {
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <PageHeader
-          eyebrow={pickableProjects.length > 0 ? "Admin · " + (activeProjectObj?.name || "No project") : "Admin"}
+          eyebrow={pickableProjects.length > 0 ? (
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+              <span style={{ width: 7, height: 7, borderRadius: "50%", background: activeColor, flex: "none" }} />
+              Admin · {activeProjectObj?.name || "No project"}
+            </span>
+          ) : "Admin"}
           title={pageLabel}
           subtitle={TAB_SUBTITLE[tab]}
           right={projectPicker}

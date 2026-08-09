@@ -19,27 +19,31 @@ export function scheduleStatus(installments, paid) {
 
 // Chronological record of every payment against a plot — first row is
 // whichever payment was recorded first (usually the booking advance), each
-// later payment (installment, final, etc.) appends below with a running
-// balance, so admin can see at a glance what's been collected and when.
-export function PaymentLedger({ transactions }) {
+// later payment (installment, final, etc.) appends below. "Balance" is what's
+// still owed against the plot price (price minus payments so far), not a
+// running total of payments — showing the cumulative-paid figure under a
+// "Balance" header read backwards (e.g. a ₹50k advance on a ₹2.5L plot showed
+// "Balance ₹50,000", as if only ₹50k were left rather than ₹2L).
+export function PaymentLedger({ transactions, price }) {
   const sorted = [...transactions].sort((a, b) => {
     if (a.date !== b.date) return a.date < b.date ? -1 : 1;
     return String(a.created_at || "").localeCompare(String(b.created_at || ""));
   });
-  let running = 0;
+  let paidSoFar = 0;
   return (
-    <TableScroll minWidth={420}>
+    <TableScroll minWidth={460}>
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead><tr><Th>Date</Th><Th>Type</Th><Th right>Amount</Th><Th right>Balance</Th></tr></thead>
+        <thead><tr><Th>Date</Th><Th>Type</Th><Th right>Amount</Th><Th right>Balance due</Th></tr></thead>
         <tbody>
           {sorted.map((t) => {
-            running += Number(t.amount);
+            paidSoFar += Number(t.amount);
+            const balanceDue = Math.max(0, Number(price) - paidSoFar);
             return (
               <tr key={t.id}>
                 <Td>{fmtDate(t.date)}</Td>
                 <Td>{t.type || "—"}</Td>
                 <Td right>{fmt(t.amount)}</Td>
-                <Td right bold>{fmt(running)}</Td>
+                <Td right bold>{fmt(balanceDue)}</Td>
               </tr>
             );
           })}
@@ -199,7 +203,7 @@ function PlotCard({ plot, customers, agents, transactions, installments, custome
           ]} />
           <div style={{ marginTop: 14 }}>
             {detailTab === "ledger" ? (
-              tx.length > 0 ? <PaymentLedger transactions={tx} /> : (
+              tx.length > 0 ? <PaymentLedger transactions={tx} price={plot.price} /> : (
                 <p style={{ fontSize: 13.5, color: C.muted, margin: 0 }}>No payments recorded yet — the first one you add above (e.g. the booking advance) will show up here.</p>
               )
             ) : (

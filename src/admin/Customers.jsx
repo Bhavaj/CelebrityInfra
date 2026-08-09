@@ -218,7 +218,7 @@ function CustomerCard({ customer, plots, transactions, installments, allPlots, p
                   <ProgressBar pct={pct} color={overdue > 0 ? `linear-gradient(90deg,#7a2a24,${C.red})` : undefined} />
 
                   <div style={{ marginTop: 14 }}>
-                    {tx.length > 0 ? <PaymentLedger transactions={tx} /> : (
+                    {tx.length > 0 ? <PaymentLedger transactions={tx} price={p.price} /> : (
                       <p style={{ fontSize: 12.5, color: C.muted, margin: 0 }}>No payments recorded yet.</p>
                     )}
                   </div>
