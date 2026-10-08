@@ -1,0 +1,18 @@
+:root{
+  --bg:#0A0907; --bg-2:#12100C; --surface:#17140F; --surface-2:#1E1A13; --field:#191510;
+  --ivory:#F4EEE1; --muted:#B3A78F; --faint:#948872;
+  --gold:#C9A227; --gold-lt:#E3C46A; --gold-hi:#F3DE9C; --gold-deep:#8A6D1B;
+  --wine:#7A1F2B; --wine-lt:#A5333F; --success:#34B378; --danger:#E2685A;
+  --line:rgba(244,238,225,.10); --line-strong:rgba(244,238,225,.18); --line-gold:rgba(201,162,39,.32);
+  --font-display:'Cormorant Garamond',Georgia,serif; --font-sans:'Manrope',system-ui,sans-serif;
+  --font-wordmark:'Cinzel',Georgia,serif; --font-mono:'JetBrains Mono',ui-monospace,monospace;
+  --r-sm:6px; --r-md:12px; --r-lg:20px; --r-pill:999px;
+  --ease-out:cubic-bezier(.16,1,.3,1); --ease-in-out:cubic-bezier(.65,0,.35,1);
+
+  /* added (homepage redesign) */
+  --ink-on-gold:#17120A;            /* text on solid gold buttons */
+  --gold-grad:linear-gradient(180deg,var(--gold-lt),var(--gold));
+  --focus-ring:0 0 0 3px rgba(227,196,106,.38);
+  --dur-fast:.4s; --dur:.7s; --dur-slow:.9s;
+  --tracking-label:.16em;           /* small uppercase Manrope 600 labels */
+}

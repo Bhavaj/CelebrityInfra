@@ -1,17 +1,262 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#0B0A08" />
-  <title>Celebrity Infra — Portal</title>
-  <link rel="icon" type="image/png" href="/celebrity-logo.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#0A0907" />
+<title>Celebrity's Park-1 — Celebrity Infra Pvt Ltd</title>
+<meta name="description" content="Celebrity's Park-1: a gated, plotted venture at Narayankhed, Telangana. 121 sq. yd. plots from ₹2,50,000 with EMI options." />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Celebrity Infra Pvt Ltd" />
+<meta property="og:title" content="Celebrity's Park-1 — Celebrity Infra Pvt Ltd" />
+<meta property="og:description" content="A gated, plotted venture at Narayankhed, Telangana. 121 sq. yd. plots from ₹2,50,000 with EMI options." />
+<meta property="og:image" content="/og-image.jpg" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="Dusk aerial view of the Celebrity's Park-1 plotted layout" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" type="image/png" href="/media/favicon-64.png">
+<link rel="apple-touch-icon" href="/media/crest-128.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script type="module" src="/src/site/main.js"></script>
 </head>
-<body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.jsx"></script>
+<body data-scene="hero">
+
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- Backdrop: static dusk gradient paints instantly; the WebGL canvas fades in over it. -->
+<div class="stage" aria-hidden="true">
+  <div class="stage-static"></div>
+  <canvas id="scene" class="stage-canvas" tabindex="-1"></canvas>
+  <div class="scrim scrim-side"></div>
+  <div class="scrim scrim-low"></div>
+  <div class="scrim scrim-full"></div>
+</div>
+
+<!-- Labels pinned to points in the 3D scene (positioned by the scene loop). -->
+<div class="pins" aria-hidden="true">
+  <div class="pin pin-plot" data-pin="plot">
+    <span class="pin-dot"></span>
+    <span class="pin-text"><b>121 sq. yd</b><i>1,089 sq. ft &middot; one plot</i></span>
+  </div>
+  <div class="pin pin-gate" data-pin="gate">
+    <span class="pin-dot"></span>
+    <span class="pin-text"><b>Entrance gate</b><i>Main avenue</i></span>
+  </div>
+  <div class="pin pin-site" data-pin="site">
+    <span class="pin-dot"></span>
+    <span class="pin-text"><b>Celebrity's Park-1</b><i>Narayankhed, Telangana</i></span>
+  </div>
+</div>
+
+<header class="nav" id="nav">
+  <a class="brand" href="#top" aria-label="Celebrity Infra — back to top">
+    <img src="/media/crest-128.webp" alt="" width="40" height="40" />
+    <span class="brand-name"><b>Celebrity</b><span>Infra Pvt Ltd</span></span>
+  </a>
+  <nav class="nav-links" aria-label="Primary">
+    <a href="#offer">Offer</a>
+    <a href="#venture">Venture</a>
+    <a href="#why">Why Park-1</a>
+    <a href="#location">Location</a>
+  </nav>
+  <a class="btn btn-line btn-sm nav-login" href="/portal/">Login</a>
+  <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="menu">
+    <span></span><span></span>
+  </button>
+</header>
+
+<div class="menu" id="menu" hidden>
+  <nav aria-label="Mobile">
+    <a href="#offer">Offer</a>
+    <a href="#venture">Venture</a>
+    <a href="#why">Why Park-1</a>
+    <a href="#location">Location</a>
+    <a href="#enquire">Enquire</a>
+  </nav>
+  <div class="menu-foot">
+    <a class="btn btn-gold" href="#enquire">Book a site visit</a>
+    <a class="btn btn-line" href="/portal/">Login</a>
+  </div>
+</div>
+
+<main id="main">
+
+<section class="hero" id="top" data-scene="hero" aria-label="Celebrity's Park-1">
+  <div class="wrap hero-inner">
+    <div class="hero-copy">
+      <p class="presents intro i1">
+        <img src="/media/crest-128.webp" alt="Celebrity Infra Pvt Ltd" width="52" height="52" />
+        <span>Celebrity Infra<br /><b>Presents</b></span>
+      </p>
+      <h1 class="hero-title intro i2">
+        <span class="t-script">Celebrity's</span>
+        <span class="t-main">Park <span class="t-num">1</span></span>
+      </h1>
+      <p class="hero-tag intro i3">Building prestige. Creating a legacy that lasts.</p>
+      <p class="hero-date intro i3"><span class="tick" aria-hidden="true"></span>Grand venture opening &middot; 12 July 2026</p>
+      <div class="hero-cta intro i4">
+        <a class="btn btn-gold" href="#enquire">Book a site visit</a>
+        <a class="btn btn-line" href="#offer">View the offer</a>
+      </div>
+    </div>
+    <dl class="facts intro i5">
+      <div><dt>Acres planned</dt><dd>9</dd></div>
+      <div><dt>Sq. yd per plot</dt><dd>121</dd></div>
+      <div><dt>Starting price</dt><dd>&#8377;2.5L</dd></div>
+    </dl>
+  </div>
+</section>
+
+<div class="trust">
+  <ul class="wrap" aria-label="Highlights">
+    <li>Clear titles</li><li>Gated community</li><li>Easy EMI</li><li>Resort membership</li><li>Narayankhed, Telangana</li>
+  </ul>
+</div>
+
+<section class="sec offer" id="offer" data-scene="offer" aria-labelledby="offer-h">
+  <div class="wrap split">
+    <div class="panel ticket reveal">
+      <p class="label">The offer</p>
+      <h2 id="offer-h">One price. Every privilege.</h2>
+      <div class="price">
+        <p class="price-size">121 sq. yards</p>
+        <p class="price-amt">&#8377;2,50,000</p>
+        <p class="price-note">Only, all inclusive <span class="flag">Limited period offer</span></p>
+      </div>
+      <ul class="perks">
+        <li><b>Easy EMI facility</b><span>Own now, pay in comfortable monthly installments.</span></li>
+        <li><b>Free resort membership</b><span>Complimentary access for every plot owner.</span></li>
+        <li><b>Free fruits delivery</b><span>A taste of the estate, delivered to you.</span></li>
+        <li><b>Early registration priority</b><span>Book now and secure the best-placed plots first.</span></li>
+      </ul>
+      <a class="btn btn-gold" href="#enquire">Book a site visit</a>
+    </div>
+    <div class="window" aria-hidden="true"></div>
+  </div>
+</section>
+
+<section class="sec venture" id="venture" data-scene="venture" aria-labelledby="venture-h">
+  <div class="wrap">
+    <div class="copy-col reveal">
+      <p class="label">The venture</p>
+      <h2 id="venture-h">Land that appreciates while your family grows around it.</h2>
+      <p class="lead">Celebrity's Park-1 is a planned plotted community: gated, landscaped, and built to a standard that holds up over time. A piece of the legacy, close to nature and positioned for growth.</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec why" id="why" data-scene="why" aria-labelledby="why-h">
+  <div class="wrap">
+    <div class="copy-col">
+      <div class="reveal">
+        <p class="label">Why Park-1</p>
+        <h2 id="why-h">A considered investment, not a gamble.</h2>
+      </div>
+      <ul class="points">
+        <li class="reveal"><h3>Clear and ready titles</h3><p>Transparent documentation and a registration process handled end to end, so ownership is never in question.</p></li>
+        <li class="reveal"><h3>Planned and gated</h3><p>Wide internal roads, defined boundaries, and landscaping designed for a community that grows in value.</p></li>
+        <li class="reveal"><h3>An appreciating corridor</h3><p>Positioned in a growth belt at Narayankhed, where connectivity and demand continue to rise.</p></li>
+      </ul>
+    </div>
+    <dl class="stats reveal" aria-label="Key figures">
+      <div><dd>9</dd><dt>Acres planned</dt></div>
+      <div><dd>121</dd><dt>Sq. yards per plot</dt></div>
+      <div><dd>100%</dd><dt>Clear titles</dt></div>
+      <div><dd>EMI</dd><dt>Payment ease</dt></div>
+    </dl>
+  </div>
+</section>
+
+<section class="sec location" id="location" data-scene="location" aria-labelledby="loc-h">
+  <div class="wrap split">
+    <div class="panel loc-card reveal">
+      <p class="label">Location</p>
+      <h2 id="loc-h">Rooted at Narayankhed.</h2>
+      <p class="loc-place">Narayankhed, Telangana <span>Sangareddy district</span></p>
+      <ul class="dash">
+        <li>A steadily developing town in a recognised growth corridor</li>
+        <li>Well connected by road to surrounding districts</li>
+        <li>Surrounded by green, open landscape, ideal for a farm-plot lifestyle</li>
+        <li>Grand venture opening ceremony held 12 July 2026</li>
+      </ul>
+      <a class="btn btn-line" href="https://www.google.com/maps/search/?api=1&amp;query=Narayankhed%2C+Telangana" target="_blank" rel="noopener">Open in Google Maps</a>
+    </div>
+    <div class="window" aria-hidden="true"></div>
+  </div>
+</section>
+
+<section class="sec chairman" data-scene="chairman" aria-label="A word from the Chairman">
+  <div class="wrap">
+    <figure class="quote reveal">
+      <blockquote>
+        <p>We don't just sell land. We hand over the foundation of a family's legacy, with the trust and transparency every owner deserves.</p>
+      </blockquote>
+      <figcaption><b>V. Vijay Kumar Babu</b><span>Chairman &amp; Managing Director</span></figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="sec enquire" id="enquire" data-scene="enquire" aria-labelledby="enq-h">
+  <div class="wrap split">
+    <div class="enq-info reveal">
+      <p class="label">Site visit</p>
+      <h2 id="enq-h">Secure your plot.</h2>
+      <p class="lead">Leave your details and our team will arrange a personal site visit at Park-1.</p>
+      <ul class="dash">
+        <li>Personal walkthrough of the actual plot grid</li>
+        <li>EMI options explained on the spot</li>
+        <li>No obligation, no pressure</li>
+      </ul>
+    </div>
+    <div class="panel enq-panel reveal">
+      <form class="form" id="enquireForm" novalidate>
+        <div class="row">
+          <label class="field"><span>Full name</span><input type="text" id="enqName" name="name" autocomplete="name" placeholder="Your name" required /></label>
+          <label class="field"><span>Phone number</span><input type="tel" id="enqPhone" name="phone" autocomplete="tel" inputmode="tel" placeholder="98480 00000" required /></label>
+        </div>
+        <label class="field"><span>Email <em>(optional)</em></span><input type="email" id="enqEmail" name="email" autocomplete="email" placeholder="you@example.com" /></label>
+        <label class="field"><span>Preferred visit date</span><input type="text" id="enqDate" name="preferred_date" placeholder="e.g. next Saturday" /></label>
+        <button class="btn btn-gold btn-block" type="submit">Request site visit</button>
+        <p class="form-error" id="enqError" role="alert" hidden>Your request didn't go through. Check your connection and try again, or call us directly.</p>
+        <p class="form-note">By submitting, you agree to be contacted by Celebrity Infra Pvt Ltd regarding Park-1.</p>
+      </form>
+      <div class="enq-success" id="enqSuccess" hidden tabindex="-1">
+        <span class="ok" aria-hidden="true"></span>
+        <h3>Request received</h3>
+        <p>Our team will reach out shortly to arrange your personal site visit at Park-1.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="f-top">
+      <div>
+        <p class="f-mark">CELEBRITY</p>
+        <p class="f-tag">Building prestige &middot; Creating legacy</p>
+      </div>
+      <nav class="f-nav" aria-label="Footer">
+        <a href="#offer">The Offer</a>
+        <a href="#venture">The Venture</a>
+        <a href="#why">Why Park-1</a>
+        <a href="#location">Location</a>
+        <a href="#enquire">Enquire</a>
+        <a href="/portal/">Login</a>
+      </nav>
+    </div>
+    <p class="f-legal">Conceptual visuals. Indicative, not to scale. Subject to change without notice. T&amp;C apply. Celebrity Infra Pvt Ltd, Narayankhed, Telangana.</p>
+    <div class="f-bottom">
+      <p>&copy; 2026 Celebrity Infra Pvt Ltd. All rights reserved.</p>
+      <p class="f-links"><a href="#">Privacy policy</a><a href="#">Terms of service</a></p>
+    </div>
+  </div>
+</footer>
+
 </body>
 </html>
