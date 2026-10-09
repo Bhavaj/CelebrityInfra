@@ -31,6 +31,8 @@
   <div class="stage-static"></div>
   <canvas id="scene" class="stage-canvas" tabindex="-1"></canvas>
   <div class="scrim scrim-side"></div>
+  <div class="scrim scrim-right"></div>
+  <div class="scrim scrim-center"></div>
   <div class="scrim scrim-low"></div>
   <div class="scrim scrim-full"></div>
 </div>
@@ -39,15 +41,11 @@
 <div class="pins" aria-hidden="true">
   <div class="pin pin-plot" data-pin="plot">
     <span class="pin-dot"></span>
-    <span class="pin-text"><b>121 sq. yd</b><i>1,089 sq. ft &middot; one plot</i></span>
-  </div>
-  <div class="pin pin-gate" data-pin="gate">
-    <span class="pin-dot"></span>
-    <span class="pin-text"><b>Entrance gate</b><i>Main avenue</i></span>
+    <span class="pin-text"><b>121 sq. yd &middot; &#8377;2,50,000</b><i>1,089 sq. ft &middot; one plot</i></span>
   </div>
   <div class="pin pin-site" data-pin="site">
     <span class="pin-dot"></span>
-    <span class="pin-text"><b>Celebrity's Park-1</b><i>Narayankhed, Telangana</i></span>
+    <span class="pin-text"><b>Celebrity's Park-1</b></span>
   </div>
 </div>
 
@@ -62,6 +60,7 @@
     <a href="#why">Why Park-1</a>
     <a href="#location">Location</a>
   </nav>
+  <a class="btn btn-gold btn-sm nav-cta" href="#enquire">Book a visit</a>
   <a class="btn btn-line btn-sm nav-login" href="/portal/">Login</a>
   <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="menu">
     <span></span><span></span>
@@ -87,55 +86,46 @@
 <section class="hero" id="top" data-scene="hero" aria-label="Celebrity's Park-1">
   <div class="wrap hero-inner">
     <div class="hero-copy">
-      <p class="presents intro i1">
-        <img src="/media/crest-128.webp" alt="Celebrity Infra Pvt Ltd" width="52" height="52" />
-        <span>Celebrity Infra<br /><b>Presents</b></span>
-      </p>
       <h1 class="hero-title intro i2">
         <span class="t-script">Celebrity's</span>
-        <span class="t-main">Park <span class="t-num">1</span></span>
+        <span class="t-main"><span class="t-park">Park</span> <span class="t-num"><span class="t-num-i">1</span></span></span>
       </h1>
-      <p class="hero-tag intro i3">Building prestige. Creating a legacy that lasts.</p>
-      <p class="hero-date intro i3"><span class="tick" aria-hidden="true"></span>Grand venture opening &middot; 12 July 2026</p>
-      <div class="hero-cta intro i4">
-        <a class="btn btn-gold" href="#enquire">Book a site visit</a>
-        <a class="btn btn-line" href="#offer">View the offer</a>
+      <div class="hero-sub">
+        <p class="hero-tag intro i3">Building prestige. Creating a legacy that lasts.</p>
+        <p class="hero-date intro i3"><span class="tick" aria-hidden="true"></span>Grand venture opening &middot; 12 July 2026</p>
+        <div class="hero-cta intro i4">
+          <a class="btn btn-gold" href="#enquire">Book a site visit</a>
+        </div>
       </div>
     </div>
     <dl class="facts intro i5">
-      <div><dt>Acres planned</dt><dd>9</dd></div>
-      <div><dt>Sq. yd per plot</dt><dd>121</dd></div>
-      <div><dt>Starting price</dt><dd>&#8377;2.5L</dd></div>
+      <div><dt>Acres planned</dt><dd><span class="num" data-to="9">9</span></dd></div>
+      <div><dt>Sq. yd per plot</dt><dd><span class="num" data-to="121">121</span></dd></div>
+      <div><dt>Starting price</dt><dd>&#8377;<span class="num" data-to="2.5" data-dec="1">2.5</span>L</dd></div>
       <div class="facts-wide"><dt>Every plot</dt><dd>Mango tree</dd></div>
     </dl>
   </div>
 </section>
 
-<div class="trust">
-  <ul class="wrap" aria-label="Highlights">
-    <li>Clear titles</li><li>Gated community</li><li>Easy EMI</li><li>Resort membership</li><li>Narayankhed, Telangana</li>
-  </ul>
-</div>
-
 <section class="sec offer" id="offer" data-scene="offer" aria-labelledby="offer-h">
   <div class="wrap split">
-    <div class="panel ticket reveal">
-      <div class="ticket-head">
-        <p class="label">The offer</p>
-        <h2 id="offer-h">One price. Every privilege.</h2>
+    <div class="ticket-wrap">
+      <div class="panel ticket">
+        <div class="ticket-head">
+          <h2 id="offer-h">One price. Every privilege.</h2>
+        </div>
+        <div class="price">
+          <p class="price-amt">&#8377;2,50,000</p>
+          <p class="price-note">Only, all inclusive <span class="flag">Limited period offer</span></p>
+        </div>
+        <ul class="perks">
+          <li><b>Easy EMI facility</b><span>Own now, pay in comfortable monthly installments.</span></li>
+          <li><b>Free resort membership</b><span>Complimentary access for every plot owner.</span></li>
+          <li><b>Free fruits delivery</b><span>A taste of the estate, delivered to you.</span></li>
+          <li><b>Early registration priority</b><span>Book now and secure the best-placed plots first.</span></li>
+        </ul>
+        <a class="btn btn-gold" href="#enquire">Book a site visit</a>
       </div>
-      <div class="price">
-        <p class="price-size">121 sq. yards</p>
-        <p class="price-amt">&#8377;2,50,000</p>
-        <p class="price-note">Only, all inclusive <span class="flag">Limited period offer</span></p>
-      </div>
-      <ul class="perks">
-        <li><b>Easy EMI facility</b><span>Own now, pay in comfortable monthly installments.</span></li>
-        <li><b>Free resort membership</b><span>Complimentary access for every plot owner.</span></li>
-        <li><b>Free fruits delivery</b><span>A taste of the estate, delivered to you.</span></li>
-        <li><b>Early registration priority</b><span>Book now and secure the best-placed plots first.</span></li>
-      </ul>
-      <a class="btn btn-gold" href="#enquire">Book a site visit</a>
     </div>
     <div class="window" aria-hidden="true"></div>
   </div>
@@ -143,8 +133,7 @@
 
 <section class="sec venture" id="venture" data-scene="venture" aria-labelledby="venture-h">
   <div class="wrap">
-    <div class="copy-col reveal">
-      <p class="label">The venture</p>
+    <div class="copy-col">
       <h2 id="venture-h">Land that appreciates while your family grows around it.</h2>
       <p class="lead">Celebrity's Park-1 is a planned plotted community: gated, landscaped, and built to a standard that holds up over time. A piece of the legacy, close to nature and positioned for growth.</p>
     </div>
@@ -154,36 +143,28 @@
 <section class="sec why" id="why" data-scene="why" aria-labelledby="why-h">
   <div class="wrap">
     <div class="copy-col">
-      <div class="reveal">
-        <p class="label">Why Park-1</p>
+      <div class="why-head">
         <h2 id="why-h">A considered investment, not a gamble.</h2>
       </div>
       <ul class="points">
-        <li class="reveal"><h3>Clear and ready titles</h3><p>Transparent documentation and a registration process handled end to end, so ownership is never in question.</p></li>
-        <li class="reveal"><h3>Planned and gated</h3><p>Wide internal roads, defined boundaries, and landscaping designed for a community that grows in value.</p></li>
-        <li class="reveal"><h3>An appreciating corridor</h3><p>Positioned in a growth belt at Narayankhed, where connectivity and demand continue to rise.</p></li>
+        <li><h3>Clear and ready titles</h3><p>Transparent documentation and a registration process handled end to end, so ownership is never in question.</p></li>
+        <li><h3>Planned and gated</h3><p>Wide internal roads, defined boundaries, and landscaping designed for a community that grows in value.</p></li>
+        <li><h3>An appreciating corridor</h3><p>Positioned in a growth belt at Narayankhed, where connectivity and demand continue to rise.</p></li>
       </ul>
     </div>
-    <dl class="stats reveal" aria-label="Key figures">
-      <div><dd>9</dd><dt>Acres planned</dt></div>
-      <div><dd>121</dd><dt>Sq. yards per plot</dt></div>
-      <div><dd>100%</dd><dt>Clear titles</dt></div>
-      <div><dd>EMI</dd><dt>Payment ease</dt></div>
-    </dl>
   </div>
 </section>
 
 <section class="sec location" id="location" data-scene="location" aria-labelledby="loc-h">
   <div class="wrap split">
-    <div class="panel loc-card reveal">
-      <p class="label">Location</p>
+    <div class="panel loc-card">
+      <div class="loc-bg" aria-hidden="true"></div>
       <h2 id="loc-h">Rooted at Narayankhed.</h2>
-      <p class="loc-place">Narayankhed, Telangana <span>Sangareddy district</span></p>
+      <p class="loc-place">Telangana &middot; Sangareddy district</p>
       <ul class="dash">
         <li>A steadily developing town in a recognised growth corridor</li>
         <li>Well connected by road to surrounding districts</li>
         <li>Surrounded by green, open landscape, ideal for a farm-plot lifestyle</li>
-        <li>Grand venture opening ceremony held 12 July 2026</li>
       </ul>
       <a class="btn btn-line" href="https://www.google.com/maps/search/?api=1&amp;query=Narayankhed%2C+Telangana" target="_blank" rel="noopener">Open in Google Maps</a>
     </div>
@@ -193,7 +174,7 @@
 
 <section class="sec chairman" data-scene="chairman" aria-label="A word from the Chairman">
   <div class="wrap">
-    <figure class="quote reveal">
+    <figure class="quote">
       <blockquote>
         <p>We don't just sell land. We hand over the foundation of a family's legacy, with the trust and transparency every owner deserves.</p>
       </blockquote>
@@ -204,7 +185,7 @@
 
 <section class="sec enquire" id="enquire" data-scene="enquire" aria-labelledby="enq-h">
   <div class="wrap split">
-    <div class="enq-info reveal">
+    <div class="enq-info">
       <p class="label">Site visit</p>
       <h2 id="enq-h">Secure your plot.</h2>
       <p class="lead">Leave your details and our team will arrange a personal site visit at Park-1.</p>
@@ -214,7 +195,7 @@
         <li>No obligation, no pressure</li>
       </ul>
     </div>
-    <div class="panel enq-panel reveal">
+    <div class="panel enq-panel">
       <form class="form" id="enquireForm" novalidate>
         <div class="row">
           <label class="field"><span>Full name</span><input type="text" id="enqName" name="name" autocomplete="name" placeholder="Your name" required /></label>
@@ -241,8 +222,7 @@
   <div class="wrap">
     <div class="f-top">
       <div>
-        <p class="f-mark">CELEBRITY</p>
-        <p class="f-tag">Building prestige &middot; Creating legacy</p>
+        <p class="f-mark" role="img" aria-label="Celebrity">CELEBRITY</p>
       </div>
       <nav class="f-nav" aria-label="Footer">
         <a href="#offer">The Offer</a>

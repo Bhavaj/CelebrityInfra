@@ -15,4 +15,18 @@
   --focus-ring:0 0 0 3px rgba(227,196,106,.38);
   --dur-fast:.4s; --dur:.7s; --dur-slow:.9s;
   --tracking-label:.16em;           /* small uppercase Manrope 600 labels */
+
+  /* type scale (homepage). One ratio (~1.25), phone → desktop via clamp (390 → 1440 px viewport).
+     Every font-size on the homepage resolves to one of these; no per-section overrides. */
+  --fs-micro:12px;                                    /* uppercase labels, dt, flags, pin captions, field labels */
+  --fs-small:14px;                                    /* legal, notes, small buttons */
+  --fs-ui:clamp(15px,calc(14.63px + .095vw),16px);    /* nav, buttons, secondary copy */
+  --fs-body:clamp(17px,calc(16.63px + .095vw),18px);
+  --fs-lead:clamp(19px,1.5vw,22px);
+  --fs-h4:clamp(18px,calc(17.63px + .095vw),19px);    /* sans 600 item titles */
+  --fs-h3:clamp(24px,calc(21.03px + .762vw),32px);    /* h3, hero tagline */
+  --fs-h2:clamp(40px,4.6vw,76px);                     /* every section h2 */
+  --fs-figure:clamp(48px,5vw,80px);                   /* price */
+  --fs-quote:clamp(28px,3.2vw,52px);
+  --fs-display:clamp(96px,15vw,248px);                /* PARK 1 (script line = .36x) */
 }

@@ -5,8 +5,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { L, HIGHLIGHT } from "./layout.js";
 import * as SH from "./shaders.js";
 import * as OB from "./objects.js";
-import { SHOTS, PIN_ANCHORS, evalShots, buildKeys } from "./shots.js";
-import { initMotion } from "../motion.js";
+import { SHOTS, PIN_ANCHORS, PIN_SECTION, evalShots, buildKeys, measureSections, sceneOptions, shotFor } from "./shots.js";
 import { FXAAShader } from "three/examples/jsm/shaders/FXAAShader.js";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -243,17 +242,17 @@ export async function createStage({ canvas, reduceMotion }) {
   resize();
 
   /* ---------- scroll → shot keys ---------- */
-  const names = ["hero", "offer", "venture", "why", "location", "chairman", "enquire"];
-  const secEls = Object.fromEntries(names.map((n) => [n, document.querySelector(`section[data-scene="${n}"]`)]));
+  // Section geometry is measured after every ScrollTrigger refresh, i.e. after motion.js has laid out its
+  // pinned sections (their pin spacing is part of the section heights, so the shots stretch over the pins).
   let keys = [{ y: 0, shot: SHOTS.hero }, { y: 1e9, shot: SHOTS.hero }];
-  const triggers = names.map((n) => ScrollTrigger.create({ trigger: secEls[n], start: "top top", end: "bottom top" }));
+  let sceneOpt = sceneOptions();
   function rebuild() {
-    const s = {};
-    names.forEach((n, i) => { s[n] = { top: triggers[i].start, bottom: triggers[i].end }; });
-    keys = buildKeys(s, innerHeight);
+    sceneOpt = sceneOptions();
+    keys = buildKeys(measureSections(), innerHeight, sceneOpt);
+    for (const k in pinEls) pinEls[k].w = 0;
   }
   ScrollTrigger.addEventListener("refresh", rebuild);
-  ScrollTrigger.refresh();
+  rebuild();
 
   let lenis = null;
   if (!reduceMotion) {
@@ -261,34 +260,74 @@ export async function createStage({ canvas, reduceMotion }) {
     lenis.on("scroll", ScrollTrigger.update);
     document.documentElement.classList.add("lenis");
     window.__lenis = lenis;
-    if (!window.__noMotion) initMotion({ desktop: !mobile && innerWidth > 1080 });
   }
 
   /* ---------- pins ---------- */
-  document.querySelectorAll(".pin").forEach((el) => { pinEls[el.dataset.pin] = { el, on: false, p: v3(PIN_ANCHORS[el.dataset.pin]) }; });
+  // A label only shows while (1) the camera is on its shot, (2) its section is the active one, and (3) it is not
+  // covered by copy. Phones scroll the copy over the scene, so without (2)/(3) the plot label used to show
+  // through the hero facts rail. Beside its point it tries the right, then the left, before giving up.
+  const PIN_COVERS = { plot: [".hero-copy", ".hero .facts", ".offer .ticket"], site: [".location .loc-card", ".why .points"] };
+  document.querySelectorAll(".pin").forEach((el) => {
+    const k = el.dataset.pin;
+    if (!PIN_ANCHORS[k]) return;
+    pinEls[k] = { el, on: false, p: v3(PIN_ANCHORS[k]), sec: PIN_SECTION[k], covers: PIN_COVERS[k].map((s) => document.querySelector(s)).filter(Boolean) };
+  });
   const proj = new THREE.Vector3();
+  const hits = (pin, x0, y0) => {
+    for (const c of pin.covers) {
+      const r = c.getBoundingClientRect();
+      if (r.bottom > 0 && r.top < H && x0 < r.right && x0 + pin.w > r.left && y0 < r.bottom && y0 + pin.h > r.top) return true;
+    }
+    return false;
+  };
   function updatePins(shot) {
+    const scene = document.body.dataset.scene;
     for (const k in pinEls) {
       const pin = pinEls[k];
-      const want = shot.pin === k && shot.pinW > 0.6;
+      const want = shot.pin === k && shot.pinW > 0.6 && scene === pin.sec;
+      let vis = false;
       if (want) {
         proj.copy(pin.p).project(camera);
-        const vis = proj.z < 1 && Math.abs(proj.x) < 1.1 && Math.abs(proj.y) < 1.1;
+        vis = proj.z < 1 && Math.abs(proj.x) < 1.1 && Math.abs(proj.y) < 1.1;
         if (vis) {
           if (!pin.w) { pin.w = pin.el.offsetWidth; pin.h = pin.el.offsetHeight; } // measured once (and after resizes)
           const x = (proj.x * 0.5 + 0.5) * W, y = (-proj.y * 0.5 + 0.5) * H;
-          // narrow screens: label stacked above the point; otherwise beside it, flipping to stay on screen
-          const mode = W < 600 ? "above" : x + pin.w > W - 12 ? "flip" : "";
-          if (mode !== pin.mode) { pin.el.classList.remove("flip", "above"); if (mode) pin.el.classList.add(mode); pin.mode = mode; pin.w = 0; }
-          else {
-            const tx = mode === "above" ? Math.min(Math.max(x - pin.w / 2, 12), W - pin.w - 12) : mode === "flip" ? x - pin.w : x;
-            const ty = mode === "above" ? y - pin.h : y - pin.h / 2;
-            pin.el.style.transform = `translate3d(${tx.toFixed(1)}px,${ty.toFixed(1)}px,0)`;
-          }
+          // narrow screens: label stacked above the point; otherwise beside it (right, else left)
+          let mode = W < 600 ? "above" : "", tx = 0, ty = 0;
+          const place = (m) => {
+            tx = m === "above" ? Math.min(Math.max(x - pin.w / 2, 12), W - pin.w - 12) : m === "flip" ? x - pin.w : x;
+            ty = m === "above" ? y - pin.h : y - pin.h / 2;
+          };
+          place(mode);
+          if (mode !== "above" && (tx + pin.w > W - 12 || hits(pin, tx, ty))) { mode = "flip"; place(mode); }
+          if (tx < 0 || hits(pin, tx, ty)) vis = false;
+          else if (mode !== pin.mode) { pin.el.classList.remove("flip", "above"); if (mode) pin.el.classList.add(mode); pin.mode = mode; pin.w = 0; vis = pin.on; }
+          else pin.el.style.transform = `translate3d(${tx.toFixed(1)}px,${ty.toFixed(1)}px,0)`;
         }
-        if (vis !== pin.on) { pin.on = vis; pin.el.classList.toggle("on", vis); }
-      } else if (pin.on) { pin.on = false; pin.el.classList.remove("on"); }
+      }
+      if (vis !== pin.on) { pin.on = vis; pin.el.classList.toggle("on", vis); }
     }
+  }
+
+  // Screen position (px) of a label's anchor when the camera rests on a given shot: lets copy hand off to a
+  // label before it appears (the hero's gold "1" flies to the plot). Same framing maths as applyShot, no drift.
+  const aimCam = new THREE.PerspectiveCamera(38, 1, 0.5, 9500);
+  function pinAt(k, shotName) {
+    if (!PIN_ANCHORS[k] || !SHOTS[shotName]) return null;
+    const s = shotFor(shotName, sceneOpt);
+    aimCam.fov = aspect < 1.25 ? Math.min(74, 2 * Math.atan(Math.tan((s.fov * Math.PI) / 360) * (1.25 / aspect) ** 0.72) * 180 / Math.PI) : s.fov;
+    aimCam.aspect = aspect;
+    aimCam.position.set(...s.p);
+    if (s.p[1] > 300) aimCam.up.set(0, 0, -1).lerp(new THREE.Vector3(0, 1, 0), 1 - Math.min(1, (s.p[1] - 300) / 300)).normalize();
+    else aimCam.up.set(0, 1, 0);
+    aimCam.lookAt(...s.t);
+    aimCam.updateProjectionMatrix();
+    const wide = Math.min(1, Math.max(0, (aspect - 0.85) / 0.4));
+    const e = aimCam.projectionMatrix.elements;
+    e[8] = -(s.sx * wide + (s.mx || 0) * (1 - wide)); e[9] = -(s.sy * (1 - wide) + (s.dy || 0) * wide);
+    aimCam.updateMatrixWorld();
+    proj.set(...PIN_ANCHORS[k]).project(aimCam);
+    return { x: (proj.x * 0.5 + 0.5) * W, y: (-proj.y * 0.5 + 0.5) * H };
   }
 
   /* ---------- camera state (damped toward the scroll-derived shot) ---------- */
@@ -303,7 +342,7 @@ export async function createStage({ canvas, reduceMotion }) {
 
   const tmpP = new THREE.Vector3(), tmpT = new THREE.Vector3(), fwd = new THREE.Vector3(), right = new THREE.Vector3(), up = new THREE.Vector3();
   let lastPal = -1;
-  const rootStyle = document.documentElement.style, cssPtr = { x: 0, y: 0 };
+  const rootStyle = document.documentElement.style;
   let cssSun = "";
   function applyShot(dt, time) {
     if (!reduceMotion) evalShots(keys, window.scrollY, want);
@@ -321,11 +360,6 @@ export async function createStage({ canvas, reduceMotion }) {
     const dist = cur.p.distanceTo(cur.t);
     pointer.sx += (pointer.x - pointer.sx) * Math.min(1, dt * 2.5);
     pointer.sy += (pointer.y - pointer.sy) * Math.min(1, dt * 2.5);
-    // copy floats at its own depth: it counter-shifts against the camera's pointer parallax (CSS `translate`)
-    if (!coarse && (Math.abs(pointer.sx - cssPtr.x) > 0.002 || Math.abs(pointer.sy - cssPtr.y) > 0.002)) {
-      cssPtr.x = pointer.sx; cssPtr.y = pointer.sy;
-      rootStyle.setProperty("--px", cssPtr.x.toFixed(3)); rootStyle.setProperty("--py", cssPtr.y.toFixed(3));
-    }
     fwd.subVectors(cur.t, cur.p).normalize();
     right.crossVectors(fwd, camera.up).normalize();
     up.crossVectors(right, fwd);
@@ -415,7 +449,8 @@ export async function createStage({ canvas, reduceMotion }) {
   document.addEventListener("visibilitychange", () => (document.hidden ? stop() : start()));
   renderer.compile(scene, camera);
   if (reduceMotion) requestRender(); else start();
-  const api = { renderer, stop, start, scene };
+  const api = { renderer, stop, start, scene, pinAt };
   window.__stage = api;
+  ScrollTrigger.refresh(); // copy that hands off to scene labels (motion.js) re-reads their screen positions
   return api;
 }

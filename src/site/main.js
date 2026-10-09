@@ -6,6 +6,47 @@ const root = document.documentElement;
 root.classList.add("js");
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+/* ---------- scroll position on reload / deep links ---------- */
+// The page only reaches its full height once motion.js has pinned its sections, which is after the browser
+// would restore a reload's scroll position (it gives up when the old position is out of range) or jump to a
+// #fragment. So both are done here, once the layout is final: a reload returns to where it was, a deep link
+// lands where that section's copy is assembled.
+if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+const SCROLL_KEY = "ci-home-scroll";
+addEventListener("pagehide", () => {
+  try { sessionStorage.setItem(SCROLL_KEY, JSON.stringify({ y: Math.round(scrollY), w: innerWidth })); } catch { /* storage unavailable */ }
+});
+function restoreScroll() {
+  let saved = null;
+  try { saved = JSON.parse(sessionStorage.getItem(SCROLL_KEY)); sessionStorage.removeItem(SCROLL_KEY); } catch { /* storage unavailable */ }
+  const navType = performance.getEntriesByType?.("navigation")[0]?.type;
+  let y = null;
+  if (saved && navType !== "navigate" && saved.w === innerWidth) y = saved.y;
+  else if (location.hash.length > 1) {
+    const el = document.querySelector(location.hash);
+    y = window.__motion?.restY(location.hash) ?? (el ? el.getBoundingClientRect().top + scrollY - document.getElementById("nav").offsetHeight : null);
+  }
+  if (y == null) return;
+  const apply = () => (window.__lenis ? window.__lenis.scrollTo(y, { immediate: true }) : scrollTo({ top: y, behavior: "instant" }));
+  apply();
+  // the browser's own jump to a #fragment can land after this; take the position back once it has
+  if (document.readyState !== "complete") addEventListener("load", () => requestAnimationFrame(apply), { once: true });
+}
+
+/* ---------- scroll choreography (motion.js: GSAP + SplitText, lazy-loaded, independent of WebGL) ---------- */
+// The hero title and facts rail wait (hidden) for motion.js to play their intro. If it hasn't taken over
+// within 2.5 s (slow network, script error), `mo-wait` is dropped and the CSS intro plays instead, so the
+// copy is never left hidden. Everything else is visible until motion.js sets its own start states.
+if (!reduceMotion && !window.__noMotion) {
+  root.classList.add("mo-wait");
+  const fallback = setTimeout(() => root.classList.remove("mo-wait"), 2500);
+  import("./motion.js")
+    .then((m) => m.initMotion({ introExpired: () => !root.classList.contains("mo-wait"), cancelFallback: () => clearTimeout(fallback) }))
+    .catch((err) => { console.warn("motion unavailable", err); root.classList.remove("mo-wait"); })
+    .finally(restoreScroll);
+} else if (document.readyState === "complete") restoreScroll();
+else addEventListener("load", restoreScroll, { once: true });
+
 /* ---------- nav: solid after leaving the hero (class toggle only on change) ---------- */
 const nav = document.getElementById("nav");
 let navSolid = false;
@@ -44,16 +85,13 @@ document.addEventListener("click", (e) => {
   const target = id === "#top" ? document.body : document.querySelector(id);
   if (!target) return;
   e.preventDefault();
-  if (window.__lenis) window.__lenis.scrollTo(id === "#top" ? 0 : target, { offset: id === "#top" ? 0 : -8, duration: 1.6 });
-  else (id === "#top" ? scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" }) : target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" }));
+  // pinned / scrubbed sections: land where the section's copy is fully assembled (motion.js knows where)
+  const rest = id === "#top" ? 0 : window.__motion?.restY(id);
+  if (window.__lenis) window.__lenis.scrollTo(rest ?? target, { offset: rest != null ? 0 : -8, duration: 1.6 });
+  else if (rest != null) scrollTo({ top: rest, behavior: reduceMotion ? "auto" : "smooth" });
+  else target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
   if (id !== "#top") history.replaceState(null, "", id);
 });
-
-/* ---------- reveals ---------- */
-const io = new IntersectionObserver((entries) => entries.forEach((e) => {
-  if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
-}), { threshold: 0, rootMargin: "0px 0px -8% 0px" });
-document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
 
 /* ---------- active section → body[data-scene] (drives the canvas scrims) + nav state ---------- */
 const navLinks = [...document.querySelectorAll(".nav-links a")];
