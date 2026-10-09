@@ -3,18 +3,21 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 import { L, rng, terrainH, mangoInPlot } from "./layout.js";
 
 /* ---------- geometry helpers ---------- */
-function prep(geo, rgb, sway = 0) {
+// kind: surface shading in litFrag — 0 plain, 1 foliage (leaf-clump detail + sheen), 2 fruit (glossy skin)
+export const KIND = { PLAIN: 0, LEAF: 1, FRUIT: 2 };
+function prep(geo, rgb, sway = 0, kind = KIND.PLAIN) {
   const g = geo.index ? geo.toNonIndexed() : geo;
   g.deleteAttribute("uv");
   const n = g.attributes.position.count;
-  const col = new Float32Array(n * 3), sw = new Float32Array(n);
+  const col = new Float32Array(n * 3), sw = new Float32Array(n), kd = new Float32Array(n);
   for (let i = 0; i < n; i++) {
     const c = typeof rgb === "function" ? rgb(i, g) : rgb;
     col[i * 3] = c[0]; col[i * 3 + 1] = c[1]; col[i * 3 + 2] = c[2];
-    sw[i] = sway;
+    sw[i] = sway; kd[i] = kind;
   }
   g.setAttribute("color", new THREE.BufferAttribute(col, 3));
   g.setAttribute("aSway", new THREE.BufferAttribute(sw, 1));
+  g.setAttribute("aKind", new THREE.BufferAttribute(kd, 1));
   return g;
 }
 const box = (w, h, d, x, y, z, rgb) => prep(new THREE.BoxGeometry(w, h, d).translate(x, y, z), rgb);
@@ -42,64 +45,96 @@ export function treeGeometry() {
       const y = gg.attributes.position.getY(i);
       const t = 0.75 + 0.25 * Math.min(1, Math.max(0, (y - 3) / 4));
       return [0.15 * t, 0.19 * t, 0.085 * t];
-    }, 1));
+    }, 1, KIND.LEAF));
   }
   return mergeGeometries(parts);
 }
 
-/* ---------- mango tree, ~7 m: short stout trunk, dense dark dome, fruit hanging off the lower canopy ---------- */
-// Fruit is drawn ~2.5x life size so it still reads from the aerial shots.
-export function mangoGeometry({ fruits = 46, detail = 2 } = {}) {
+/* ---------- mango tree, ~7 m: short stout trunk, dense clumpy dome, fruit hanging off the lower canopy ---------- */
+// Fruit is drawn ~2.5x life size so it still reads from the aerial shots. Leaf detail is added per-pixel in litFrag.
+const hashf = (x, y, z) => { const h = Math.sin(x * 12.9898 + y * 78.233 + z * 37.719) * 43758.5453; return h - Math.floor(h); };
+// smooth-ish 3D value noise from position hashes (geometry only, runs once at build time)
+function vnoise3(x, y, z) {
+  const ix = Math.floor(x), iy = Math.floor(y), iz = Math.floor(z);
+  const fx = x - ix, fy = y - iy, fz = z - iz;
+  const u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy), w = fz * fz * (3 - 2 * fz);
+  const l = (a, b, t) => a + (b - a) * t;
+  const c = (dx, dy, dz) => hashf(ix + dx, iy + dy, iz + dz);
+  return l(l(l(c(0, 0, 0), c(1, 0, 0), u), l(c(0, 1, 0), c(1, 1, 0), u), v), l(l(c(0, 0, 1), c(1, 0, 1), u), l(c(0, 1, 1), c(1, 1, 1), u), v), w);
+}
+// mango silhouette (radius, height) from the tip up to the stalk: full shoulder, tapered, slightly hooked tip
+const MANGO_PROFILE = [[0, -0.5], [0.2, -0.45], [0.36, -0.33], [0.46, -0.15], [0.5, 0.05], [0.48, 0.24], [0.4, 0.38], [0.24, 0.47], [0, 0.5]];
+const MANGO_PROFILE_LO = [[0, -0.5], [0.34, -0.36], [0.5, 0], [0.42, 0.34], [0, 0.5]];
+function fruitGeometry(seg, hi) {
+  const prof = hi ? MANGO_PROFILE : MANGO_PROFILE_LO;
+  const g = new THREE.LatheGeometry(prof.map(([x, y]) => new THREE.Vector2(x, y)), seg);
+  const p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    let x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+    z *= 0.82;                                         // a little flattened, like the real fruit
+    x += 0.09 * Math.max(0, -y) ** 2 * 4;              // the "beak" curls to one side
+    p.setXYZ(i, x * 0.27, y * 0.4, z * 0.27);
+  }
+  g.computeVertexNormals();
+  return g;
+}
+
+export function mangoGeometry({ fruits = 30, detail = 2, seg = 7, hiFruit = false } = {}) {
   const r = rng(11);
   const parts = [];
   const bark = [0.2, 0.14, 0.09];
-  parts.push(prep(new THREE.CylinderGeometry(0.3, 0.42, 2.2, 7, 1).translate(0, 1.1, 0), bark, 0.15));
+  parts.push(prep(new THREE.CylinderGeometry(0.3, 0.42, 2.2, 8, 1).translate(0, 1.1, 0), bark, 0.15));
   for (const [a, tilt] of [[0.3, 0.5], [2.4, 0.55], [4.4, 0.45]]) {
-    const b = new THREE.CylinderGeometry(0.13, 0.2, 2.2, 5, 1).translate(0, 1.1, 0);
+    const b = new THREE.CylinderGeometry(0.13, 0.2, 2.2, 6, 1).translate(0, 1.1, 0);
     b.rotateZ(tilt); b.rotateY(a); b.translate(0, 1.9, 0);
     parts.push(prep(b, bark, 0.3));
   }
-  // canopy: one broad dome + lobes, squashed so it's wider than tall
+  // canopy: broad dome + lobes, squashed wider than tall, with two octaves of clumping on the surface
   const blobs = [[0, 4.6, 0, 3.3], [1.7, 4.1, 0.9, 2.3], [-1.6, 4.2, -0.8, 2.4], [0.7, 4.0, -1.8, 2.2], [-0.8, 4.1, 1.8, 2.2], [0.1, 5.7, 0.2, 2.2]];
-  const shell = []; // points on the canopy underside where fruit can hang
   for (const [bx, by, bz, br] of blobs) {
     const g = new THREE.IcosahedronGeometry(br, detail);
     const p = g.attributes.position, nrm = g.attributes.normal;
+    const ao = new Float32Array(p.count), young = new Float32Array(p.count);
     for (let i = 0; i < p.count; i++) {
       const v = new THREE.Vector3().fromBufferAttribute(p, i);
-      const hv = Math.sin(v.x * 12.9898 + v.y * 78.233 + v.z * 37.719) * 43758.5453;
-      const k = 0.9 + 0.2 * (hv - Math.floor(hv));
+      const d = v.clone().normalize();
+      const wx = v.x + bx, wy = v.y + by, wz = v.z + bz;
+      const clump = vnoise3(wx * 0.9, wy * 0.9, wz * 0.9) * 0.7 + vnoise3(wx * 2.1 + 5, wy * 2.1, wz * 2.1) * 0.3;
+      const k = 0.84 + 0.3 * clump;
       v.multiplyScalar(k); v.y *= 0.72;
       p.setXYZ(i, v.x + bx, v.y + by, v.z + bz);
-      v.y /= 0.72; v.normalize();
-      nrm.setXYZ(i, v.x, v.y, v.z);
+      // normal: mostly the smooth dome, tilted toward the clump bulges
+      const n = d.clone().multiplyScalar(1).add(new THREE.Vector3(hashf(wx, 1, wz) - 0.5, 0, hashf(wz, 2, wx) - 0.5).multiplyScalar(0.35)).normalize();
+      nrm.setXYZ(i, n.x, n.y, n.z);
+      ao[i] = 0.55 + 0.45 * clump;   // recessed clumps sit in shade
+      young[i] = Math.max(0, vnoise3(wx * 0.7 + 9, wy * 0.7, wz * 0.7) - 0.72) * 3.5; // patches of lighter new flush
     }
     parts.push(prep(g, (i, gg) => {
       const y = gg.attributes.position.getY(i);
-      const t = 0.62 + 0.38 * Math.min(1, Math.max(0, (y - 2.6) / 4.2));
-      return [0.085 * t, 0.235 * t, 0.07 * t];   // deep glossy mango green
-    }, 1));
-    shell.push([bx, by, bz, br]);
+      const t = (0.58 + 0.42 * Math.min(1, Math.max(0, (y - 2.6) / 4.2))) * ao[i];
+      return [(0.08 + young[i] * 0.06) * t, (0.23 + young[i] * 0.08) * t, 0.065 * t];
+    }, 1, KIND.LEAF));
   }
-  // fruit: elongated, hanging from short stalks just outside the lower half of the canopy
-  const fruitGeo = () => new THREE.IcosahedronGeometry(1, detail > 1 ? 1 : 0).scale(0.18, 0.27, 0.16);
+  // fruit: hanging from short stalks off the sides and underside of the canopy
+  const proto = fruitGeometry(seg, hiFruit);
   for (let n = 0, tries = 0; n < fruits && tries < fruits * 20; tries++) {
-    const [bx, by, bz, br] = shell[Math.floor(r() * shell.length)];
-    const a = r() * Math.PI * 2, el = 0.35 - r() * 1.05;              // sides and underside of the canopy
+    const [bx, by, bz, br] = blobs[Math.floor(r() * blobs.length)];
+    const a = r() * Math.PI * 2, el = 0.6 - r() * 1.1;              // outer flanks, so it reads from the air too
     const d = new THREE.Vector3(Math.cos(a) * Math.cos(el), Math.sin(el), Math.sin(a) * Math.cos(el));
-    const x = bx + d.x * br * 1.04, z = bz + d.z * br * 1.04, y = by + d.y * br * 0.72 * 1.04;
-    // must sit on the outside of every canopy lobe (otherwise it's buried)
-    if (shell.some(([cx, cy, cz, cr]) => ((x - cx) ** 2 + ((y - cy) / 0.72) ** 2 + (z - cz) ** 2) < (cr * 0.97) ** 2)) continue;
+    const x = bx + d.x * br * 1.08, z = bz + d.z * br * 1.08, y = by + d.y * br * 0.72 * 1.08;
+    if (blobs.some(([cx, cy, cz, cr]) => ((x - cx) ** 2 + ((y - cy) / 0.72) ** 2 + (z - cz) ** 2) < (cr * 0.97) ** 2)) continue;
     if (y < 2.2) continue;
     const ripe = r();
-    const col = ripe < 0.45 ? [0.95, 0.62, 0.08] : ripe < 0.8 ? [0.98, 0.78, 0.16] : [0.55, 0.62, 0.12];
-    const f = fruitGeo().rotateZ((r() - 0.5) * 0.5).translate(x, y - 0.24, z);
+    const base = ripe < 0.4 ? [0.93, 0.6, 0.1] : ripe < 0.75 ? [0.96, 0.76, 0.2] : [0.5, 0.62, 0.16];
+    const f = proto.clone().rotateY(r() * 6.28).rotateZ((r() - 0.5) * 0.35).translate(x, y - 0.28, z);
+    const cy = y - 0.28;
     parts.push(prep(f, (i, gg) => {
-      const fy = gg.attributes.position.getY(i) - (y - 0.24);
-      const blush = Math.max(0, fy) * 2.2;                             // red-orange shoulder near the stalk
-      return [Math.min(1, col[0] + blush * 0.05), col[1] * (1 - blush * 0.35), col[2]];
-    }, 1));
-    if (detail > 1) parts.push(prep(new THREE.CylinderGeometry(0.02, 0.02, 0.3, 3, 1).translate(x, y + 0.02, z), [0.16, 0.2, 0.06], 1));
+      const fy = (gg.attributes.position.getY(i) - cy) / 0.2;          // -1 tip .. +1 stalk
+      const sun = Math.max(0, gg.attributes.normal.getX(i) * 0.5 + 0.5); // one cheek blushes
+      const blush = Math.max(0, fy) * 0.5 + sun * 0.35 * (ripe < 0.75 ? 1 : 0.3);
+      return [Math.min(1, base[0] + blush * 0.05), base[1] * (1 - blush * 0.45), base[2] * (1 - blush * 0.5)];
+    }, 1, KIND.FRUIT));
+    if (detail > 1) parts.push(prep(new THREE.CylinderGeometry(0.015, 0.02, 0.26, 4, 1).translate(x, y + 0.02, z), [0.2, 0.22, 0.08], 1));
     n++;
   }
   return mergeGeometries(parts);

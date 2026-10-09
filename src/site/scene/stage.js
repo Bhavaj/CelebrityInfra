@@ -6,6 +6,8 @@ import { L, HIGHLIGHT } from "./layout.js";
 import * as SH from "./shaders.js";
 import * as OB from "./objects.js";
 import { SHOTS, PIN_ANCHORS, evalShots, buildKeys } from "./shots.js";
+import { initMotion } from "../motion.js";
+import { FXAAShader } from "three/examples/jsm/shaders/FXAAShader.js";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -35,16 +37,36 @@ export async function createStage({ canvas, reduceMotion }) {
   let dpr = Math.min(window.devicePixelRatio || 1, maxDpr);
   let pending = false; // reduced-motion: render-on-demand flag
 
-  // MSAA cost ~30% frame time on integrated desktop GPUs, so it stays off there (survey lines are shader-anti-aliased
-  // via fwidth). Touch devices (phones/tablets) have tile-based GPUs where 4x MSAA resolves in-tile and is near-free,
-  // and without it the distant hill silhouettes stair-step at DPR 1.25. `dbg` = test-harness switches (scripts/perf.mjs).
+  // Anti-aliasing (thousands of small leaf/fruit silhouettes stair-step badly without it):
+  //  - touch devices: native 4x MSAA. Tile-based mobile GPUs resolve it in-tile, so it's near-free.
+  //  - desktop: one FXAA pass. Native MSAA costs integrated desktop GPUs far more (measured: frame p50 16.7 → 180 ms
+  //    on the dev laptop's iGPU), FXAA is a single cheap full-screen pass.
+  // `dbg` = test-harness switches (scripts/perf.mjs); dbg.noAa turns both off for comparisons.
   const dbg = window.__stageDebug || {};
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !!dbg.aa || coarse, powerPreference: "high-performance", alpha: false, stencil: false });
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: coarse && !dbg.noAa, powerPreference: "high-performance", alpha: false, stencil: false });
   renderer.outputColorSpace = THREE.LinearSRGBColorSpace; // shaders author display-space colour directly
   renderer.setPixelRatio(dpr);
   renderer.setClearColor(0x0a0907, 1);
 
   const scene = new THREE.Scene();
+  let post = null;
+  if (!coarse && !dbg.noAa) {
+    const rt = new THREE.WebGLRenderTarget(1, 1, { depthBuffer: true, stencilBuffer: false });
+    const m = new THREE.ShaderMaterial({ ...FXAAShader, uniforms: THREE.UniformsUtils.clone(FXAAShader.uniforms), depthTest: false, depthWrite: false });
+    m.uniforms.tDiffuse.value = rt.texture;
+    post = { rt, m, scene: new THREE.Scene(), cam: new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1) };
+    post.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), m));
+  }
+  const sizePost = () => {
+    if (!post) return;
+    const w = Math.max(1, Math.round(W * dpr)), h = Math.max(1, Math.round(H * dpr));
+    post.rt.setSize(w, h); post.m.uniforms.resolution.value.set(1 / w, 1 / h);
+  };
+  const draw = () => {
+    if (!post) { renderer.render(scene, camera); return; }
+    renderer.setRenderTarget(post.rt); renderer.render(scene, camera);
+    renderer.setRenderTarget(null); renderer.render(post.scene, post.cam);
+  };
   const camera = new THREE.PerspectiveCamera(38, 1, 0.5, 9500);
 
   /* ---------- shared uniforms ---------- */
@@ -95,10 +117,11 @@ export async function createStage({ canvas, reduceMotion }) {
     vertexShader: SH.litVert, fragmentShader: SH.litFrag, vertexColors: true,
     uniforms: { ...U, uSway: { value: extra.sway ?? 0 }, uWrap: { value: extra.wrap ?? 0.15 }, uEmissive: { value: new THREE.Vector3(...(extra.emissive || [0, 0, 0])) } },
     side: extra.side ?? THREE.FrontSide,
+    defines: { SURFACE_DETAIL: mobile || dbg.noDetail ? 0 : 1 },   // per-pixel leaf/skin detail: desktop only
   });
   const place = placements();
   function placements() {
-    return OB.placements({ outsideTrees: mobile ? 260 : 520, orchards: mobile ? 6 : 10 });
+    return OB.placements({ outsideTrees: mobile ? 210 : 520, orchards: mobile ? 6 : 10 });
   }
   const instanced = (geo, mat, list) => {
     const im = new THREE.InstancedMesh(geo, mat, list.length);
@@ -121,13 +144,15 @@ export async function createStage({ canvas, reduceMotion }) {
   trees.instanceColor.needsUpdate = true;
   trees.name = "trees";
   scene.add(trees);
-  // mango trees: full-detail (with fruit) inside the compound, a light fruitless version for the far orchards
+  // mango trees: full-detail (with fruit) inside the compound, a light fruitless version for the far orchards.
+  // ~290 trees are instanced, so per-tree triangles dominate the frame cost on integrated GPUs: keep fruit low-poly
+  // (smooth normals hide the facets) and spend the triangles on the canopy silhouette instead.
   const mangoMat = lit({ sway: 1, wrap: 0.5 });
   const mangoTint = (im, off) => {
     for (let i = 0; i < im.count; i++) { const j = i + off, k = 0.86 + ((j * 0.618) % 1) * 0.28; im.setColorAt(i, tint.setRGB(k, k * (0.97 + ((j * 0.37) % 1) * 0.08), k)); }
     im.instanceColor.needsUpdate = true;
   };
-  const mangos = instanced(OB.mangoGeometry({ fruits: mobile ? 30 : 46, detail: mobile ? 1 : 2 }), mangoMat, place.mangos.slice(0, place.insideMangos));
+  const mangos = instanced(OB.mangoGeometry(mobile ? { fruits: 22, detail: 1, seg: 5 } : { fruits: 30, detail: 2, seg: 7 }), mangoMat, place.mangos.slice(0, place.insideMangos));
   mangoTint(mangos, 0);
   mangos.name = "mangos";
   scene.add(mangos);
@@ -180,7 +205,8 @@ export async function createStage({ canvas, reduceMotion }) {
     shadowList.push(m);
   };
   for (const m of place.trees) { m.decompose(P, Qt, Sc); addShadow(P.x, P.z, P.y + 0.3, 5.2 * Sc.x, 17 * Sc.x); }
-  for (const m of place.mangos) { m.decompose(P, Qt, Sc); addShadow(P.x, P.z, P.y + 0.2, 7 * Sc.x, 19 * Sc.x); }
+  // mango shadows inside the compound only: the far orchards are lost in haze, and their decals are pure overdraw
+  for (const m of place.mangos.slice(0, place.insideMangos)) { m.decompose(P, Qt, Sc); addShadow(P.x, P.z, P.y + 0.2, 7 * Sc.x, 19 * Sc.x); }
   for (const m of place.palms) { m.decompose(P, Qt, Sc); addShadow(P.x, P.z, 0, 4.2 * Sc.x, 22 * Sc.x); }
   for (const s of [-1, 1]) addShadow(s * (L.GATE + 0.8), L.SITE, 0, 2.6, 26);
   const shadowMat = new THREE.ShaderMaterial({
@@ -209,6 +235,7 @@ export async function createStage({ canvas, reduceMotion }) {
   function resize() {
     W = stageEl.clientWidth; H = stageEl.clientHeight; aspect = W / H;
     renderer.setSize(W, H, false);
+    sizePost();
     for (const k in pinEls) pinEls[k].w = 0;
     if (reduceMotion) requestRender();
   }
@@ -234,6 +261,7 @@ export async function createStage({ canvas, reduceMotion }) {
     lenis.on("scroll", ScrollTrigger.update);
     document.documentElement.classList.add("lenis");
     window.__lenis = lenis;
+    if (!window.__noMotion) initMotion({ desktop: !mobile && innerWidth > 1080 });
   }
 
   /* ---------- pins ---------- */
@@ -275,6 +303,8 @@ export async function createStage({ canvas, reduceMotion }) {
 
   const tmpP = new THREE.Vector3(), tmpT = new THREE.Vector3(), fwd = new THREE.Vector3(), right = new THREE.Vector3(), up = new THREE.Vector3();
   let lastPal = -1;
+  const rootStyle = document.documentElement.style, cssPtr = { x: 0, y: 0 };
+  let cssSun = "";
   function applyShot(dt, time) {
     if (!reduceMotion) evalShots(keys, window.scrollY, want);
     else Object.assign(want, SHOTS.hero, { pinW: 1, pin: null });
@@ -291,6 +321,11 @@ export async function createStage({ canvas, reduceMotion }) {
     const dist = cur.p.distanceTo(cur.t);
     pointer.sx += (pointer.x - pointer.sx) * Math.min(1, dt * 2.5);
     pointer.sy += (pointer.y - pointer.sy) * Math.min(1, dt * 2.5);
+    // copy floats at its own depth: it counter-shifts against the camera's pointer parallax (CSS `translate`)
+    if (!coarse && (Math.abs(pointer.sx - cssPtr.x) > 0.002 || Math.abs(pointer.sy - cssPtr.y) > 0.002)) {
+      cssPtr.x = pointer.sx; cssPtr.y = pointer.sy;
+      rootStyle.setProperty("--px", cssPtr.x.toFixed(3)); rootStyle.setProperty("--py", cssPtr.y.toFixed(3));
+    }
     fwd.subVectors(cur.t, cur.p).normalize();
     right.crossVectors(fwd, camera.up).normalize();
     up.crossVectors(right, fwd);
@@ -318,6 +353,12 @@ export async function createStage({ canvas, reduceMotion }) {
       U.uSunCol.value.set(...pl.sun); U.uSkyCol.value.set(...pl.sky); U.uBounce.value.set(...pl.bnc); U.uFogCol.value.set(...pl.fog);
       skyU.uZenith.value.set(...pl.zen); skyU.uHorizon.value.set(...pl.hor);
       U.uDusk.value = cur.dusk;
+      // the page's accents pick up the scene's light: warm gold in the afternoon, ember toward blue hour.
+      // Desktop only (the CSS that reads it is too), and quantised: a root custom property restyles the whole page.
+      if (!mobile) {
+        const sun = pl.sun.map((c) => Math.round(Math.min(1, c) * 63) * 4).join(",");
+        if (sun !== cssSun) { cssSun = sun; rootStyle.setProperty("--scene-sun", sun); }
+      }
       U.uLamps.value = Math.min(1, Math.max(0, (cur.dusk - 0.3) / 0.5));
       shadowMat.uniforms.uStrength.value = 0.55 * (1 - Math.min(1, Math.max(0, (cur.dusk - 0.45) / 0.45)));
     }
@@ -330,7 +371,7 @@ export async function createStage({ canvas, reduceMotion }) {
   // Two consecutive slow windows → step DPR down; three healthy windows → step back up (bounded).
   let acc = 0, frames = 0, lastCheck = performance.now() + 3000, upgrades = 0, tier = 0, slow = 0, good = 0;
   const targetDpr = Math.min(window.devicePixelRatio || 1, maxDpr);
-  const setDpr = (v) => { dpr = v; renderer.setPixelRatio(dpr); renderer.setSize(W, H, false); };
+  const setDpr = (v) => { dpr = v; renderer.setPixelRatio(dpr); renderer.setSize(W, H, false); sizePost(); };
   function adapt(dt, now) {
     if (dbg.noAdapt || now < lastCheck - 1500) return;           // ignore start-up (shader compile, first uploads)
     if (dt > 0 && dt < 250) { acc += dt; frames++; }
@@ -356,7 +397,7 @@ export async function createStage({ canvas, reduceMotion }) {
     lenis?.raf(now);
     U.uTime.value = (now - t0) / 1000;
     applyShot(dt, U.uTime.value);
-    renderer.render(scene, camera);
+    draw();
     if (!shown) reveal();
   }
   function reveal() {
@@ -368,7 +409,7 @@ export async function createStage({ canvas, reduceMotion }) {
   function stop() { rafOn = false; renderer.setAnimationLoop(null); }
   function requestRender() {
     if (pending) return; pending = true;
-    requestAnimationFrame(() => { pending = false; applyShot(0, 0); renderer.render(scene, camera); if (!shown) { shown = true; canvas.classList.add("on"); } });
+    requestAnimationFrame(() => { pending = false; applyShot(0, 0); draw(); if (!shown) { shown = true; canvas.classList.add("on"); } });
   }
 
   document.addEventListener("visibilitychange", () => (document.hidden ? stop() : start()));

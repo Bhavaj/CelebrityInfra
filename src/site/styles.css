@@ -6,6 +6,8 @@
   --nav-h:72px;
   --sec-y:clamp(96px,14vh,168px);
   --scrim:10,9,7;           /* rgb of --bg for translucent veils */
+  --scene-sun:255,219,163;  /* rgb of the 3D scene's sunlight; updated live by the stage as the evening falls */
+  --px:0;--py:0;            /* smoothed pointer, -1..1 (desktop); copy counter-shifts against the camera parallax */
 }
 
 *,*::before,*::after{box-sizing:border-box}
@@ -148,6 +150,8 @@ body.menu-open{overflow:hidden}
 
 /* ---------- layout ---------- */
 main{position:relative;z-index:2}
+/* scroll-scrubbed by motion.js: keep each content block on its own compositor layer so it never repaints */
+.js .sec>.wrap,.js .hero-copy{will-change:transform,opacity}
 .sec{position:relative;padding:var(--sec-y) 0}
 .split{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(32px,5vw,96px);align-items:center}
 .copy-col{max-width:600px}
@@ -386,6 +390,18 @@ h1,h2,h3,.facts dd,.stats dd,.price-amt,.pin-text b,.quote p,.loc-place,.enq-suc
   .points li{max-width:none}
   .points p{font-size:17px}
   body[data-scene="why"] .scrim-full{opacity:.45}
+
+  /* copy lives in the scene: floats at its own depth against the camera, catches the scene's light */
+  .hero-inner,.sec>.wrap{translate:calc(var(--px) * -14px) calc(var(--py) * -8px)}
+  .hero-title{text-shadow:0 0 70px rgba(var(--scene-sun),.22)}
+  .panel{
+    background:linear-gradient(160deg,rgba(26,22,16,.74),rgba(14,12,9,.84));
+    border-color:rgba(var(--scene-sun),.14);
+    box-shadow:0 40px 90px -40px rgba(0,0,0,.7),0 0 120px -50px rgba(var(--scene-sun),.35),inset 0 1px 0 rgba(var(--scene-sun),.16);
+    transition:border-color var(--dur-slow) var(--ease-out),box-shadow var(--dur-slow) var(--ease-out);
+  }
+  .label::before{background:rgba(var(--scene-sun),.55)}
+
 
   .dash li{font-size:17px}
   .loc-card,.enq-info{max-width:620px}

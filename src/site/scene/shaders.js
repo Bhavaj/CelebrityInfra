@@ -245,9 +245,10 @@ void main(){
 export const litVert = /* glsl */ `
 ${LIGHT_UNIFORMS}
 uniform float uSway;
-varying vec3 vW; varying vec3 vN; varying vec3 vC;
-attribute float aSway;
+varying vec3 vW; varying vec3 vN; varying vec3 vC; varying float vKind;
+attribute float aSway; attribute float aKind;
 void main(){
+  vKind = aKind;
   mat4 im = mat4(1.);
   #ifdef USE_INSTANCING
     im = instanceMatrix;
@@ -270,15 +271,46 @@ void main(){
 }`;
 
 export const litFrag = /* glsl */ `
+${NOISE}
 ${FOG}
 ${LIGHT_UNIFORMS}
 uniform float uWrap; uniform vec3 uEmissive; uniform float uLamps;
-varying vec3 vW; varying vec3 vN; varying vec3 vC;
+varying vec3 vW; varying vec3 vN; varying vec3 vC; varying float vKind;
 void main(){
   vec3 N = normalize(vN);
   if (!gl_FrontFacing) N = -N;
+  vec3 alb = vC;
+  vec3 V = cameraPosition - vW; float dist = length(V); V /= dist;
+  float spec = 0., shine = 1.;
+  #if SURFACE_DETAIL
+  if (vKind > .5) {
+    // close up, break the surface into leaf clumps / give the skin a soft mottle. Faded out with distance
+    // (and wherever a clump would be smaller than a pixel) so far trees stay calm instead of shimmering.
+    float near = 1. - smoothstep(30., 120., dist);
+    if (vKind < 1.5) {
+      spec = .16; shine = 22.;                        // waxy mango leaves
+      if (near > 0.) {                                // far canopies skip the noise entirely
+        vec2 q = vW.xz*2.6 + vW.y*1.9;
+        float a = vnoise(q), b = vnoise(q.yx*1.37 + 11.7);
+        float fade = near * (1. - smoothstep(.15, .5, fwidth(q.x)));
+        N = normalize(N + vec3(a - .5, (a + b) * .5 - .5, b - .5) * 1.3 * fade);
+        alb *= mix(1., .62 + .76*a, fade);
+      }
+    } else {
+      spec = .42; shine = 46.;                        // glossy ripe skin
+    }
+  }
+  #else
+  if (vKind > 1.5) { spec = .42; shine = 46.; } else if (vKind > .5) { spec = .16; shine = 22.; }
+  #endif
   float ndl = max((dot(N, uSunDir) + uWrap) / (1. + uWrap), 0.);
-  vec3 col = vC * (uSunCol * ndl * 1.9 * smoothstep(-.02, .06, uSunDir.y) + uSkyCol * (.6 + .4*N.y) + uBounce);
+  float sunUp = smoothstep(-.02, .06, uSunDir.y);
+  vec3 col = alb * (uSunCol * ndl * 1.9 * sunUp + uSkyCol * (.6 + .4*N.y) + uBounce);
+  if (spec > 0.) {
+    vec3 H = normalize(uSunDir + V);
+    col += uSunCol * spec * pow(max(dot(N, H), 0.), shine) * sunUp * step(0., dot(N, uSunDir));
+    col += uSkyCol * spec * .5 * pow(1. - max(dot(N, V), 0.), 4.);   // rim sheen against the sky
+  }
   col += uEmissive * (.35 + .65*uLamps);
   col = applyFog(col, vW);
   gl_FragColor = vec4(col, 1.);

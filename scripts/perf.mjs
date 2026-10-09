@@ -19,7 +19,7 @@ const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
 page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
 
-await page.addInitScript((dbg) => { window.__stageDebug = dbg; }, { aa: args.includes("--aa"), noAdapt: args.includes("--noadapt") });
+await page.addInitScript((dbg) => { window.__stageDebug = dbg; window.__noMotion = dbg.noMotion; }, { noAa: args.includes("--noaa"), noMotion: args.includes("--nomotion"), noDetail: args.includes("--nodetail"), noAdapt: args.includes("--noadapt") });
 await page.addInitScript(() => {
   window.__perf = { frames: [], long: [], stalls: [], recording: false };
   new PerformanceObserver((l) => { for (const e of l.getEntries()) if (window.__perf.recording) window.__perf.long.push(e.duration); })

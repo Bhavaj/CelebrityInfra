@@ -24,7 +24,7 @@ for (const { w, h, opts } of sizes) {
       const y = s === "hero" ? 0 : el.offsetTop + Math.max(0, (el.offsetHeight - innerHeight) / 2);
       window.__lenis ? window.__lenis.scrollTo(y, { immediate: true }) : scrollTo(0, y);
     }, s);
-    await page.waitForTimeout(4000);
+    await page.waitForTimeout(Number(process.env.WAIT || 4000));
     await page.screenshot({ path: `.shots/${prefix}-${w}-${s}.png` });
   }
   console.log("done", w);
