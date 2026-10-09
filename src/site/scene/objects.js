@@ -83,14 +83,30 @@ export function mangoGeometry({ fruits = 30, detail = 2, seg = 7, hiFruit = fals
   const r = rng(11);
   const parts = [];
   const bark = [0.2, 0.14, 0.09];
-  parts.push(prep(new THREE.CylinderGeometry(0.3, 0.42, 2.2, 8, 1).translate(0, 1.1, 0), bark, 0.15));
-  for (const [a, tilt] of [[0.3, 0.5], [2.4, 0.55], [4.4, 0.45]]) {
-    const b = new THREE.CylinderGeometry(0.13, 0.2, 2.2, 6, 1).translate(0, 1.1, 0);
+  // trunk: knobby (noise-displaced rings), flared at the root, with streaky bark colour
+  const barkCol = (base) => (i, gg) => {
+    const q = gg.attributes.position;
+    const k = 0.7 + 0.6 * hashf(Math.round(q.getX(i) * 40), Math.round(q.getY(i) * 6), Math.round(q.getZ(i) * 40));
+    return [base[0] * k, base[1] * k, base[2] * k];
+  };
+  const knob = (g, amp, flare) => {
+    const p = g.attributes.position;
+    for (let i = 0; i < p.count; i++) {
+      const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+      const f = 1 + amp * (vnoise3(x * 3 + 7, y * 2.2, z * 3) - 0.5) + flare * Math.max(0, 0.5 - y);
+      p.setXYZ(i, x * f, y, z * f);
+    }
+    return g;
+  };
+  parts.push(prep(knob(new THREE.CylinderGeometry(0.28, 0.46, 2.2, 8, 4, true).translate(0, 1.1, 0), 0.5, 0.35), barkCol(bark), 0.15));
+  for (const [a, tilt, len] of [[0.3, 0.5, 2.3], [2.4, 0.62, 2.0], [4.4, 0.4, 2.6], [5.5, 0.85, 1.6]]) {
+    const b = knob(new THREE.CylinderGeometry(0.11, 0.2, len, 6, 2, true).translate(0, len / 2, 0), 0.4, 0);
     b.rotateZ(tilt); b.rotateY(a); b.translate(0, 1.9, 0);
-    parts.push(prep(b, bark, 0.3));
+    parts.push(prep(b, barkCol(bark), 0.3));
   }
   // canopy: broad dome + lobes, squashed wider than tall, with two octaves of clumping on the surface
-  const blobs = [[0, 4.6, 0, 3.3], [1.7, 4.1, 0.9, 2.3], [-1.6, 4.2, -0.8, 2.4], [0.7, 4.0, -1.8, 2.2], [-0.8, 4.1, 1.8, 2.2], [0.1, 5.7, 0.2, 2.2]];
+  // lopsided on purpose: one heavy limb side, a thinner gap, a few detached outliers
+  const blobs = [[0.3, 4.5, 0.1, 3.1], [2.2, 3.9, 1.1, 2.2], [-1.9, 4.3, -0.6, 2.0], [0.9, 3.8, -2.2, 1.9], [-0.7, 3.9, 2.1, 2.3], [-0.2, 5.8, 0.5, 1.9], [3.4, 4.6, -0.8, 1.2], [-2.8, 3.7, 1.5, 1.3], [1.3, 6.2, -1.3, 1.1]];
   for (const [bx, by, bz, br] of blobs) {
     const g = new THREE.IcosahedronGeometry(br, detail);
     const p = g.attributes.position, nrm = g.attributes.normal;
@@ -100,7 +116,7 @@ export function mangoGeometry({ fruits = 30, detail = 2, seg = 7, hiFruit = fals
       const d = v.clone().normalize();
       const wx = v.x + bx, wy = v.y + by, wz = v.z + bz;
       const clump = vnoise3(wx * 0.9, wy * 0.9, wz * 0.9) * 0.7 + vnoise3(wx * 2.1 + 5, wy * 2.1, wz * 2.1) * 0.3;
-      const k = 0.84 + 0.3 * clump;
+      const k = 0.76 + 0.46 * clump;
       v.multiplyScalar(k); v.y *= 0.72;
       p.setXYZ(i, v.x + bx, v.y + by, v.z + bz);
       // normal: mostly the smooth dome, tilted toward the clump bulges
@@ -259,6 +275,9 @@ export function birdGeometry() {
 /* ---------- placement ---------- */
 const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), V = new THREE.Vector3(), S3 = new THREE.Vector3(), UP = new THREE.Vector3(0, 1, 0);
 const mat = (x, y, z, s = 1, ry = 0) => M.compose(V.set(x, y, z), Q.setFromAxisAngle(UP, ry), S3.set(s, s, s)).clone();
+// organic variant for trees: unequal width/depth/height and a slight lean, so no two canopies match
+const EU = new THREE.Euler();
+const lop = (x, y, z, s, ry, rr) => M.compose(V.set(x, y, z), Q.setFromEuler(EU.set((rr() - 0.5) * 0.07, ry, (rr() - 0.5) * 0.07)), S3.set(s * (0.86 + rr() * 0.3), s * (0.88 + rr() * 0.26), s * (0.86 + rr() * 0.3))).clone();
 
 export function placements({ outsideTrees = 380, orchards = 9 } = {}) {
   const r = rng(42);
@@ -269,16 +288,16 @@ export function placements({ outsideTrees = 380, orchards = 9 } = {}) {
   for (const s of [-1, 1]) for (let i = 0; i < 3; i++) palms.push(mat(s * (L.GATE + 6 + i * 7), 0, L.SITE + 3.5, 0.9 + r() * 0.2, r() * 6.28));
 
   // mango trees: both kerbs of the avenue, between the palms
-  for (let z = L.SITE - 13; z > -L.RING_IN; z -= 12) for (const s of [-1, 1]) mangos.push(mat(s * (L.AVE + 1.6), 0, z, 0.78 + r() * 0.14, r() * 6.28));
+  for (let z = L.SITE - 13; z > -L.RING_IN; z -= 12) for (const s of [-1, 1]) mangos.push(lop(s * (L.AVE + 1.6), 0, z, 0.78 + r() * 0.14, r() * 6.28, r));
   // ...and one in every plot, at the back of the plot so the frontage stays open
   for (const s of [-1, 1]) for (let b = 0; b < L.NB; b++) for (let row = 0; row < 2; row++) for (let c = 0; c < L.NPX; c++) {
     const [x, z] = mangoInPlot(s, b, row, c);
-    mangos.push(mat(x, 0, z, 0.56 + r() * 0.12, r() * 6.28));
+    mangos.push(lop(x, 0, z, 0.52 + r() * 0.2, r() * 6.28, r));
   }
 
   // inside the wall verge and the open space: mango with the odd neem
   const vergeM = (L.RING_OUT + L.SITE) / 2;
-  const verge = (x, z) => (r() < 0.75 ? mangos : trees).push(mat(x, 0, z, 0.8 + r() * 0.3, r() * 6.28));
+  const verge = (x, z) => (r() < 0.75 ? mangos : trees).push(lop(x, 0, z, 0.74 + r() * 0.4, r() * 6.28, r));
   for (let t = -vergeM; t <= vergeM; t += 8) {
     const j = () => (r() - 0.5) * 1.2;
     verge(t + j(), -vergeM + j());
@@ -291,7 +310,7 @@ export function placements({ outsideTrees = 380, orchards = 9 } = {}) {
     if (Math.abs(x) < L.AVE + 3) continue;
     const d = Math.hypot(x, z - (L.PARK_Z - L.RING_IN) * 0.5);
     if (Math.abs(d - 14) < 2.5) continue;
-    (r() < 0.6 ? mangos : trees).push(mat(x, 0, z, 0.75 + r() * 0.4, r() * 6.28));
+    (r() < 0.6 ? mangos : trees).push(lop(x, 0, z, 0.7 + r() * 0.5, r() * 6.28, r));
   }
   const insideCount = trees.length, insideMangos = mangos.length;
 
@@ -306,7 +325,7 @@ export function placements({ outsideTrees = 380, orchards = 9 } = {}) {
     for (let i = 0; i < nx; i++) for (let k = 0; k < nz; k++) {
       const lx = (i - nx / 2) * sp, lz = (k - nz / 2) * sp;
       const x = cx + lx * ca - lz * sa, z = cz + lx * sa + lz * ca;
-      if (clear(x, z)) mangos.push(mat(x, terrainH(x, z) - 0.2, z, 0.75 + r() * 0.25, r() * 6.28));
+      if (clear(x, z)) mangos.push(lop(x, terrainH(x, z) - 0.2, z, 0.7 + r() * 0.35, r() * 6.28, r));
     }
     o++;
   }
@@ -324,7 +343,7 @@ export function placements({ outsideTrees = 380, orchards = 9 } = {}) {
       x = 0.96 * nx + 0.28 * nz; z = -0.28 * nx + 0.96 * nz;
       if (!clear(x, z)) continue;
     }
-    trees.push(mat(x, terrainH(x, z) - 0.3, z, 0.8 + r() * 0.7, r() * 6.28));
+    trees.push(lop(x, terrainH(x, z) - 0.3, z, 0.7 + r() * 0.8, r() * 6.28, r));
   }
 
   // boundary stones at every plot corner

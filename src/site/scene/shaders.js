@@ -29,12 +29,24 @@ float terrainH(vec2 p){
 // Atmosphere shared by every material: exp² fog that warms toward the sun (aerial perspective).
 const FOG = /* glsl */ `
 uniform vec3 uFogCol; uniform vec3 uSunCol; uniform vec3 uSunDir; uniform float uFogDen;
+// restrained grade: slight desaturation, gentle S-curve, hue-preserving highlight shoulder
+vec3 grade(vec3 c){
+  float l = dot(c, vec3(.3,.55,.15));
+  c = mix(vec3(l), c, .9);
+  c = mix(c, c*c*(3.-2.*min(c, vec3(1.))), .16);
+  float mx = max(c.r, max(c.g, c.b));
+  if (mx > .85) c *= (.85 + .15*(1. - exp(-(mx - .85)/.15))) / mx;
+  return c;
+}
 vec3 applyFog(vec3 col, vec3 wpos){
   vec3 v = wpos - cameraPosition; float dist = length(v);
   float f = 1. - exp(-pow(dist*uFogDen, 2.));
+  // low-lying haze: thickens toward the ground and with distance, so far fields melt into the horizon
+  float lowHaze = (1. - exp(-dist*.0011)) * exp(-max(wpos.y, 0.)*.012) * .32;
+  f = f + (1. - f) * lowHaze;
   float s = pow(max(dot(v/dist, normalize(vec3(uSunDir.x, 0.05, uSunDir.z))), 0.), 6.);
   vec3 fc = mix(uFogCol, uSunCol*.9, s*.55);
-  return mix(col, fc, f);
+  return grade(mix(col, fc, f));
 }
 float fogAmt(vec3 wpos){ float dist = length(wpos - cameraPosition); return 1. - exp(-pow(dist*uFogDen, 2.)); }
 `;
@@ -76,9 +88,19 @@ void main(){
   float n1 = vnoise(p*0.35), n2 = vnoise(p*0.045 + 4.);
 
   // palette (albedo, already warm-graded)
-  vec3 grass  = mix(vec3(.12,.25,.06), vec3(.19,.33,.08), n2) * (.88 + .24*n1);   // monsoon-green lawn
-  vec3 soil   = mix(vec3(.43,.22,.13), vec3(.50,.29,.17), n2) * (.92 + .16*n1);   // Deccan red soil
-  vec3 tar    = vec3(.13,.125,.12) * (.94 + .1*n1);
+  // lawn: broad colour patches, dry straw-coloured drifts, and blade-scale grain that fades once sub-pixel
+  float gBig = fbm3(p*0.021 + 9.), gDry = smoothstep(.52, .82, vnoise(p*0.014 + 31.)), gMid = vnoise(p*1.7 + 3.);
+  float bladeFade = 1. - smoothstep(.03, .22, fw);
+  float blades = mix(.5, vnoise(p*7.3)*.55 + vnoise(p*21.)*.45, bladeFade);
+  vec3 grass  = mix(vec3(.105,.205,.05), vec3(.20,.30,.085), gBig);
+  grass = mix(grass, vec3(.30,.285,.13), gDry*.5);
+  grass *= (.78 + .22*gMid + .3*blades) * (.9 + .2*n1);
+  // red soil: pebbles and clods
+  float pebble = mix(.5, hash12(floor(p*9.)), bladeFade * .6);
+  vec3 soil   = mix(vec3(.40,.215,.13), vec3(.50,.30,.18), n2) * (.86 + .2*n1 + .12*pebble);
+  // asphalt: aggregate speckle, uneven wear
+  float agg = mix(.5, hash12(floor(p*26.)), bladeFade);
+  vec3 tar    = vec3(.125,.12,.115) * (.88 + .12*n1 + .2*agg) * (.9 + .2*vnoise(p*.21 + 2.));
   vec3 kerb   = vec3(.55,.52,.46);
 
   vec3 alb; float line = 0.; float lineA = 0.; float plotMask = 0.;
@@ -226,17 +248,21 @@ void main(){
   col = mix(col, uSunCol * .95, hb * (.25 + .6*pow(s, 3.)));
   col += uSunCol * (pow(s, 10.) * .32 + pow(s, 90.) * .7);
   col += uSunCol * smoothstep(.99935, .99965, s) * 1.4 * smoothstep(-.02, .01, uSunDir.y);
-  // high thin stratus, rim-lit by the low sun
-  vec2 cp = d.xz / (h + .12) * 1.6 + vec2(uTime*.004, 0.);
-  float cn = fbm2(cp + 3.) * .7 + vnoise(cp*3.7) * .3;
-  float cm = smoothstep(.52, .78, cn) * smoothstep(.02, .1, h) * smoothstep(.55, .18, h);
-  vec3 cc = mix(uHorizon * .55 + uZenith * .3, uSunCol * 1.15, pow(s, 2.5) * .9 + .1);
-  col = mix(col, cc, cm * .75);
+  // soft cumulus bands with a warm sun-side rim and bluish, shaded undersides
+  vec2 cp = d.xz / (h + .16) * 1.15 + vec2(uTime*.004, 0.);
+  float cb = fbm3(cp + 3.);
+  float cn = cb * .8 + vnoise(cp*4.1 + cb*2.2) * .32;
+  float cm = smoothstep(.5, .86, cn) * smoothstep(.015, .12, h) * smoothstep(.7, .16, h);
+  float thick = smoothstep(.55, 1., cn);
+  vec3 shade = uZenith * .75 + uHorizon * .35;
+  vec3 cc = mix(shade, uSunCol * 1.05 + uHorizon*.1, clamp(pow(s, 1.6) * .85 + .3*(1. - thick), 0., 1.));
+  col = mix(col, cc, cm * .82);
   col = mix(col, uFogCol, smoothstep(.02, -.06, h));
   // warm→cool gradients pass through olive in RGB; keep green under red so the blend reads as dusky rose
   float mx = max(col.r, max(col.g, col.b));          // hue-preserving highlight roll-off (no clipping to yellow-white)
   if (mx > .8) col *= (.8 + .2 * (1. - exp(-(mx - .8) / .2))) / mx;
   col.g = mix(col.g, min(col.g, col.r * .86 + .01), smoothstep(.12, .45, uDusk));
+  float sl = dot(col, vec3(.3,.55,.15)); col = mix(vec3(sl), col, .92);
   col += (hash12(gl_FragCoord.xy) - .5) / 200.;
   gl_FragColor = vec4(col, 1.);
 }`;
@@ -299,10 +325,19 @@ void main(){
     } else {
       spec = .42; shine = 46.;                        // glossy ripe skin
     }
+  } else {
+    // plaster / stone / bark: weathering mottle and vertical streaking, fading out with distance
+    float nr = 1. - smoothstep(25., 170., dist);
+    if (nr > 0.) {
+      vec2 q = vec2(vW.x + vW.z, vW.y*1.8);
+      float m = vnoise(q*vec2(2.3, .7))*.55 + vnoise(q*7.1)*.3 + vnoise(q*vec2(19., 3.))*.15;
+      alb *= mix(1., .72 + .5*m, nr);
+    }
   }
   #else
   if (vKind > 1.5) { spec = .42; shine = 46.; } else if (vKind > .5) { spec = .16; shine = 22.; }
   #endif
+  if (vKind < .5) alb *= mix(.74, 1., smoothstep(0., 1.4, vW.y));   // dirt and damp near the ground
   float ndl = max((dot(N, uSunDir) + uWrap) / (1. + uWrap), 0.);
   float sunUp = smoothstep(-.02, .06, uSunDir.y);
   vec3 col = alb * (uSunCol * ndl * 1.9 * sunUp + uSkyCol * (.6 + .4*N.y) + uBounce);

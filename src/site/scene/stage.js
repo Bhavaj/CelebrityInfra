@@ -141,7 +141,9 @@ export async function createStage({ canvas, reduceMotion }) {
   const treeMat = lit({ sway: 1, wrap: 0.55 });
   const trees = instanced(OB.treeGeometry(), treeMat, place.trees);
   const tint = new THREE.Color();
-  for (let i = 0; i < place.trees.length; i++) { const k = 0.82 + ((i * 0.618) % 1) * 0.36; trees.setColorAt(i, tint.setRGB(k, k * (0.96 + ((i * 0.37) % 1) * 0.08), k)); }
+  // per-tree hue drift: some olive/yellow-green, some deep blue-green, some dry, never one flat green
+  const hueTint = (j, k) => { const h = (j * 0.7548776) % 1, v = (j * 0.5698403) % 1; return tint.setRGB(k * (0.88 + h * 0.3), k * (0.94 + v * 0.1), k * (1.06 - h * 0.2)); };
+  for (let i = 0; i < place.trees.length; i++) { const k = 0.82 + ((i * 0.618) % 1) * 0.36; trees.setColorAt(i, hueTint(i, k)); }
   trees.instanceColor.needsUpdate = true;
   trees.name = "trees";
   scene.add(trees);
@@ -150,7 +152,7 @@ export async function createStage({ canvas, reduceMotion }) {
   // (smooth normals hide the facets) and spend the triangles on the canopy silhouette instead.
   const mangoMat = lit({ sway: 1, wrap: 0.5 });
   const mangoTint = (im, off) => {
-    for (let i = 0; i < im.count; i++) { const j = i + off, k = 0.86 + ((j * 0.618) % 1) * 0.28; im.setColorAt(i, tint.setRGB(k, k * (0.97 + ((j * 0.37) % 1) * 0.08), k)); }
+    for (let i = 0; i < im.count; i++) { const j = i + off, k = 0.86 + ((j * 0.618) % 1) * 0.28; im.setColorAt(i, hueTint(j, k)); }
     im.instanceColor.needsUpdate = true;
   };
   const mangos = instanced(OB.mangoGeometry(mobile ? { fruits: 22, detail: 1, seg: 5 } : { fruits: 30, detail: 2, seg: 7 }), mangoMat, place.mangos.slice(0, place.insideMangos));
