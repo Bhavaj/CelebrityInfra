@@ -312,7 +312,7 @@ export const litFrag = /* glsl */ `
 ${NOISE}
 ${FOG}
 ${LIGHT_UNIFORMS}
-uniform float uWrap; uniform vec3 uEmissive; uniform float uLamps;
+uniform float uWrap; uniform vec3 uEmissive; uniform float uLamps; uniform sampler2D uLeaf;
 varying vec3 vW; varying vec3 vN; varying vec3 vC; varying float vKind;
 void main(){
   vec3 N = normalize(vN);
@@ -327,12 +327,20 @@ void main(){
     float near = 1. - smoothstep(30., 120., dist);
     if (vKind < 1.5) {
       spec = .16; shine = 22.;                        // waxy mango leaves
-      if (near > 0.) {                                // far canopies skip the noise entirely
-        vec2 q = vW.xz*2.6 + vW.y*1.9;
-        float a = vnoise(q), b = vnoise(q.yx*1.37 + 11.7);
-        float fade = near * (1. - smoothstep(.15, .5, fwidth(q.x)));
-        N = normalize(N + vec3(a - .5, (a + b) * .5 - .5, b - .5) * 1.3 * fade);
-        alb *= mix(1., .62 + .76*a, fade);
+      if (near > 0.) {                                // far canopies skip the leaf texture entirely
+        // real leaf-cluster tile, projected on the three world planes and blended by the normal (mipmaps average it
+        // to a calm mid-grey with distance, so nothing shimmers)
+        vec3 aw = abs(N); aw /= aw.x + aw.y + aw.z;
+        vec2 uz = vW.zy / 1.3, uy = vW.xz / 1.3, ux = vW.xy / 1.3;
+        float L = texture2D(uLeaf, uz).r * aw.x + texture2D(uLeaf, uy + .31).r * aw.y + texture2D(uLeaf, ux + .67).r * aw.z;
+        float Lx = texture2D(uLeaf, uz + vec2(.004, 0.)).r * aw.x + texture2D(uLeaf, uy + vec2(.314, 0.)).r * aw.y + texture2D(uLeaf, ux + vec2(.674, 0.)).r * aw.z;
+        float Ly = texture2D(uLeaf, uz + vec2(0., .004)).r * aw.x + texture2D(uLeaf, uy + vec2(.31, .004)).r * aw.y + texture2D(uLeaf, ux + vec2(.67, .004)).r * aw.z;
+        // ragged silhouette: on the grazing edges of a canopy blob, the gaps between leaves are see-through
+        float edge = 1. - abs(dot(N, V));
+        if (L < (.1 + .3*edge*edge) * near) discard;
+        N = normalize(N + (cross(N, vec3(0., 1., 0.)) * (L - Lx) + vec3(0., L - Ly, 0.)) * 9. * near);
+        alb *= mix(1., .3 + 1.25*L, near);            // leaves vs shaded gaps
+        alb = mix(alb, alb * vec3(1.12, 1.06, .78), smoothstep(.55, .95, L) * near * .6);   // sun-bleached upper faces
       }
     } else {
       spec = .42; shine = 46.;                        // glossy ripe skin
