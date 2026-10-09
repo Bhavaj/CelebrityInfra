@@ -77,7 +77,16 @@ ${FOG}
 ${LIGHT_UNIFORMS}
 uniform float uReveal, uHi, uMap, uLamps;
 uniform vec4 uHiRect;
+uniform sampler2D uDetail;   // R grass / G soil / B asphalt: photo-derived luminance detail, mean ~0.5
 varying vec3 vW; varying vec3 vN;
+
+// three octaves of the photo detail (one rotated) so the tiling never reads; ~1.0 on average
+vec3 photoDetail(vec2 p){
+  vec3 a = texture2D(uDetail, p / 4.).rgb * 2.;
+  vec3 b = texture2D(uDetail, mat2(.8,-.6,.6,.8) * p / 15. + .37).rgb * 2.;
+  vec3 c = texture2D(uDetail, p / 57. + .11).rgb * 2.;
+  return a * mix(vec3(1.), b, .65) * mix(vec3(1.), c, .55);
+}
 
 float band(float d, float w, float fw){ return 1. - smoothstep(w - fw, w + fw, d); }
 
@@ -94,13 +103,16 @@ void main(){
   float blades = mix(.5, vnoise(p*7.3)*.55 + vnoise(p*21.)*.45, bladeFade);
   vec3 grass  = mix(vec3(.105,.205,.05), vec3(.20,.30,.085), gBig);
   grass = mix(grass, vec3(.30,.285,.13), gDry*.5);
-  grass *= (.78 + .22*gMid + .3*blades) * (.9 + .2*n1);
+  vec3 ph3 = photoDetail(p);
+  float dfade = 1. - smoothstep(60., 420., length(p - cameraPosition.xz));   // far away, fall back to flat colour
+  vec3 pd = mix(vec3(1.), ph3, dfade);
+  grass *= (.82 + .18*gMid + .12*blades) * (.9 + .2*n1) * mix(1., pd.r, .95);
   // red soil: pebbles and clods
   float pebble = mix(.5, hash12(floor(p*9.)), bladeFade * .6);
-  vec3 soil   = mix(vec3(.40,.215,.13), vec3(.50,.30,.18), n2) * (.86 + .2*n1 + .12*pebble);
+  vec3 soil   = mix(vec3(.40,.215,.13), vec3(.50,.30,.18), n2) * (.86 + .2*n1 + .06*pebble) * mix(1., pd.g, .9);
   // asphalt: aggregate speckle, uneven wear
   float agg = mix(.5, hash12(floor(p*26.)), bladeFade);
-  vec3 tar    = vec3(.125,.12,.115) * (.88 + .12*n1 + .2*agg) * (.9 + .2*vnoise(p*.21 + 2.));
+  vec3 tar    = vec3(.125,.12,.115) * (.9 + .1*n1 + .08*agg) * (.9 + .2*vnoise(p*.21 + 2.)) * mix(1., pd.b, .95);
   vec3 kerb   = vec3(.55,.52,.46);
 
   vec3 alb; float line = 0.; float lineA = 0.; float plotMask = 0.;
@@ -114,7 +126,7 @@ void main(){
     float hsh = hash12(cell);
     // mostly paddy and pulses in leaf, the odd field gone gold or freshly turned
     vec3 fc = hsh < .34 ? vec3(.13,.30,.05) : hsh < .6 ? vec3(.18,.34,.07) : hsh < .8 ? vec3(.10,.22,.05) : hsh < .95 ? vec3(.30,.33,.10) : vec3(.36,.24,.14);
-    alb = fc * (.85 + .3*vnoise(p*0.02 + hsh*9.));
+    alb = fc * (.85 + .3*vnoise(p*0.02 + hsh*9.)) * mix(1., pd.r, .8);
     // crop rows
     alb *= .94 + .06*sin(dot(q, hsh < .5 ? vec2(1.,0.) : vec2(0.,1.)) * 2.4);
     vec2 bd = min(fq, 1.-fq) * vec2(64., 46.);

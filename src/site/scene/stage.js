@@ -80,7 +80,17 @@ export async function createStage({ canvas, reduceMotion }) {
   const ground = {
     ...U, uReveal: { value: reduceMotion ? 1 : 0 }, uHi: { value: 0 }, uMap: { value: 0 },
     uHiRect: { value: new THREE.Vector4(HIGHLIGHT.x0, HIGHLIGHT.z0, HIGHLIGHT.x1, HIGHLIGHT.z1) },
+    uDetail: { value: new THREE.DataTexture(new Uint8Array([128, 128, 128, 255]), 1, 1) },   // neutral grey (=1.0) until the photo loads
   };
+  // photo-derived ground detail (CC0 Poly Haven grass / laterite soil / asphalt, packed into RGB); the flat colours
+  // render until it arrives, then it fades the real texture in on top of them
+  ground.uDetail.value.needsUpdate = true;
+  new THREE.TextureLoader().load(`${import.meta.env.BASE_URL}media/ground-detail.jpg`, (t) => {
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.colorSpace = THREE.NoColorSpace;
+    t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+    ground.uDetail.value = t;
+  });
   const skyU = { uZenith: { value: new THREE.Vector3() }, uHorizon: { value: new THREE.Vector3() }, uSunCol: U.uSunCol, uSunDir: U.uSunDir, uFogCol: U.uFogCol, uTime: U.uTime, uDusk: U.uDusk };
 
   /* ---------- terrain (polar grid: dense near the site, coarse toward the horizon) ---------- */
