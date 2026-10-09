@@ -3,8 +3,8 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 import { L, rng, terrainH, mangoInPlot } from "./layout.js";
 
 /* ---------- geometry helpers ---------- */
-// kind: surface shading in litFrag — 0 plain, 1 foliage (leaf-clump detail + sheen), 2 fruit (glossy skin)
-export const KIND = { PLAIN: 0, LEAF: 1, FRUIT: 2 };
+// kind: surface shading in litFrag — 0 plain, 1 foliage (leaf-clump detail + sheen), 2 fruit (glossy skin), 3 bark (photo fissures)
+export const KIND = { PLAIN: 0, LEAF: 1, FRUIT: 2, BARK: 3 };
 function prep(geo, rgb, sway = 0, kind = KIND.PLAIN) {
   const g = geo.index ? geo.toNonIndexed() : geo;
   g.deleteAttribute("uv");
@@ -26,7 +26,7 @@ const box = (w, h, d, x, y, z, rgb) => prep(new THREE.BoxGeometry(w, h, d).trans
 export function treeGeometry() {
   const r = rng(7);
   const parts = [];
-  parts.push(prep(new THREE.CylinderGeometry(0.16, 0.26, 3.6, 6, 1).translate(0, 1.8, 0), [0.17, 0.12, 0.08], 0.3));
+  parts.push(prep(new THREE.CylinderGeometry(0.16, 0.26, 3.6, 6, 1).translate(0, 1.8, 0), [0.17, 0.12, 0.08], 0.3, KIND.BARK));
   const blobs = [[0, 4.9, 0, 2.5], [1.1, 4.4, 0.5, 1.8], [-1.0, 4.5, -0.4, 1.9], [0.2, 5.7, -0.6, 1.6]];
   for (const [bx, by, bz, br] of blobs) {
     const g = new THREE.IcosahedronGeometry(br, 1);
@@ -98,39 +98,52 @@ export function mangoGeometry({ fruits = 30, detail = 2, seg = 7, hiFruit = fals
     }
     return g;
   };
-  parts.push(prep(knob(new THREE.CylinderGeometry(0.28, 0.46, 2.2, 8, 4, true).translate(0, 1.1, 0), 0.5, 0.35), barkCol(bark), 0.15));
+  parts.push(prep(knob(new THREE.CylinderGeometry(0.28, 0.46, 2.2, 8, 4, true).translate(0, 1.1, 0), 0.5, 0.35), barkCol(bark), 0.15, KIND.BARK));
   for (const [a, tilt, len] of [[0.3, 0.5, 2.3], [2.4, 0.62, 2.0], [4.4, 0.4, 2.6], [5.5, 0.85, 1.6]]) {
     const b = knob(new THREE.CylinderGeometry(0.11, 0.2, len, 6, 2, true).translate(0, len / 2, 0), 0.4, 0);
     b.rotateZ(tilt); b.rotateY(a); b.translate(0, 1.9, 0);
-    parts.push(prep(b, barkCol(bark), 0.3));
+    parts.push(prep(b, barkCol(bark), 0.3, KIND.BARK));
   }
-  // canopy: broad dome + lobes, squashed wider than tall, with two octaves of clumping on the surface
-  // lopsided on purpose: one heavy limb side, a thinner gap, a few detached outliers
-  const blobs = [[0.3, 4.5, 0.1, 3.1], [2.2, 3.9, 1.1, 2.2], [-1.9, 4.3, -0.6, 2.0], [0.9, 3.8, -2.2, 1.9], [-0.7, 3.9, 2.1, 2.3], [-0.2, 5.8, 0.5, 1.9], [3.4, 4.6, -0.8, 1.2], [-2.8, 3.7, 1.5, 1.3], [1.3, 6.2, -1.3, 1.1]];
-  for (const [bx, by, bz, br] of blobs) {
-    const g = new THREE.IcosahedronGeometry(br, detail);
+  // canopy: a heap of overlapping leaf masses rather than a few smooth domes. Clump centres sit inside a lopsided
+  // dome (heavier on +x, thinner toward -z), with hanging skirts at the rim, a dark core so gaps don't show sky,
+  // and ragged outliers. Fewer, cheaper masses for the orchard LOD (detail < 2).
+  const nMass = detail >= 2 ? 28 : 13;
+  const R = 3.1;
+  const masses = [];
+  for (let i = 0; i < nMass; i++) {
+    const a = r() * Math.PI * 2, rr = R * Math.sqrt(r()) * (1 + 0.18 * Math.cos(a));       // heavier on +x
+    const cx = Math.cos(a) * rr * 1.08 + 0.3, cz = Math.sin(a) * rr * (Math.sin(a) < 0 ? 0.82 : 1);
+    const edge = Math.min(1, rr / R);
+    const cy = 3.15 + 2.5 * Math.pow(Math.max(0, 1 - edge * edge), 0.7) + (r() - 0.5) * 0.7 - (edge > 0.7 ? 0.25 + r() * 0.55 : 0); // dome, rim hangs
+    const br = (detail >= 2 ? 0.8 : 1.15) + r() * (detail >= 2 ? 0.55 : 0.6);
+    masses.push([cx, cy, cz, br]);
+  }
+  masses.push([0.3, 4.2, 0, 1.9]);                               // dark core
+  const core = masses.length - 1;
+  const blobs = masses.slice(0, core);                           // fruit hangs off these
+  masses.forEach(([bx, by, bz, br], mi) => {
+    const g = new THREE.IcosahedronGeometry(br, mi === core ? 1 : (detail >= 2 ? 1 : 1));
     const p = g.attributes.position, nrm = g.attributes.normal;
     const ao = new Float32Array(p.count), young = new Float32Array(p.count);
     for (let i = 0; i < p.count; i++) {
       const v = new THREE.Vector3().fromBufferAttribute(p, i);
       const d = v.clone().normalize();
       const wx = v.x + bx, wy = v.y + by, wz = v.z + bz;
-      const clump = vnoise3(wx * 0.9, wy * 0.9, wz * 0.9) * 0.7 + vnoise3(wx * 2.1 + 5, wy * 2.1, wz * 2.1) * 0.3;
-      const k = 0.76 + 0.46 * clump;
-      v.multiplyScalar(k); v.y *= 0.72;
+      const clump = vnoise3(wx * 1.4, wy * 1.4, wz * 1.4) * 0.65 + vnoise3(wx * 3.3 + 5, wy * 3.3, wz * 3.3) * 0.35;
+      const k = 0.7 + 0.6 * clump;                               // lumpy outline, leaf-tuft scale
+      v.multiplyScalar(k); v.y *= 0.7;
       p.setXYZ(i, v.x + bx, v.y + by, v.z + bz);
-      // normal: mostly the smooth dome, tilted toward the clump bulges
-      const n = d.clone().multiplyScalar(1).add(new THREE.Vector3(hashf(wx, 1, wz) - 0.5, 0, hashf(wz, 2, wx) - 0.5).multiplyScalar(0.35)).normalize();
+      const n = d.clone().add(new THREE.Vector3(hashf(wx, 1, wz) - 0.5, 0, hashf(wz, 2, wx) - 0.5).multiplyScalar(0.45)).normalize();
       nrm.setXYZ(i, n.x, n.y, n.z);
-      ao[i] = 0.55 + 0.45 * clump;   // recessed clumps sit in shade
-      young[i] = Math.max(0, vnoise3(wx * 0.7 + 9, wy * 0.7, wz * 0.7) - 0.72) * 3.5; // patches of lighter new flush
+      ao[i] = (mi === core ? 0.3 : 0.5) + 0.5 * clump;           // recessed tufts and the core sit in shade
+      young[i] = Math.max(0, vnoise3(wx * 0.7 + 9, wy * 0.7, wz * 0.7) - 0.7) * 3.5; // patches of lighter new flush
     }
     parts.push(prep(g, (i, gg) => {
       const y = gg.attributes.position.getY(i);
-      const t = (0.58 + 0.42 * Math.min(1, Math.max(0, (y - 2.6) / 4.2))) * ao[i];
+      const t = (0.55 + 0.45 * Math.min(1, Math.max(0, (y - 2.6) / 4.2))) * ao[i];
       return [(0.08 + young[i] * 0.06) * t, (0.23 + young[i] * 0.08) * t, 0.065 * t];
     }, 1, KIND.LEAF));
-  }
+  });
   // fruit: hanging from short stalks off the sides and underside of the canopy
   const proto = fruitGeometry(seg, hiFruit);
   for (let n = 0, tries = 0; n < fruits && tries < fruits * 20; tries++) {

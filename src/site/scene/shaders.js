@@ -312,7 +312,7 @@ export const litFrag = /* glsl */ `
 ${NOISE}
 ${FOG}
 ${LIGHT_UNIFORMS}
-uniform float uWrap; uniform vec3 uEmissive; uniform float uLamps; uniform sampler2D uLeaf;
+uniform float uWrap; uniform vec3 uEmissive; uniform float uLamps; uniform sampler2D uLeaf, uBark;
 varying vec3 vW; varying vec3 vN; varying vec3 vC; varying float vKind;
 void main(){
   vec3 N = normalize(vN);
@@ -321,7 +321,21 @@ void main(){
   vec3 V = cameraPosition - vW; float dist = length(V); V /= dist;
   float spec = 0., shine = 1.;
   #if SURFACE_DETAIL
-  if (vKind > .5) {
+  if (vKind > 2.5) {
+    // bark: real fissured-bark photo, projected on the world planes (grain tilted off-vertical), plus relief from its gradient
+    float nb = 1. - smoothstep(35., 180., dist);
+    spec = .05; shine = 8.;
+    if (nb > 0.) {
+      vec3 aw = abs(N); aw /= aw.x + aw.y + aw.z;
+      mat2 rot = mat2(.94, .34, -.34, .94);
+      vec2 uz = rot * vec2(vW.z, vW.y) / .9, ux = rot * vec2(vW.x, vW.y) / .9, uy = vW.xz / .9;
+      float B = texture2D(uBark, uz).r * aw.x + texture2D(uBark, uy + .21).r * aw.y + texture2D(uBark, ux + .53).r * aw.z;
+      float Bx = texture2D(uBark, uz + vec2(.005, 0.)).r * aw.x + texture2D(uBark, uy + vec2(.215, 0.)).r * aw.y + texture2D(uBark, ux + vec2(.535, 0.)).r * aw.z;
+      float By = texture2D(uBark, uz + vec2(0., .005)).r * aw.x + texture2D(uBark, uy + vec2(.21, .005)).r * aw.y + texture2D(uBark, ux + vec2(.53, .005)).r * aw.z;
+      N = normalize(N + (cross(N, vec3(0., 1., 0.)) * (B - Bx) + vec3(0., B - By, 0.)) * 14. * nb);
+      alb *= mix(1., .35 + 1.4*B, nb);
+    }
+  } else if (vKind > .5) {
     // close up, break the surface into leaf clumps / give the skin a soft mottle. Faded out with distance
     // (and wherever a clump would be smaller than a pixel) so far trees stay calm instead of shimmering.
     float near = 1. - smoothstep(30., 120., dist);
@@ -355,9 +369,9 @@ void main(){
     }
   }
   #else
-  if (vKind > 1.5) { spec = .42; shine = 46.; } else if (vKind > .5) { spec = .16; shine = 22.; }
+  if (vKind > 2.5) { spec = .05; shine = 8.; } else if (vKind > 1.5) { spec = .42; shine = 46.; } else if (vKind > .5) { spec = .16; shine = 22.; }
   #endif
-  if (vKind < .5) alb *= mix(.74, 1., smoothstep(0., 1.4, vW.y));   // dirt and damp near the ground
+  if (vKind < .5 || vKind > 2.5) alb *= mix(.74, 1., smoothstep(0., 1.4, vW.y));   // dirt and damp near the ground
   float ndl = max((dot(N, uSunDir) + uWrap) / (1. + uWrap), 0.);
   float sunUp = smoothstep(-.02, .06, uSunDir.y);
   vec3 col = alb * (uSunCol * ndl * 1.9 * sunUp + uSkyCol * (.6 + .4*N.y) + uBounce);

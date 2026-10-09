@@ -77,6 +77,7 @@ export async function createStage({ canvas, reduceMotion }) {
     uFogCol: { value: new THREE.Vector3() }, uFogDen: { value: 1 / 3300 },
     uTime: { value: 0 }, uDusk: { value: 0 }, uLamps: { value: 0 },
     uLeaf: { value: new THREE.DataTexture(new Uint8Array([160, 160, 160, 255]), 1, 1) },   // flat until the leaf tile loads
+    uBark: { value: new THREE.DataTexture(new Uint8Array([128, 128, 128, 255]), 1, 1) },
   };
   const ground = {
     ...U, uReveal: { value: reduceMotion ? 1 : 0 }, uHi: { value: 0 }, uMap: { value: 0 },
@@ -86,7 +87,14 @@ export async function createStage({ canvas, reduceMotion }) {
   // photo-derived ground detail (CC0 Poly Haven grass / laterite soil / asphalt, packed into RGB); the flat colours
   // render until it arrives, then it fades the real texture in on top of them
   ground.uDetail.value.needsUpdate = true;
-  U.uLeaf.value.needsUpdate = true;
+  U.uLeaf.value.needsUpdate = true; U.uBark.value.needsUpdate = true;
+  // fissured bark photo (CC0 Poly Haven, greyscale) for trunks and limbs
+  new THREE.TextureLoader().load(`${import.meta.env.BASE_URL}media/bark-detail.jpg`, (t) => {
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.colorSpace = THREE.NoColorSpace;
+    t.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
+    U.uBark.value = t;
+  });
   // procedurally drawn leaf-cluster tile (white leaves, black gaps) for the canopy shading and ragged edges
   new THREE.TextureLoader().load(`${import.meta.env.BASE_URL}media/leaf-detail.jpg`, (t) => {
     t.wrapS = t.wrapT = THREE.RepeatWrapping;
