@@ -73,7 +73,7 @@ h3{font:600 var(--fs-h3)/1.15 var(--font-display);letter-spacing:-.005em}
 body.no-webgl .stage-static{background:#0f0c09 url(/media/park1-still.jpg) 62% 50%/cover no-repeat}
 .stage-canvas{display:block;opacity:0;transition:opacity 1.6s var(--ease-out)}
 .stage-canvas.on{opacity:1}
-.stage::after{content:"";position:absolute;inset:0 0 auto;height:160px;background:linear-gradient(180deg,rgba(var(--scrim),.7),transparent)}
+.stage::after{content:"";position:absolute;inset:0 0 auto;height:160px;background:linear-gradient(180deg,rgba(var(--scrim),.6),transparent)}
 
 /* Veils between the scene and the copy, one per composition; body[data-scene] picks them. */
 .scrim{opacity:0;transition:opacity var(--dur-slow) var(--ease-out);will-change:opacity}
@@ -83,20 +83,20 @@ body.no-webgl .stage-static{background:#0f0c09 url(/media/park1-still.jpg) 62% 5
 .scrim-low{background:linear-gradient(0deg,rgba(var(--scrim),.92) 0%,rgba(var(--scrim),.5) 28%,transparent 56%)}
 .scrim-full{background:rgba(var(--scrim),.62)}
 
-body[data-scene="hero"] .scrim-side{opacity:.85}
-body[data-scene="hero"] .scrim-low{opacity:1}
-body[data-scene="offer"] .scrim-side{opacity:.55}
-body[data-scene="offer"] .scrim-low{opacity:.35}
-body[data-scene="venture"] .scrim-side{opacity:1}
-body[data-scene="venture"] .scrim-low{opacity:.5}
-body[data-scene="why"] .scrim-side{opacity:1}
-body[data-scene="why"] .scrim-low{opacity:.85}
-body[data-scene="location"] .scrim-side{opacity:.45}
-body[data-scene="location"] .scrim-low{opacity:.25}
-body[data-scene="chairman"] .scrim-full{opacity:.4}
-body[data-scene="chairman"] .scrim-low{opacity:.6}
-body[data-scene="enquire"] .scrim-side{opacity:.8}
-body[data-scene="enquire"] .scrim-low{opacity:.6}
+body[data-scene="hero"] .scrim-side{opacity:.6}
+body[data-scene="hero"] .scrim-low{opacity:.7}
+body[data-scene="offer"] .scrim-side{opacity:.35}
+body[data-scene="offer"] .scrim-low{opacity:.25}
+body[data-scene="venture"] .scrim-side{opacity:.7}
+body[data-scene="venture"] .scrim-low{opacity:.35}
+body[data-scene="why"] .scrim-side{opacity:.7}
+body[data-scene="why"] .scrim-low{opacity:.6}
+body[data-scene="location"] .scrim-side{opacity:.3}
+body[data-scene="location"] .scrim-low{opacity:.18}
+body[data-scene="chairman"] .scrim-full{opacity:.3}
+body[data-scene="chairman"] .scrim-low{opacity:.45}
+body[data-scene="enquire"] .scrim-side{opacity:.55}
+body[data-scene="enquire"] .scrim-low{opacity:.45}
 
 /* ---------- scene pins ---------- */
 .pins{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden}

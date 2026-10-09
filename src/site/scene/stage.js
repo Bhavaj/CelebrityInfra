@@ -14,11 +14,12 @@ const Y_UP = new THREE.Vector3(0, 1, 0);
 const v3 = (a) => new THREE.Vector3(a[0], a[1], a[2]);
 const mix3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 
-// Light/atmosphere palette across the evening (display-space RGB).
+// Light/atmosphere palette across the morning (display-space RGB): fresh early light with a soft warm horizon,
+// then a clear bright mid-morning sky as the page scrolls on. The old golden-hour → blue-hour run left the scene dim.
 const PAL = [
-  { d: 0.0, zen: [0.25, 0.38, 0.58], hor: [0.93, 0.8, 0.62], sun: [1.0, 0.86, 0.64], sky: [0.27, 0.32, 0.36], bnc: [0.05, 0.06, 0.035], fog: [0.6, 0.66, 0.66], el: 0.3 },
-  { d: 0.5, zen: [0.13, 0.12, 0.19], hor: [0.86, 0.48, 0.29], sun: [1.0, 0.56, 0.31], sky: [0.15, 0.14, 0.19], bnc: [0.05, 0.03, 0.025], fog: [0.5, 0.36, 0.31], el: 0.07 },
-  { d: 1.0, zen: [0.045, 0.055, 0.1], hor: [0.42, 0.25, 0.22], sun: [0.8, 0.36, 0.2], sky: [0.075, 0.08, 0.115], bnc: [0.02, 0.016, 0.016], fog: [0.21, 0.155, 0.16], el: -0.035 },
+  { d: 0.0, zen: [0.2, 0.44, 0.82], hor: [0.99, 0.88, 0.72], sun: [1.0, 0.9, 0.72], sky: [0.42, 0.52, 0.66], bnc: [0.09, 0.1, 0.06], fog: [0.74, 0.82, 0.9], el: 0.36 },
+  { d: 0.5, zen: [0.17, 0.44, 0.88], hor: [0.8, 0.9, 0.99], sun: [1.0, 0.96, 0.86], sky: [0.5, 0.62, 0.8], bnc: [0.1, 0.12, 0.07], fog: [0.78, 0.87, 0.95], el: 0.6 },
+  { d: 1.0, zen: [0.16, 0.42, 0.86], hor: [0.76, 0.87, 0.98], sun: [1.0, 0.97, 0.9], sky: [0.52, 0.64, 0.82], bnc: [0.11, 0.13, 0.08], fog: [0.8, 0.88, 0.95], el: 0.7 },
 ];
 function palette(d) {
   const i = d < 0.5 ? 0 : 1, a = PAL[i], b = PAL[i + 1];
@@ -419,15 +420,15 @@ export async function createStage({ canvas, reduceMotion }) {
       U.uSunDir.value.set(-Math.cos(sunAz) * Math.cos(el), Math.sin(el), -Math.sin(sunAz) * Math.cos(el)).normalize();
       U.uSunCol.value.set(...pl.sun); U.uSkyCol.value.set(...pl.sky); U.uBounce.value.set(...pl.bnc); U.uFogCol.value.set(...pl.fog);
       skyU.uZenith.value.set(...pl.zen); skyU.uHorizon.value.set(...pl.hor);
-      U.uDusk.value = cur.dusk;
+      U.uDusk.value = 0;   // morning: no dusk tinting in the sky shader
       // the page's accents pick up the scene's light: warm gold in the afternoon, ember toward blue hour.
       // Desktop only (the CSS that reads it is too), and quantised: a root custom property restyles the whole page.
       if (!mobile) {
         const sun = pl.sun.map((c) => Math.round(Math.min(1, c) * 63) * 4).join(",");
         if (sun !== cssSun) { cssSun = sun; rootStyle.setProperty("--scene-sun", sun); }
       }
-      U.uLamps.value = Math.min(1, Math.max(0, (cur.dusk - 0.3) / 0.5));
-      shadowMat.uniforms.uStrength.value = 0.55 * (1 - Math.min(1, Math.max(0, (cur.dusk - 0.45) / 0.45)));
+      U.uLamps.value = 0;   // daylight: lamps stay off
+      shadowMat.uniforms.uStrength.value = 0.55;
     }
     ground.uHi.value = cur.hi; ground.uMap.value = cur.map;
     updatePins(reduceMotion ? { pin: null } : want);
