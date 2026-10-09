@@ -14,7 +14,11 @@ export default defineConfig({
     rollupOptions: {
       output: {
         // three.js in its own long-cache chunk, separate from the app-specific stage code
-        manualChunks: (id) => (id.includes("node_modules/three/") ? "three" : undefined),
+        manualChunks: (id) => {
+          if (id.includes("node_modules/three/")) return "three";
+          if (/node_modules\/(gsap|lenis)\//.test(id)) return "motion-vendor";
+          if (/node_modules\/(react|react-dom|scheduler)\//.test(id)) return "react";
+        },
       },
       input: {
         main: resolve(__dirname, "index.html"),

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { Suspense, lazy, useEffect, useState } from "react";
 import { supabase } from "../shared/supabase.js";
 import { C, FONT, DISPLAY, WORDMARK, LABEL, R, Crest, Button, Icon, Loading, useIsMobile } from "./ui";
 import RoleChooser from "./auth/RoleChooser";
@@ -8,8 +8,9 @@ import ClientLogin from "./auth/ClientLogin";
 import AuthShell from "./auth/AuthShell";
 import NewPasswordForm from "./auth/NewPasswordForm";
 import { peekPendingCode, clearPendingCode, peekPasswordSetupFlag, clearPasswordSetupFlag } from "./auth/authFlags";
-import Admin from "./Admin";
-import { AgentPortal, CustomerPortal } from "./Portals";
+const Admin = lazy(() => import("./Admin"));
+const AgentPortal = lazy(() => import("./Portals").then((m) => ({ default: m.AgentPortal })));
+const CustomerPortal = lazy(() => import("./Portals").then((m) => ({ default: m.CustomerPortal })));
 
 export default function App() {
   const mobile = useIsMobile(480);
@@ -136,6 +137,7 @@ export default function App() {
       </div>
 
       <div style={{ maxWidth: role === "admin" ? 1720 : 1160, margin: "0 auto", padding: "clamp(24px, 4vw, 48px) max(clamp(16px, 3vw, 40px), env(safe-area-inset-right)) calc(72px + env(safe-area-inset-bottom)) max(clamp(16px, 3vw, 40px), env(safe-area-inset-left))" }}>
+        <Suspense fallback={<Loading label="Opening your portal" />}>
         {!hasAccount && <NoAccount error={claimError} />}
         {hasAccount && role === "admin" && <Admin />}
         {hasAccount && role === "agent" && (profile.agent_id
@@ -144,6 +146,7 @@ export default function App() {
         {hasAccount && role === "customer" && (profile.customer_id
           ? <CustomerPortal customerId={profile.customer_id} />
           : <NotLinked kind="customer" error={claimError} />)}
+        </Suspense>
       </div>
     </div>
   );

@@ -10,6 +10,7 @@ import { FXAAShader } from "three/examples/jsm/shaders/FXAAShader.js";
 
 gsap.registerPlugin(ScrollTrigger);
 
+const Y_UP = new THREE.Vector3(0, 1, 0);
 const v3 = (a) => new THREE.Vector3(a[0], a[1], a[2]);
 const mix3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 
@@ -32,7 +33,8 @@ export async function createStage({ canvas, reduceMotion }) {
   const coarse = matchMedia("(pointer: coarse)").matches;
   const small = Math.min(innerWidth, innerHeight) < 700;
   const mobile = coarse || small;
-  const maxDpr = mobile ? 1.25 : 1.5;
+  const lowEnd = (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4;
+  const maxDpr = lowEnd ? 1 : mobile ? 1.25 : 1.5;
   let dpr = Math.min(window.devicePixelRatio || 1, maxDpr);
   let pending = false; // reduced-motion: render-on-demand flag
 
@@ -238,7 +240,8 @@ export async function createStage({ canvas, reduceMotion }) {
     for (const k in pinEls) pinEls[k].w = 0;
     if (reduceMotion) requestRender();
   }
-  new ResizeObserver(resize).observe(stageEl);
+  const ro = new ResizeObserver(resize);
+  ro.observe(stageEl);
   resize();
 
   /* ---------- scroll → shot keys ---------- */
@@ -318,7 +321,7 @@ export async function createStage({ canvas, reduceMotion }) {
     aimCam.fov = aspect < 1.25 ? Math.min(74, 2 * Math.atan(Math.tan((s.fov * Math.PI) / 360) * (1.25 / aspect) ** 0.72) * 180 / Math.PI) : s.fov;
     aimCam.aspect = aspect;
     aimCam.position.set(...s.p);
-    if (s.p[1] > 300) aimCam.up.set(0, 0, -1).lerp(new THREE.Vector3(0, 1, 0), 1 - Math.min(1, (s.p[1] - 300) / 300)).normalize();
+    if (s.p[1] > 300) aimCam.up.set(0, 0, -1).lerp(Y_UP, 1 - Math.min(1, (s.p[1] - 300) / 300)).normalize();
     else aimCam.up.set(0, 1, 0);
     aimCam.lookAt(...s.t);
     aimCam.updateProjectionMatrix();
@@ -338,7 +341,8 @@ export async function createStage({ canvas, reduceMotion }) {
   if (reduceMotion) cur.p.set(...SHOTS.hero.p);
   cur.t.set(...want.t); cur.fov = want.fov; cur.sx = want.sx; cur.sy = want.sy; cur.dusk = want.dusk;
   const pointer = { x: 0, y: 0, sx: 0, sy: 0 };
-  if (!coarse && !reduceMotion) addEventListener("pointermove", (e) => { pointer.x = e.clientX / innerWidth * 2 - 1; pointer.y = e.clientY / innerHeight * 2 - 1; }, { passive: true });
+  const onPointer = (e) => { pointer.x = e.clientX / innerWidth * 2 - 1; pointer.y = e.clientY / innerHeight * 2 - 1; };
+  if (!coarse && !reduceMotion) addEventListener("pointermove", onPointer, { passive: true });
 
   const tmpP = new THREE.Vector3(), tmpT = new THREE.Vector3(), fwd = new THREE.Vector3(), right = new THREE.Vector3(), up = new THREE.Vector3();
   let lastPal = -1;
@@ -367,7 +371,7 @@ export async function createStage({ canvas, reduceMotion }) {
     camera.position.copy(cur.p)
       .addScaledVector(right, Math.sin(time * 0.11) * drift + pointer.sx * dist * 0.035)
       .addScaledVector(up, Math.sin(time * 0.17) * drift * 0.5 - pointer.sy * dist * 0.02);
-    if (cur.p.y > 300) camera.up.set(0, 0, -1).lerp(new THREE.Vector3(0, 1, 0), 1 - Math.min(1, (cur.p.y - 300) / 300)).normalize();
+    if (cur.p.y > 300) camera.up.set(0, 0, -1).lerp(Y_UP, 1 - Math.min(1, (cur.p.y - 300) / 300)).normalize();
     else camera.up.set(0, 1, 0);
     camera.lookAt(cur.t);
     camera.updateProjectionMatrix();
@@ -406,15 +410,18 @@ export async function createStage({ canvas, reduceMotion }) {
   let acc = 0, frames = 0, lastCheck = performance.now() + 3000, upgrades = 0, tier = 0, slow = 0, good = 0;
   const targetDpr = Math.min(window.devicePixelRatio || 1, maxDpr);
   const setDpr = (v) => { dpr = v; renderer.setPixelRatio(dpr); renderer.setSize(W, H, false); sizePost(); };
+  let frameGap = lowEnd ? 1000 / 31 : 0, lastDraw = 0;   // low-core devices start capped at ~30 fps
   function adapt(dt, now) {
     if (dbg.noAdapt || now < lastCheck - 1500) return;           // ignore start-up (shader compile, first uploads)
     if (dt > 0 && dt < 250) { acc += dt; frames++; }
     if (now - lastCheck < 1500 || frames < 30) return;
     const avg = acc / frames; acc = 0; frames = 0; lastCheck = now;
-    if (avg > 22) { slow++; good = 0; } else if (avg < 17.6) { good++; slow = 0; } else { slow = good = 0; }
+    const base = frameGap || 16.7;
+    if (avg > base * 1.32) { slow++; good = 0; } else if (avg < base * 1.05) { good++; slow = 0; } else { slow = good = 0; }
     if (slow >= 2) {
       slow = 0;
       if (dpr > 0.75) setDpr(Math.max(0.75, dpr - 0.25));
+      else if (tier === 1) { tier = 2; frameGap = 1000 / 31; }   // still slow at the floor: cap at ~30 fps
       else if (tier === 0) { tier = 1; birds.visible = false; shadows.visible = false; trees.count = place.insideCount; orchard.count = 0; }
     } else if (good >= 3 && dpr < targetDpr && upgrades < 3) {
       good = 0; upgrades++; setDpr(Math.min(targetDpr, dpr + 0.25));
@@ -425,6 +432,8 @@ export async function createStage({ canvas, reduceMotion }) {
   /* ---------- loop ---------- */
   let last = performance.now(), t0 = last, shown = false, rafOn = false;
   function frame(now) {
+    if (frameGap && now - lastDraw < frameGap - 1) return;   // cheap skip: no draw, no allocation
+    lastDraw = now;
     const dt = Math.min(0.1, (now - last) / 1000);
     adapt(now - last, now);
     last = now;
@@ -446,10 +455,22 @@ export async function createStage({ canvas, reduceMotion }) {
     requestAnimationFrame(() => { pending = false; applyShot(0, 0); draw(); if (!shown) { shown = true; canvas.classList.add("on"); } });
   }
 
-  document.addEventListener("visibilitychange", () => (document.hidden ? stop() : start()));
+  const onVis = () => (document.hidden ? stop() : start());
+  document.addEventListener("visibilitychange", onVis);
   renderer.compile(scene, camera);
   if (reduceMotion) requestRender(); else start();
-  const api = { renderer, stop, start, scene, pinAt };
+  function dispose() {
+    stop();
+    document.removeEventListener("visibilitychange", onVis);
+    removeEventListener("pointermove", onPointer);
+    ScrollTrigger.removeEventListener("refresh", rebuild);
+    ro.disconnect();
+    lenis?.destroy();
+    scene.traverse((o) => { o.geometry?.dispose(); const m = o.material; if (m) (Array.isArray(m) ? m : [m]).forEach((x) => x.dispose()); });
+    if (post) { post.rt.dispose(); post.m.dispose(); post.scene.children[0].geometry.dispose(); }
+    renderer.dispose();
+  }
+  const api = { renderer, stop, start, scene, pinAt, dispose };
   window.__stage = api;
   ScrollTrigger.refresh(); // copy that hands off to scene labels (motion.js) re-reads their screen positions
   return api;
