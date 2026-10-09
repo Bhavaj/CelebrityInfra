@@ -76,7 +76,7 @@ void main(){
   float n1 = vnoise(p*0.35), n2 = vnoise(p*0.045 + 4.);
 
   // palette (albedo, already warm-graded)
-  vec3 grass  = mix(vec3(.25,.24,.13), vec3(.33,.30,.16), n2) * (.9 + .2*n1);
+  vec3 grass  = mix(vec3(.12,.25,.06), vec3(.19,.33,.08), n2) * (.88 + .24*n1);   // monsoon-green lawn
   vec3 soil   = mix(vec3(.43,.22,.13), vec3(.50,.29,.17), n2) * (.92 + .16*n1);   // Deccan red soil
   vec3 tar    = vec3(.13,.125,.12) * (.94 + .1*n1);
   vec3 kerb   = vec3(.55,.52,.46);
@@ -90,12 +90,16 @@ void main(){
     vec2 cell = floor(q / vec2(64., 46.));
     vec2 fq = fract(q / vec2(64., 46.));
     float hsh = hash12(cell);
-    vec3 fc = hsh < .3 ? vec3(.34,.29,.16) : hsh < .55 ? vec3(.27,.27,.14) : hsh < .78 ? vec3(.36,.27,.17) : vec3(.38,.33,.20);
+    // mostly paddy and pulses in leaf, the odd field gone gold or freshly turned
+    vec3 fc = hsh < .34 ? vec3(.13,.30,.05) : hsh < .6 ? vec3(.18,.34,.07) : hsh < .8 ? vec3(.10,.22,.05) : hsh < .95 ? vec3(.30,.33,.10) : vec3(.36,.24,.14);
     alb = fc * (.85 + .3*vnoise(p*0.02 + hsh*9.));
     // crop rows
     alb *= .94 + .06*sin(dot(q, hsh < .5 ? vec2(1.,0.) : vec2(0.,1.)) * 2.4);
     vec2 bd = min(fq, 1.-fq) * vec2(64., 46.);
-    alb = mix(alb, vec3(.22,.20,.12), band(min(bd.x, bd.y), .8, fw*1.5) * .7);
+    alb = mix(alb, vec3(.09,.17,.05), band(min(bd.x, bd.y), .8, fw*1.5) * .7);
+    // distant hills: scrub forest
+    float hillF = smoothstep(500., 1600., length(p));
+    alb = mix(alb, mix(vec3(.08,.17,.05), vec3(.13,.22,.07), vnoise(p*.004)) * (.8 + .4*vnoise(p*.03)), hillF);
     // access road + approach
     float rd = abs(p.y - (ACC0+ACC1)*.5);
     float approach = step(p.y, ACC0) * step(ax, GATE - .5);
@@ -130,7 +134,11 @@ void main(){
       vec2 c = vec2((ax - BX0)/PW, local/PD);
       vec2 id = floor(c);
       float ph = hash12(id + k*13. + step(0., p.x)*71.);
-      alb = soil * (.9 + .2*ph);
+      alb = mix(grass * (1.06 + .16*ph), soil, .12 + .1*vnoise(p*.6));   // levelled, grassed plot
+      // soil basin around the plot's mango tree (positions mirror layout.js mangoInPlot)
+      vec2 tp = vec2((fract(c.x) - .5) * PW, local - (PD + (id.y < .5 ? -MANGO_BACK : MANGO_BACK)));
+      float basin = 1. - smoothstep(1.1, 1.3 + fw, length(tp));
+      alb = mix(alb, soil * .62, basin * .85);
       plotMask = 1.;
       vec2 f = fract(c);
       vec2 dm = min(f, 1. - f) * vec2(PW, PD);
@@ -140,7 +148,7 @@ void main(){
       float dly = length(vec2(pc.x, pc.y - SITE)) / 230.;
       lineA = smoothstep(dly*.75, dly*.75 + .25, uReveal);
     } else if (k >= 0. && k < NB && local < BLOCK) {
-      alb = grass;                                   // side verges
+      alb = grass * 1.05;                            // side verges
     } else {
       alb = tar;                                     // cross road
       float e = min(abs(local - BLOCK), abs(local - PITCH));
@@ -181,7 +189,7 @@ void main(){
   // ---- map mode: contours + grid, muted palette ----
   if (uMap > .001) {
     float lum = dot(col, vec3(.3,.55,.15));
-    col = mix(col, vec3(lum)*vec3(1.08,.98,.86), uMap*.55);
+    col = mix(col, vec3(lum)*vec3(.98,1.04,.88), uMap*.35);
     float hgt = vW.y / 3.;
     float contour = 1. - smoothstep(0., 1.5, abs(fract(hgt + .5) - .5) / max(fwidth(hgt), 1e-4));
     vec2 g = abs(fract(p / 100.) - .5) * 100.;
@@ -228,7 +236,7 @@ void main(){
   // warm→cool gradients pass through olive in RGB; keep green under red so the blend reads as dusky rose
   float mx = max(col.r, max(col.g, col.b));          // hue-preserving highlight roll-off (no clipping to yellow-white)
   if (mx > .8) col *= (.8 + .2 * (1. - exp(-(mx - .8) / .2))) / mx;
-  col.g = min(col.g, col.r * .86 + .01);
+  col.g = mix(col.g, min(col.g, col.r * .86 + .01), smoothstep(.12, .45, uDusk));
   col += (hash12(gl_FragCoord.xy) - .5) / 200.;
   gl_FragColor = vec4(col, 1.);
 }`;

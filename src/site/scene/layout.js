@@ -23,6 +23,13 @@ export function plotRect(side, block, row, col) {
   const zTop = L.Z0 - block * L.PITCH - row * L.PD;
   return side > 0 ? { x0: xa, x1: xb, z0: zTop - L.PD, z1: zTop } : { x0: -xb, x1: -xa, z0: zTop - L.PD, z1: zTop };
 }
+// Each plot has a young mango tree near its back boundary, so every block carries a row of mangoes down its
+// spine (rows 0/1 sit back to back). The ground shader draws a soil basin under each one.
+L.MANGO_BACK = 2.6;  // metres in from the plot's back edge
+export function mangoInPlot(side, block, row, col) {
+  const p = plotRect(side, block, row, col);
+  return [(p.x0 + p.x1) / 2, row === 0 ? p.z0 + L.MANGO_BACK : p.z1 - L.MANGO_BACK];
+}
 // The plot the "Offer" shot descends onto: east of the avenue, first block, front row, third plot.
 export const HIGHLIGHT = plotRect(1, 0, 0, 2);
 export const HIGHLIGHT_C = [(HIGHLIGHT.x0 + HIGHLIGHT.x1) / 2, (HIGHLIGHT.z0 + HIGHLIGHT.z1) / 2];

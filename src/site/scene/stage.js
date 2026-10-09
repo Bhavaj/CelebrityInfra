@@ -14,7 +14,7 @@ const mix3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a
 
 // Light/atmosphere palette across the evening (display-space RGB).
 const PAL = [
-  { d: 0.0, zen: [0.2, 0.19, 0.27], hor: [0.93, 0.67, 0.43], sun: [1.0, 0.76, 0.48], sky: [0.2, 0.21, 0.27], bnc: [0.07, 0.05, 0.035], fog: [0.72, 0.57, 0.46], el: 0.2 },
+  { d: 0.0, zen: [0.25, 0.38, 0.58], hor: [0.93, 0.8, 0.62], sun: [1.0, 0.86, 0.64], sky: [0.27, 0.32, 0.36], bnc: [0.05, 0.06, 0.035], fog: [0.6, 0.66, 0.66], el: 0.3 },
   { d: 0.5, zen: [0.13, 0.12, 0.19], hor: [0.86, 0.48, 0.29], sun: [1.0, 0.56, 0.31], sky: [0.15, 0.14, 0.19], bnc: [0.05, 0.03, 0.025], fog: [0.5, 0.36, 0.31], el: 0.07 },
   { d: 1.0, zen: [0.045, 0.055, 0.1], hor: [0.42, 0.25, 0.22], sun: [0.8, 0.36, 0.2], sky: [0.075, 0.08, 0.115], bnc: [0.02, 0.016, 0.016], fog: [0.21, 0.155, 0.16], el: -0.035 },
 ];
@@ -51,7 +51,7 @@ export async function createStage({ canvas, reduceMotion }) {
   const U = {
     uSunDir: { value: new THREE.Vector3() }, uSunCol: { value: new THREE.Vector3() },
     uSkyCol: { value: new THREE.Vector3() }, uBounce: { value: new THREE.Vector3() },
-    uFogCol: { value: new THREE.Vector3() }, uFogDen: { value: 1 / 2700 },
+    uFogCol: { value: new THREE.Vector3() }, uFogDen: { value: 1 / 3300 },
     uTime: { value: 0 }, uDusk: { value: 0 }, uLamps: { value: 0 },
   };
   const ground = {
@@ -98,7 +98,7 @@ export async function createStage({ canvas, reduceMotion }) {
   });
   const place = placements();
   function placements() {
-    return OB.placements({ outsideTrees: mobile ? 170 : 380 });
+    return OB.placements({ outsideTrees: mobile ? 260 : 520, orchards: mobile ? 6 : 10 });
   }
   const instanced = (geo, mat, list) => {
     const im = new THREE.InstancedMesh(geo, mat, list.length);
@@ -121,6 +121,21 @@ export async function createStage({ canvas, reduceMotion }) {
   trees.instanceColor.needsUpdate = true;
   trees.name = "trees";
   scene.add(trees);
+  // mango trees: full-detail (with fruit) inside the compound, a light fruitless version for the far orchards
+  const mangoMat = lit({ sway: 1, wrap: 0.5 });
+  const mangoTint = (im, off) => {
+    for (let i = 0; i < im.count; i++) { const j = i + off, k = 0.86 + ((j * 0.618) % 1) * 0.28; im.setColorAt(i, tint.setRGB(k, k * (0.97 + ((j * 0.37) % 1) * 0.08), k)); }
+    im.instanceColor.needsUpdate = true;
+  };
+  const mangos = instanced(OB.mangoGeometry({ fruits: mobile ? 30 : 46, detail: mobile ? 1 : 2 }), mangoMat, place.mangos.slice(0, place.insideMangos));
+  mangoTint(mangos, 0);
+  mangos.name = "mangos";
+  scene.add(mangos);
+  const orchard = instanced(OB.mangoGeometry({ fruits: 0, detail: 1 }), mangoMat, place.mangos.slice(place.insideMangos));
+  mangoTint(orchard, place.insideMangos);
+  orchard.name = "orchard";
+  scene.add(orchard);
+
   const palms = instanced(OB.palmGeometry(), lit({ sway: 1, wrap: 0.5, side: THREE.DoubleSide }), place.palms);
   palms.name = "palms";
   scene.add(palms);
@@ -165,6 +180,7 @@ export async function createStage({ canvas, reduceMotion }) {
     shadowList.push(m);
   };
   for (const m of place.trees) { m.decompose(P, Qt, Sc); addShadow(P.x, P.z, P.y + 0.3, 5.2 * Sc.x, 17 * Sc.x); }
+  for (const m of place.mangos) { m.decompose(P, Qt, Sc); addShadow(P.x, P.z, P.y + 0.2, 7 * Sc.x, 19 * Sc.x); }
   for (const m of place.palms) { m.decompose(P, Qt, Sc); addShadow(P.x, P.z, 0, 4.2 * Sc.x, 22 * Sc.x); }
   for (const s of [-1, 1]) addShadow(s * (L.GATE + 0.8), L.SITE, 0, 2.6, 26);
   const shadowMat = new THREE.ShaderMaterial({
@@ -324,7 +340,7 @@ export async function createStage({ canvas, reduceMotion }) {
     if (slow >= 2) {
       slow = 0;
       if (dpr > 0.75) setDpr(Math.max(0.75, dpr - 0.25));
-      else if (tier === 0) { tier = 1; birds.visible = false; shadows.visible = false; trees.count = place.insideCount; }
+      else if (tier === 0) { tier = 1; birds.visible = false; shadows.visible = false; trees.count = place.insideCount; orchard.count = 0; }
     } else if (good >= 3 && dpr < targetDpr && upgrades < 3) {
       good = 0; upgrades++; setDpr(Math.min(targetDpr, dpr + 0.25));
     }

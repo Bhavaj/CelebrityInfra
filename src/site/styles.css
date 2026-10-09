@@ -63,8 +63,8 @@ h3{font:600 clamp(24px,2.2vw,30px)/1.15 var(--font-display);letter-spacing:-.005
 .stage-static,.stage-canvas,.scrim{position:absolute;inset:0;width:100%;height:100%}
 .stage-static{
   background:
-    radial-gradient(60% 38% at 22% 47%,rgba(236,170,96,.42),transparent 70%),
-    linear-gradient(180deg,#141520 0%,#2a2230 22%,#6d4a3a 42%,#b47a4c 52%,#3a2a1d 56%,#1d1711 70%,#0f0c09 100%);
+    radial-gradient(60% 38% at 22% 40%,rgba(240,206,150,.35),transparent 70%),
+    linear-gradient(180deg,#2c3a4c 0%,#59646a 22%,#a7a089 34%,#5c6a48 40%,#2b3d1c 52%,#1a2512 70%,#0c0f08 100%);
 }
 body.no-webgl .stage-static{background:#0f0c09 url(/media/park1-still.jpg) 62% 50%/cover no-repeat}
 .stage-canvas{display:block;opacity:0;transition:opacity 1.6s var(--ease-out)}
@@ -344,6 +344,51 @@ h1,h2,h3,.facts dd,.stats dd,.price-amt,.pin-text b,.quote p,.loc-place,.enq-suc
   .t-main{font-size:clamp(64px,13vw,120px)}
   .offer,.location,.venture,.chairman,.enquire{padding-top:var(--sec-y);min-height:0}
   .menu nav a{font-size:30px;padding:6px 0}
+}
+
+/* desktop: use the width. Phones and tablets keep the stacked single-column layout above. */
+.facts-wide{display:none!important}
+@media (min-width:1081px){
+  :root{--maxw:1776px}
+  body{font-size:18px}
+  /* nav edges line up with the content column on very wide screens */
+  .nav{padding-left:max(var(--gutter),env(safe-area-inset-left),calc((100% - var(--maxw)) / 2));padding-right:max(var(--gutter),env(safe-area-inset-right),calc((100% - var(--maxw)) / 2))}
+  .lead{font-size:clamp(19px,1.3vw,22px)}
+  .label{font-size:13px}
+  .nav-links a{font-size:15px}
+
+  /* hero: the facts become a full-width rail along the foot of the screen */
+  .hero-copy{max-width:780px}
+  .facts{max-width:none;grid-template-columns:repeat(4,minmax(0,1fr))}
+  .facts-wide{display:flex!important}
+  .facts div{padding-top:22px}
+  .facts div+div{padding-left:28px}
+  .facts dt{font-size:12px}
+
+  /* offer: a wide two-column ticket, heading and price on the left, perks on the right */
+  .offer .split{grid-template-columns:minmax(0,13fr) minmax(0,11fr)}
+  .ticket{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto auto 1fr;grid-template-areas:"head head" "price perks" "cta perks";column-gap:clamp(32px,3.4vw,56px);align-items:start}
+  .ticket-head{grid-area:head}
+  .ticket .price{grid-area:price;border-bottom:0;padding-bottom:12px;margin-bottom:0}
+  .ticket .perks{grid-area:perks;margin:0;border-top:1px solid var(--line)}
+  .ticket .perks li:last-child{border-bottom:0}
+  .ticket>.btn{grid-area:cta;justify-self:start;align-self:start;margin-top:20px}
+  .perks b{font-size:17px}
+  .perks span{font-size:16px}
+
+  /* venture */
+  .venture .copy-col{max-width:760px}
+
+  /* why: the three reasons sit side by side under the heading */
+  .why .copy-col{max-width:none}
+  .why h2{max-width:15ch}
+  .points{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(28px,3vw,56px)}
+  .points li{max-width:none}
+  .points p{font-size:17px}
+  body[data-scene="why"] .scrim-full{opacity:.45}
+
+  .dash li{font-size:17px}
+  .loc-card,.enq-info{max-width:620px}
 }
 
 @media (prefers-reduced-motion:reduce){

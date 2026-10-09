@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
-import { L, rng, terrainH } from "./layout.js";
+import { L, rng, terrainH, mangoInPlot } from "./layout.js";
 
 /* ---------- geometry helpers ---------- */
 function prep(geo, rgb, sway = 0) {
@@ -43,6 +43,64 @@ export function treeGeometry() {
       const t = 0.75 + 0.25 * Math.min(1, Math.max(0, (y - 3) / 4));
       return [0.15 * t, 0.19 * t, 0.085 * t];
     }, 1));
+  }
+  return mergeGeometries(parts);
+}
+
+/* ---------- mango tree, ~7 m: short stout trunk, dense dark dome, fruit hanging off the lower canopy ---------- */
+// Fruit is drawn ~2.5x life size so it still reads from the aerial shots.
+export function mangoGeometry({ fruits = 46, detail = 2 } = {}) {
+  const r = rng(11);
+  const parts = [];
+  const bark = [0.2, 0.14, 0.09];
+  parts.push(prep(new THREE.CylinderGeometry(0.3, 0.42, 2.2, 7, 1).translate(0, 1.1, 0), bark, 0.15));
+  for (const [a, tilt] of [[0.3, 0.5], [2.4, 0.55], [4.4, 0.45]]) {
+    const b = new THREE.CylinderGeometry(0.13, 0.2, 2.2, 5, 1).translate(0, 1.1, 0);
+    b.rotateZ(tilt); b.rotateY(a); b.translate(0, 1.9, 0);
+    parts.push(prep(b, bark, 0.3));
+  }
+  // canopy: one broad dome + lobes, squashed so it's wider than tall
+  const blobs = [[0, 4.6, 0, 3.3], [1.7, 4.1, 0.9, 2.3], [-1.6, 4.2, -0.8, 2.4], [0.7, 4.0, -1.8, 2.2], [-0.8, 4.1, 1.8, 2.2], [0.1, 5.7, 0.2, 2.2]];
+  const shell = []; // points on the canopy underside where fruit can hang
+  for (const [bx, by, bz, br] of blobs) {
+    const g = new THREE.IcosahedronGeometry(br, detail);
+    const p = g.attributes.position, nrm = g.attributes.normal;
+    for (let i = 0; i < p.count; i++) {
+      const v = new THREE.Vector3().fromBufferAttribute(p, i);
+      const hv = Math.sin(v.x * 12.9898 + v.y * 78.233 + v.z * 37.719) * 43758.5453;
+      const k = 0.9 + 0.2 * (hv - Math.floor(hv));
+      v.multiplyScalar(k); v.y *= 0.72;
+      p.setXYZ(i, v.x + bx, v.y + by, v.z + bz);
+      v.y /= 0.72; v.normalize();
+      nrm.setXYZ(i, v.x, v.y, v.z);
+    }
+    parts.push(prep(g, (i, gg) => {
+      const y = gg.attributes.position.getY(i);
+      const t = 0.62 + 0.38 * Math.min(1, Math.max(0, (y - 2.6) / 4.2));
+      return [0.085 * t, 0.235 * t, 0.07 * t];   // deep glossy mango green
+    }, 1));
+    shell.push([bx, by, bz, br]);
+  }
+  // fruit: elongated, hanging from short stalks just outside the lower half of the canopy
+  const fruitGeo = () => new THREE.IcosahedronGeometry(1, detail > 1 ? 1 : 0).scale(0.18, 0.27, 0.16);
+  for (let n = 0, tries = 0; n < fruits && tries < fruits * 20; tries++) {
+    const [bx, by, bz, br] = shell[Math.floor(r() * shell.length)];
+    const a = r() * Math.PI * 2, el = 0.35 - r() * 1.05;              // sides and underside of the canopy
+    const d = new THREE.Vector3(Math.cos(a) * Math.cos(el), Math.sin(el), Math.sin(a) * Math.cos(el));
+    const x = bx + d.x * br * 1.04, z = bz + d.z * br * 1.04, y = by + d.y * br * 0.72 * 1.04;
+    // must sit on the outside of every canopy lobe (otherwise it's buried)
+    if (shell.some(([cx, cy, cz, cr]) => ((x - cx) ** 2 + ((y - cy) / 0.72) ** 2 + (z - cz) ** 2) < (cr * 0.97) ** 2)) continue;
+    if (y < 2.2) continue;
+    const ripe = r();
+    const col = ripe < 0.45 ? [0.95, 0.62, 0.08] : ripe < 0.8 ? [0.98, 0.78, 0.16] : [0.55, 0.62, 0.12];
+    const f = fruitGeo().rotateZ((r() - 0.5) * 0.5).translate(x, y - 0.24, z);
+    parts.push(prep(f, (i, gg) => {
+      const fy = gg.attributes.position.getY(i) - (y - 0.24);
+      const blush = Math.max(0, fy) * 2.2;                             // red-orange shoulder near the stalk
+      return [Math.min(1, col[0] + blush * 0.05), col[1] * (1 - blush * 0.35), col[2]];
+    }, 1));
+    if (detail > 1) parts.push(prep(new THREE.CylinderGeometry(0.02, 0.02, 0.3, 3, 1).translate(x, y + 0.02, z), [0.16, 0.2, 0.06], 1));
+    n++;
   }
   return mergeGeometries(parts);
 }
@@ -167,47 +225,69 @@ export function birdGeometry() {
 const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), V = new THREE.Vector3(), S3 = new THREE.Vector3(), UP = new THREE.Vector3(0, 1, 0);
 const mat = (x, y, z, s = 1, ry = 0) => M.compose(V.set(x, y, z), Q.setFromAxisAngle(UP, ry), S3.set(s, s, s)).clone();
 
-export function placements({ outsideTrees = 380 } = {}) {
+export function placements({ outsideTrees = 380, orchards = 9 } = {}) {
   const r = rng(42);
-  const palms = [], trees = [], stones = [], poles = [], glows = [];
+  const palms = [], trees = [], mangos = [], stones = [], poles = [], glows = [];
 
-  // palms: avenue median + both kerbs
+  // coconut palms: avenue median, and framing the gate outside
   for (let z = L.SITE - 4; z > -L.RING_IN + 2; z -= 12) palms.push(mat(0, 0, z, 0.9 + r() * 0.2, r() * 6.28));
-  for (let z = L.SITE - 10; z > -L.RING_IN; z -= 12) for (const s of [-1, 1]) palms.push(mat(s * (L.AVE + 1.2), 0, z, 0.85 + r() * 0.2, r() * 6.28));
-  // palms framing the gate outside
   for (const s of [-1, 1]) for (let i = 0; i < 3; i++) palms.push(mat(s * (L.GATE + 6 + i * 7), 0, L.SITE + 3.5, 0.9 + r() * 0.2, r() * 6.28));
 
-  // broadleaf trees: inside the wall verge, the open space, and side verges
-  const vergeM = (L.RING_OUT + L.SITE) / 2;
-  for (let t = -vergeM; t <= vergeM; t += 10) {
-    const j = () => (r() - 0.5) * 1.2;
-    trees.push(mat(t + j(), 0, -vergeM + j(), 0.8 + r() * 0.35, r() * 6.28));
-    trees.push(mat(-vergeM + j(), 0, t + j(), 0.8 + r() * 0.35, r() * 6.28));
-    trees.push(mat(vergeM + j(), 0, t + j(), 0.8 + r() * 0.35, r() * 6.28));
-    if (Math.abs(t) > L.GATE + 4) trees.push(mat(t + j(), 0, vergeM + j(), 0.8 + r() * 0.35, r() * 6.28));
+  // mango trees: both kerbs of the avenue, between the palms
+  for (let z = L.SITE - 13; z > -L.RING_IN; z -= 12) for (const s of [-1, 1]) mangos.push(mat(s * (L.AVE + 1.6), 0, z, 0.78 + r() * 0.14, r() * 6.28));
+  // ...and one in every plot, at the back of the plot so the frontage stays open
+  for (const s of [-1, 1]) for (let b = 0; b < L.NB; b++) for (let row = 0; row < 2; row++) for (let c = 0; c < L.NPX; c++) {
+    const [x, z] = mangoInPlot(s, b, row, c);
+    mangos.push(mat(x, 0, z, 0.56 + r() * 0.12, r() * 6.28));
   }
-  for (let i = 0; i < 46; i++) {
+
+  // inside the wall verge and the open space: mango with the odd neem
+  const vergeM = (L.RING_OUT + L.SITE) / 2;
+  const verge = (x, z) => (r() < 0.75 ? mangos : trees).push(mat(x, 0, z, 0.8 + r() * 0.3, r() * 6.28));
+  for (let t = -vergeM; t <= vergeM; t += 8) {
+    const j = () => (r() - 0.5) * 1.2;
+    verge(t + j(), -vergeM + j());
+    verge(-vergeM + j(), t + j());
+    verge(vergeM + j(), t + j());
+    if (Math.abs(t) > L.GATE + 4) verge(t + j(), vergeM + j());
+  }
+  for (let i = 0; i < 70; i++) {
     const x = (r() * 2 - 1) * (L.BX1 - 2), z = L.PARK_Z - 3 - r() * (L.RING_IN + L.PARK_Z - 6);
     if (Math.abs(x) < L.AVE + 3) continue;
     const d = Math.hypot(x, z - (L.PARK_Z - L.RING_IN) * 0.5);
     if (Math.abs(d - 14) < 2.5) continue;
-    trees.push(mat(x, 0, z, 0.75 + r() * 0.45, r() * 6.28));
+    (r() < 0.6 ? mangos : trees).push(mat(x, 0, z, 0.75 + r() * 0.4, r() * 6.28));
   }
-  const insideCount = trees.length;
+  const insideCount = trees.length, insideMangos = mangos.length;
+
+  const clear = (x, z, pad = 12) => Math.max(Math.abs(x), Math.abs(z)) > L.SITE + pad && Math.abs(z - (L.ACC0 + L.ACC1) / 2) > 9;
+  // neighbouring mango orchards: grid-planted blocks in the surrounding fields
+  for (let o = 0, tries = 0; o < orchards && tries < 200; tries++) {
+    const a = r() * Math.PI * 2, rad = 150 + r() * 520;
+    const cx = Math.cos(a) * rad, cz = Math.sin(a) * rad;
+    const nx = 5 + Math.floor(r() * 6), nz = 4 + Math.floor(r() * 5), sp = 9;
+    const rot = -0.28 + (r() - 0.5) * 0.1, ca = Math.cos(rot), sa = Math.sin(rot);
+    if (!clear(cx, cz, 60)) continue;
+    for (let i = 0; i < nx; i++) for (let k = 0; k < nz; k++) {
+      const lx = (i - nx / 2) * sp, lz = (k - nz / 2) * sp;
+      const x = cx + lx * ca - lz * sa, z = cz + lx * sa + lz * ca;
+      if (clear(x, z)) mangos.push(mat(x, terrainH(x, z) - 0.2, z, 0.75 + r() * 0.25, r() * 6.28));
+    }
+    o++;
+  }
 
   // countryside: trees cluster along field bunds and in small groves
   let tries = 0;
   while (trees.length - insideCount < outsideTrees && tries++ < outsideTrees * 8) {
     const a = r() * Math.PI * 2, rad = 112 + Math.pow(r(), 1.6) * 900;
     let x = Math.cos(a) * rad, z = Math.sin(a) * rad;
-    if (Math.max(Math.abs(x), Math.abs(z)) < L.SITE + 12) continue;
-    if (Math.abs(z - (L.ACC0 + L.ACC1) / 2) < 9) continue;
+    if (!clear(x, z)) continue;
     if (r() < 0.55) { // snap to a field bund
       const qx = 0.96 * x - 0.28 * z, qz = 0.28 * x + 0.96 * z;
       const sx = Math.round(qx / 64) * 64, sz = Math.round(qz / 46) * 46;
       const nx = Math.abs(qx - sx) < Math.abs(qz - sz) ? sx : qx, nz = nx === qx ? sz : qz;
       x = 0.96 * nx + 0.28 * nz; z = -0.28 * nx + 0.96 * nz;
-      if (Math.max(Math.abs(x), Math.abs(z)) < L.SITE + 12 || Math.abs(z - (L.ACC0 + L.ACC1) / 2) < 9) continue;
+      if (!clear(x, z)) continue;
     }
     trees.push(mat(x, terrainH(x, z) - 0.3, z, 0.8 + r() * 0.7, r() * 6.28));
   }
@@ -230,5 +310,5 @@ export function placements({ outsideTrees = 380 } = {}) {
     lamp(t, -rm, Math.PI / 2); lamp(-rm, t, Math.PI); lamp(rm, t, 0);
     if (Math.abs(t) > L.AVE + 6 && Math.abs(t - 32) > 16) lamp(t, rm, -Math.PI / 2); // keep the offer plot's frontage clear
   }
-  return { palms, trees, insideCount, stones, poles, glows };
+  return { palms, trees, mangos, insideCount, insideMangos, stones, poles, glows };
 }
